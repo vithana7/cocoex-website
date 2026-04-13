@@ -1,0 +1,107 @@
+{
+  "stardust": [
+    {
+      "number": "003",
+      "status": "active",
+      "name": "La Luna 007",
+      "subtitle": "Silat Beksi × Wex Records × La Luna · Silent Rixdorf, Berlin · August 2026",
+      "ngo": "Repair Together — rebuilding communities in war-affected Ukraine",
+      "muses": [
+        {
+          "symbol": "♀",
+          "name": "Shukra",
+          "cause": "Bio-diversity",
+          "color": "--shukra"
+        }
+      ],
+      "link": "#",
+      "linkText": "View →"
+    },
+    {
+      "number": "002",
+      "status": "open",
+      "name": "Practicing the Futures",
+      "subtitle": "Vinili e Vinelli Festival · Italy · July 7–19, 2026",
+      "ngo": "Terra Nuda — art and culture in rural communities",
+      "muses": [
+        {
+          "symbol": "✕",
+          "name": "Ares",
+          "cause": "Reforestation",
+          "color": "--ares"
+        },
+        {
+          "symbol": "◉",
+          "name": "Solis",
+          "cause": "Well-being",
+          "color": "--solis"
+        }
+      ],
+      "link": "#now",
+      "linkText": "Apply →"
+    },
+    {
+      "number": "001",
+      "status": "archive",
+      "name": "Cantine Volpi",
+      "subtitle": "Limited wine release · first proof of concept",
+      "ngo": "Art embedded in product to generate charitable funds",
+      "muses": [
+        {
+          "symbol": "✕",
+          "name": "Ares",
+          "cause": "Reforestation",
+          "color": "--ares"
+        },
+        {
+          "symbol": "◉",
+          "name": "Solis",
+          "cause": "Well-being",
+          "color": "--solis"
+        }
+      ],
+      "link": null,
+      "linkText": "Archive"
+    }
+  ],
+  "horizon": [
+    {
+      "eventTitle": "Future Lab, Carezzano · 2024",
+      "eventLabel": "The event",
+      "eventDescription": "Held during Vinili e Vinelli, September 2024. Communities co-created four visions for the future of sustainable local tourism in the Colli Tortonesi.",
+      "outcomeTitle": "A community's choice",
+      "outcomeLabel": "The outcome",
+      "outcomeDescription": "Participants chose Slow Food Terre Derthona to carry the community's vision forward — strengthening the territory and its agricultural culture.",
+      "conclusionTitle": "Art as closure · September 2025",
+      "conclusionLabel": "The conclusion",
+      "conclusionDescription": "Works exhibited and sold for charity at the same location where the Future Lab began. The circle closed."
+    }
+  ],
+  "partnerships": [
+    {
+      "name": "Partner 1",
+      "logo": "assets/images/partnerships/partner-1.png",
+      "url": "#"
+    },
+    {
+      "name": "Partner 2",
+      "logo": "assets/images/partnerships/partner-2.png",
+      "url": "#"
+    },
+    {
+      "name": "Partner 3",
+      "logo": "assets/images/partnerships/partner-3.png",
+      "url": "#"
+    },
+    {
+      "name": "Partner 4",
+      "logo": "assets/images/partnerships/partner-4.png",
+      "url": "#"
+    },
+    {
+      "name": "Partner 5",
+      "logo": "assets/images/partnerships/partner-5.png",
+      "url": "#"
+    }
+  ]
+}

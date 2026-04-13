@@ -1,0 +1,1667 @@
+/* ==========================================================================
+   COCOEX - Main Stylesheet
+   ========================================================================== */
+
+/* ==========================================================================
+   Scrollbar Styling - Minimal & Subtle
+   ========================================================================== */
+/* Minimal scrollbar for all browsers */
+* {
+  scrollbar-width: thin; /* Firefox - thin scrollbar */
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent; /* Firefox - thumb and track */
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+*::-webkit-scrollbar {
+  width: 6px; /* Thin scrollbar width */
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent; /* Invisible track */
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15); /* Very subtle white thumb */
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3); /* Slightly more visible on hover */
+}
+
+/* Ensure body and html still scroll */
+html, body {
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+/* ==========================================================================
+   CSS Custom Properties (Variables)
+   ========================================================================== */
+:root {
+  /* Colors */
+  --color-black: #000;
+  --color-white: #fff;
+  --color-text-outline: #fff;
+
+  /* Typography - Canela font family */
+  --font-canela: 'canela', Georgia, serif;
+
+  /* Typography Scale - Desktop (base) */
+  --font-h1-size: clamp(24px, 3vw, 48px);
+  --font-h1-height: clamp(28px, 3.2vw, 52px);
+  --font-h1-weight: 700; /* Bold */
+
+  --font-h2-size: clamp(14px, 1.5vw, 22px);
+  --font-h2-height: clamp(18px, 1.8vw, 26px);
+  --font-h2-weight: 400; /* Regular */
+
+  /* Middle size for body text */
+  --font-body-size: clamp(20px, 2.5vw, 36px);
+  --font-body-height: clamp(26px, 3vw, 42px);
+  --font-body-weight: 400; /* Regular */
+
+  /* Responsive logo sizes */
+  --intro-logo-size: clamp(60px, 15vw, 250px);
+  --muse-logo-size: clamp(150px, 20vw, 300px);
+  --muse-orbit-image-size: clamp(80px, 12vw, 150px);
+  --comet-logo-size: clamp(100px, 15vw, 182px);
+
+  /* Spacing - Responsive */
+  --spacing-xs: clamp(0.25rem, 1vw, 0.5rem);
+  --spacing-sm: clamp(0.5rem, 2vw, 1rem);
+  --spacing-md: clamp(1rem, 3vw, 2rem);
+  --spacing-lg: clamp(2rem, 5vw, 4rem);
+  --spacing-xl: clamp(3rem, 8vw, 8rem);
+
+  /* Transitions */
+  --transition-fast: 0.15s ease-out;
+  --transition-medium: 0.3s ease-out;
+  --transition-slow: 0.5s ease-out;
+
+  /* Z-index layers */
+  --z-background: 1;
+  --z-intro: 10;
+  --z-text-section: 20;
+  --z-white-section: 30;
+}
+
+/* ==========================================================================
+   Reset & Base Styles
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .comet-collab-bouncing-logo .comet-collab-logo-image {
+    animation: none !important;
+  }
+
+  .spark {
+    display: none !important;
+  }
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  background: var(--color-black);
+}
+
+body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  font-family: var(--font-canela);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ==========================================================================
+   Layout - Scroll Container
+   ========================================================================== */
+.scroll-container {
+  position: relative;
+}
+
+/* ==========================================================================
+   Intro Section
+   ========================================================================== */
+.intro-spacer {
+  height: 400vh;
+  position: relative;
+}
+
+.intro {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-intro);
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.intro-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.intro-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Logo Container
+   ========================================================================== */
+.logo-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform, width, height;
+}
+
+.intro-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity var(--transition-slow);
+}
+
+.intro-logo.visible {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Orbiting Dots
+   ========================================================================== */
+.orbit-dot {
+  position: absolute;
+  width: clamp(10px, 2vw, 16px);
+  height: clamp(10px, 2vw, 16px);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity var(--transition-slow);
+  will-change: transform, opacity;
+}
+
+.orbit-dot.visible {
+  opacity: 1;
+}
+
+.orbit-dot-white {
+  background: var(--color-white);
+  animation: pulseWhite 2s ease-in-out infinite;
+}
+
+.orbit-dot-black {
+  background: var(--color-black);
+  box-sizing: border-box;
+  animation: pulseBlack 2s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+@keyframes pulseWhite {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.3);
+    opacity: 0.8;
+  }
+}
+
+@keyframes pulseBlack {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.3);
+    opacity: 0.8;
+  }
+}
+
+/* ==========================================================================
+   Final Merged Dot
+   ========================================================================== */
+.final-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--color-white);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+}
+
+.final-dot.visible {
+  opacity: 1;
+  animation: pulseFinal 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseFinal {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+/* ==========================================================================
+   Transition Text (appears after orbit, before explosion)
+   ========================================================================== */
+.transition-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, calc(-50% + clamp(180px, 25vw, 280px)));
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+  text-align: center;
+  width: 90%;
+  max-width: 600px;
+  will-change: opacity, transform;
+}
+
+.transition-text p {
+  font-family: var(--font-canela);
+  font-size: clamp(14px, 2vw, 22px);
+  line-height: var(--font-h2-height);
+  font-weight: var(--font-h2-weight);
+  color: var(--color-white);
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+  margin: 0;
+  padding: 0 var(--spacing-md);
+  max-width: 600px;
+}
+
+/* ==========================================================================
+   Constellation Canvas
+   ========================================================================== */
+.constellation-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* ==========================================================================
+   Unified Starfield Background (Muse + Comet Sections)
+   ========================================================================== */
+.unified-starfield-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Text Section
+   ========================================================================== */
+.text-section-wrapper {
+  position: relative;
+  height: 250vh; /* Longer fade-in duration */
+}
+
+.text-section {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-text-section);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  padding: clamp(1rem, 5vw, 4rem);
+}
+
+.text-content {
+  max-width: min(90%, 800px);
+  width: 100%;
+  padding: 0 clamp(1rem, 3vw, 2rem);
+}
+
+.reveal-text {
+  font-family: var(--font-canela);
+  font-weight: var(--font-body-weight);
+  font-size: var(--font-body-size);
+  line-height: var(--font-body-height);
+  color: var(--color-white);
+  text-align: justify;
+  text-transform: uppercase;
+}
+
+.reveal-text em {
+  font-style: italic;
+  color: rgba(0, 0, 0, 0); /* Transparent fill */
+  -webkit-text-stroke: 1px var(--color-white); /* White stroke */
+  text-stroke: 1px var(--color-white);
+}
+
+/* ==========================================================================
+   White Section
+   ========================================================================== */
+.white-section {
+  position: relative;
+  z-index: var(--z-white-section);
+  min-height: 100vh;
+  background: transparent; /* Allow starfield to show through */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0;
+  margin: 0;
+}
+
+/* ==========================================================================
+   Comet Collab Wrapper - Creates Scroll Area
+   ========================================================================== */
+.comet-collab-wrapper {
+  position: relative;
+  width: 100%;
+  height: 1080vh; /* 180vh intro + 280vh movement + 120vh fade + 500vh phases */
+  background: transparent;
+}
+
+/* ==========================================================================
+   Comet Collab Intro Section
+   ========================================================================== */
+.comet-collab-intro {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl) var(--spacing-md);
+  z-index: 5;
+  opacity: 1;
+  will-change: opacity;
+  background: transparent;
+}
+
+
+.comet-collab-intro-logo {
+  margin-bottom: var(--spacing-xl);
+  flex-shrink: 0;
+}
+
+.comet-collab-intro-logo img {
+  width: auto;
+  height: auto;
+  max-width: var(--comet-logo-size);
+  max-height: calc(var(--comet-logo-size) * 0.5);
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.3));
+}
+
+.comet-collab-intro-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--spacing-lg);
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Comet Methods Text - matches mission text styling */
+.comet-methods-text {
+  font-family: var(--font-canela);
+  font-weight: var(--font-body-weight);
+  font-size: var(--font-body-size);
+  line-height: var(--font-body-height);
+  color: var(--color-white);
+  text-align: justify;
+  text-align-last: left;
+  text-transform: uppercase;
+  opacity: 1 !important;
+  width: 100%;
+}
+
+.comet-methods-text em {
+  font-style: italic;
+  color: rgba(0, 0, 0, 0); /* Transparent fill */
+  -webkit-text-stroke: 1px var(--color-white); /* White stroke */
+  text-stroke: 1px var(--color-white);
+}
+
+/* Comet Collab Connected Images Layout */
+.comet-collab-connected-content {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  padding: clamp(2rem, 8vw, 8rem);
+  z-index: 50;
+  opacity: 0;
+  will-change: opacity;
+  background: transparent;
+}
+
+/* Connection Canvas for white lines */
+.comet-connection-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Images Container - spread across page */
+.comet-images-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+  z-index: 2;
+}
+
+/* Individual image items */
+.comet-image-item {
+  flex: 0 1 auto;
+  max-width: clamp(120px, 20vw, 250px);
+  position: relative;
+}
+
+.comet-image-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.comet-image-item img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 30px rgba(255, 255, 255, 0.2);
+}
+
+/* Static Colored Logo at Bottom (for overlay with white logo) */
+.comet-collab-static-logo {
+  position: absolute;
+  bottom: var(--spacing-xl); /* Changed from top to bottom */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  opacity: 0; /* Start invisible, appears during overlay */
+  will-change: opacity;
+}
+
+.comet-collab-static-logo img {
+  width: auto;
+  height: auto;
+  max-width: 182px;
+  max-height: 91px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+}
+
+/* ==========================================================================
+   Comet Collab Slider Section
+   ========================================================================== */
+.comet-collab-section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  max-height: 100vh;
+  background: transparent; /* Allow starfield to show through */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  z-index: 10;
+}
+
+
+/* Gradient overlay for slider section */
+.comet-collab-background-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  opacity: 0.85; /* Blend with starfield underneath */
+}
+
+/* Bouncing Logo */
+.comet-collab-bouncing-logo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  pointer-events: auto;
+  cursor: grab;
+  will-change: transform, opacity;
+  transition: opacity 0.6s ease;
+  opacity: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.comet-collab-bouncing-logo .comet-collab-logo-image {
+  width: auto;
+  height: auto;
+  max-width: 156px;
+  max-height: 78px;
+  object-fit: contain;
+  display: block;
+  animation: depth-pulse 3s ease-in-out infinite;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+@keyframes depth-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  }
+  50% {
+    transform: scale(1.2);
+    filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.4));
+  }
+}
+
+/* Spark particles */
+.spark {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 49;
+  animation: spark-fade 0.6s ease-out forwards;
+}
+
+@keyframes spark-fade {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--spark-x), var(--spark-y)) scale(0.3);
+  }
+}
+
+.comet-collab-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-md);
+  z-index: 2;
+}
+
+.comet-collab-content {
+  width: 100%;
+  max-width: 1600px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-xl);
+  align-items: center;
+}
+
+/* Minimal Orbital Slider Navigation */
+.slider-nav {
+  position: absolute;
+  bottom: auto;
+  top: 60vh;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  z-index: 10;
+  padding: var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.slider-nav-btn {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+.slider-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.2);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25), inset 0 2px 4px rgba(255, 255, 255, 0.15);
+}
+
+.slider-nav-btn:active {
+  transform: scale(1.05);
+  transition: all 0.1s ease;
+}
+
+.slider-nav-btn::before {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-top: 2.5px solid rgba(0, 0, 0, 0.7);
+  border-right: 2.5px solid rgba(0, 0, 0, 0.7);
+  transition: all 0.3s ease;
+}
+
+.slider-nav-btn:hover::before {
+  border-color: rgba(0, 0, 0, 0.9);
+}
+
+.slider-nav-prev::before {
+  transform: rotate(-135deg);
+  left: 11px;
+}
+
+.slider-nav-next::before {
+  transform: rotate(45deg);
+  right: 11px;
+}
+
+.slider-dots {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 0 var(--spacing-sm);
+}
+
+.slider-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(8px);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+.slider-dot::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0.6;
+  transition: all 0.3s ease;
+}
+
+.slider-dot:hover {
+  transform: scale(1.3);
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 2px 4px rgba(255, 255, 255, 0.15);
+}
+
+.slider-dot:hover::before {
+  opacity: 0.8;
+  width: 6px;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.slider-dot.active {
+  width: 16px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 255, 255, 0.5);
+  border-width: 2.5px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  animation: orbital-pulse 2.5s ease-in-out infinite;
+}
+
+.slider-dot.active::before {
+  width: 7px;
+  height: 7px;
+  background: rgba(0, 0, 0, 0.75);
+  opacity: 1;
+  animation: core-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes orbital-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes core-pulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 0.85;
+  }
+}
+
+/* Phase Reel Styles */
+.comet-collab-reel {
+  width: 100%;
+  height: 45vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phase-viewport {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.phase-reel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.phase-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  opacity: 0;
+  transform: translateY(100%);
+  transition: opacity 0.6s ease-out, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.phase-item.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.phase-item.exiting {
+  opacity: 0;
+  transform: translateY(-100%);
+  pointer-events: none;
+  visibility: hidden;
+}
+
+/* Parallax layers - images move slower than text */
+.comet-collab-reel-image .phase-item {
+  will-change: transform, opacity;
+}
+
+.comet-collab-reel-text .phase-item {
+  will-change: transform, opacity;
+}
+
+/* Phase transition particles */
+.phase-transition-particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9;
+  overflow: hidden;
+}
+
+.phase-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--particle-color, #fff);
+  box-shadow: 0 0 12px var(--particle-color, #fff);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+@keyframes burst-particle {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(var(--burst-x), var(--burst-y)) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* Image Reel Specific */
+.comet-collab-reel-image .phase-item {
+  padding: var(--spacing-lg);
+}
+
+.phase-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.15));
+}
+
+/* Text Reel Specific */
+.comet-collab-reel-text .phase-item {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: left;
+}
+
+.comet-collab-reel-text h3 {
+  font-family: var(--font-canela);
+  font-size: var(--font-h1-size);
+  line-height: var(--font-h1-height);
+  font-weight: var(--font-h1-weight);
+  color: var(--color-black);
+  margin-bottom: var(--spacing-md);
+}
+
+.comet-collab-reel-text p {
+  font-family: var(--font-canela);
+  font-size: var(--font-h2-size);
+  line-height: var(--font-h2-height);
+  font-weight: var(--font-h2-weight);
+  color: var(--color-black);
+  opacity: 0.85;
+  max-width: 90%;
+}
+
+/* Responsive - Tablet (Comet Slider) */
+@media screen and (max-width: 1024px) {
+  .comet-collab-content {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .comet-collab-container {
+    padding: var(--spacing-md);
+  }
+
+  .comet-collab-reel {
+    height: 40vh;
+  }
+
+}
+
+/* Responsive - Mobile (Comet Slider) */
+@media screen and (max-width: 768px) {
+  /* Most responsive sizing handled by clamp() in base styles */
+
+  .comet-collab-section {
+    min-height: 100vh;
+    max-height: 100vh;
+  }
+
+  .comet-collab-container {
+    padding: var(--spacing-sm);
+  }
+
+  .spark {
+    width: clamp(3px, 0.8vw, 4px);
+    height: clamp(3px, 0.8vw, 4px);
+  }
+
+  .slider-nav {
+    top: 55vh;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs);
+  }
+
+  .slider-nav-btn {
+    width: clamp(28px, 5vw, 32px);
+    height: clamp(28px, 5vw, 32px);
+  }
+
+  .slider-nav-btn::before {
+    width: clamp(6px, 1.2vw, 7px);
+    height: clamp(6px, 1.2vw, 7px);
+    border-width: 2px;
+  }
+
+  .slider-nav-prev::before {
+    left: 10px;
+  }
+
+  .slider-nav-next::before {
+    right: 10px;
+  }
+
+  .slider-dot {
+    width: clamp(8px, 1.5vw, 9px);
+    height: clamp(8px, 1.5vw, 9px);
+    border-width: 1.5px;
+  }
+
+  .slider-dot::before {
+    width: clamp(3px, 0.7vw, 4px);
+    height: clamp(3px, 0.7vw, 4px);
+  }
+
+  .slider-dot.active {
+    width: clamp(12px, 2.5vw, 14px);
+    height: clamp(12px, 2.5vw, 14px);
+  }
+
+  .slider-dot.active::before {
+    width: clamp(5px, 1vw, 6px);
+    height: clamp(5px, 1vw, 6px);
+  }
+
+  .comet-collab-reel {
+    height: clamp(30vh, 35vh, 40vh);
+  }
+
+}
+
+/* ==========================================================================
+   Social Links
+   ========================================================================== */
+.social-links {
+  position: fixed;
+  bottom: calc(var(--spacing-md) + 60px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--spacing-sm);
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-medium);
+}
+
+.social-links.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(44px, 6vw, 52px);
+  height: clamp(44px, 6vw, 52px);
+  color: var(--color-black);
+  border-radius: clamp(10px, 1.5vw, 12px);
+  transition: color var(--transition-medium), transform var(--transition-medium), background-color var(--transition-medium);
+}
+
+.social-link:hover,
+.social-link:focus {
+  color: #555;
+  background-color: rgba(0, 0, 0, 0.05);
+  transform: scale(1.05);
+}
+
+.social-link:focus {
+  outline: 2px solid var(--color-black);
+  outline-offset: 2px;
+}
+
+.social-icon {
+  width: clamp(24px, 4vw, 32px);
+  height: clamp(24px, 4vw, 32px);
+}
+
+.footer-logo {
+  position: fixed;
+  bottom: var(--spacing-md);
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(120px, 18vw, 172px);
+  height: auto;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-medium);
+}
+
+.footer-logo.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ==========================================================================
+   Muse Section Wrapper - Creates Scroll Area
+   ========================================================================== */
+.muse-section-wrapper {
+  position: relative;
+  width: 100%;
+  height: 250vh; /* 150vh intro hold + 100vh crossfade (extended hold) */
+  background: transparent;
+}
+
+/* Muse Intro Page - Fixed position for overlay */
+.muse-intro-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl) var(--spacing-md);
+  z-index: 5;
+  opacity: 0;
+  will-change: opacity;
+  pointer-events: none; /* Allow scrolling through */
+}
+
+.muse-intro-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.muse-intro-logo-image {
+  width: var(--muse-logo-size);
+  height: auto;
+  display: block;
+  object-fit: contain;
+  filter: brightness(0) invert(1) drop-shadow(0 8px 16px rgba(255, 255, 255, 0.3));
+}
+
+.muse-intro-text-top {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-canela);
+  font-size: var(--font-body-size);
+  line-height: var(--font-body-height);
+  font-weight: var(--font-body-weight);
+  color: var(--color-white);
+  opacity: 0.9;
+  max-width: 1400px;
+  width: 90%;
+  text-align: justify;
+  text-transform: uppercase;
+  padding: 0 var(--spacing-md);
+}
+
+.muse-intro-text-bottom {
+  position: absolute;
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-canela);
+  font-size: var(--font-body-size);
+  line-height: var(--font-body-height);
+  font-weight: var(--font-body-weight);
+  color: var(--color-white);
+  opacity: 0.9;
+  max-width: 1400px;
+  width: 90%;
+  text-align: justify;
+  text-transform: uppercase;
+  padding: 0 var(--spacing-md);
+}
+
+.muse-intro-text-top a,
+.muse-intro-text-bottom a {
+  color: var(--color-white);
+  text-decoration: underline;
+  transition: opacity var(--transition-fast);
+}
+
+.muse-intro-text-top a:hover,
+.muse-intro-text-top a:focus,
+.muse-intro-text-bottom a:hover,
+.muse-intro-text-bottom a:focus {
+  opacity: 0.7;
+}
+
+/* Highlighted "Muse" text - hollow letters with transparent fill */
+.highlight-muse {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--color-white);
+  text-stroke: 1px var(--color-white);
+}
+
+/* White Section Content - Sticky positioning */
+.white-section-content {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  opacity: 0; /* Start invisible, GSAP will fade in */
+  will-change: opacity;
+}
+
+
+/* ==========================================================================
+   Muse Section - Orbiting Layout
+   ========================================================================== */
+.muse-section {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  background: transparent; /* Allow gradient + starfield to show through */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+/* Animated Background Canvas - Overlay on starfield */
+.muse-background-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  opacity: 0.9; /* Allow starfield to show through slightly */
+}
+
+/* Central Logo */
+.muse-center-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  opacity: 0; /* Start invisible, GSAP will fade in */
+  will-change: opacity, transform;
+}
+
+.muse-logo-image {
+  width: var(--muse-logo-size);
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+/* Orbit Container - Fixed horizontal ellipse */
+.muse-orbit-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+}
+
+/* Orbiting Muse Items */
+.muse-orbit-item {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.15rem, 0.5vw, 0.25rem);
+  will-change: transform;
+}
+
+/* Muse Image */
+.muse-orbit-item .muse-image {
+  width: var(--muse-orbit-image-size);
+  height: var(--muse-orbit-image-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.muse-orbit-item .muse-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(1px 4px 1px rgba(0, 0, 0, 0.2));
+}
+
+/* Muse Text */
+.muse-orbit-item .muse-text {
+  text-align: center;
+  max-width: 200px;
+  padding: var(--spacing-xs);
+}
+
+.muse-orbit-item .muse-text h3 {
+  font-family: var(--font-canela);
+  font-size: var(--font-h2-size);
+  line-height: var(--font-h2-height);
+  font-weight: var(--font-h1-weight);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  margin-bottom: 0;
+  cursor: pointer;
+  transition: transform var(--transition-medium);
+  filter: drop-shadow(0 4px 1px rgba(0, 0, 0, 0.2));
+  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.3);
+  text-stroke: 0.5px rgba(0, 0, 0, 0.3);
+}
+
+.muse-orbit-item .muse-text h3:hover {
+  transform: scale(1.1);
+}
+
+.muse-orbit-item .muse-text p {
+  display: none;
+}
+
+/* ==========================================================================
+   Muse Popup Modal - Orbital Focus Design
+   ========================================================================== */
+.muse-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  /* GSAP handles transitions */
+}
+
+.muse-popup-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  cursor: pointer;
+}
+
+.muse-popup-content {
+  position: relative;
+  background: transparent;
+  max-width: min(90%, 500px);
+  width: 90%;
+  max-height: 80vh;
+  overflow: visible;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  will-change: transform, opacity;
+  /* No hard container - floats in space */
+}
+
+/* Muse Image Container with Aura */
+.muse-popup-image {
+  position: relative;
+  width: clamp(140px, 30vw, 240px);
+  height: clamp(140px, 30vw, 240px);
+  border-radius: 50%;
+  overflow: hidden;
+  will-change: transform, opacity;
+}
+
+.muse-popup-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Color aura glow effect */
+.muse-popup-image::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  right: -20px;
+  bottom: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--muse-color, #fff) 0%, transparent 70%);
+  opacity: 0.3;
+  z-index: -1;
+  filter: blur(30px);
+  animation: pulse-aura 3s ease-in-out infinite;
+}
+
+@keyframes pulse-aura {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.05); }
+}
+
+/* Text content wrapper */
+.muse-popup-body {
+  text-align: center;
+  max-width: 400px;
+  padding: 0;
+}
+
+.muse-popup-title {
+  font-family: var(--font-canela);
+  font-size: calc(var(--font-h1-size) * 1.2);
+  line-height: 1.1;
+  font-weight: var(--font-h1-weight);
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  margin-bottom: var(--spacing-md);
+  color: var(--muse-color, #fff);
+  will-change: opacity, transform;
+  /* Removed text-shadow glow for cleaner look */
+}
+
+.muse-popup-text {
+  font-family: var(--font-canela);
+  font-size: var(--font-h2-size);
+  line-height: var(--font-h2-height);
+  font-weight: var(--font-h2-weight);
+  color: rgba(255, 255, 255, 0.9);
+  will-change: opacity, transform;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Floating sparkle particles container */
+.muse-popup-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1002;
+  overflow: visible;
+}
+
+.muse-popup-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--muse-color, #fff);
+  box-shadow: 0 0 8px var(--muse-color, #fff);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: float-particle 4s ease-in-out infinite;
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(var(--particle-x), var(--particle-y)) scale(0.5);
+    opacity: 0;
+  }
+}
+
+/* Close button - hidden but accessible */
+.muse-popup-close {
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Hint text for closing */
+.muse-popup-hint {
+  position: absolute;
+  bottom: var(--spacing-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-canela);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  pointer-events: none;
+  animation: fade-hint 2s ease-in-out infinite;
+}
+
+@keyframes fade-hint {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+}
+
+/* ==========================================================================
+   Responsive Styles - Tablet
+   ========================================================================== */
+@media screen and (max-width: 1024px) {
+  /* Most responsive sizing handled by clamp() in base styles */
+
+  .muse-orbit-item {
+    touch-action: manipulation;
+  }
+
+  .comet-collab-intro-content {
+    padding: 0 clamp(1rem, 4vw, 3rem);
+  }
+}
+
+/* ==========================================================================
+   Responsive Styles - Mobile
+   ========================================================================== */
+@media screen and (max-width: 768px) {
+  /* Most responsive sizing handled by clamp() in base styles */
+
+  .muse-orbit-item {
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+
+  .white-section {
+    padding: 0;
+  }
+
+  .comet-collab-connected-content {
+    padding: clamp(1rem, 5vw, 3rem);
+  }
+
+  .comet-image-item {
+    max-width: clamp(100px, 25vw, 180px);
+  }
+
+  .muse-popup-body {
+    max-width: 320px;
+  }
+
+  .muse-popup-hint {
+    font-size: 12px;
+    bottom: var(--spacing-md);
+  }
+}
+
+/* ==========================================================================
+   Responsive Styles - Small Mobile
+   ========================================================================== */
+@media screen and (max-width: 480px) {
+  /* Most responsive sizing handled by clamp() in base styles */
+
+  .text-section {
+    padding: clamp(0.5rem, 3vw, 1rem);
+  }
+
+  .muse-popup-hint {
+    font-size: clamp(10px, 2vw, 12px);
+  }
+
+  .comet-image-item {
+    max-width: clamp(90px, 28vw, 140px);
+  }
+}
+
+/* Note: Large desktop breakpoints removed - clamp() handles all screen sizes fluidly */
+
+/* ==========================================================================
+   Utility Classes
+   ========================================================================== */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+@media print {
+  .intro,
+  .intro-spacer,
+  .constellation-canvas {
+    display: none !important;
+  }
+
+  .text-section {
+    position: static;
+    height: auto;
+    padding: 2cm;
+  }
+
+  .reveal-text {
+    color: var(--color-black);
+    filter: none !important;
+    opacity: 1 !important;
+  }
+
+  .reveal-text em {
+    -webkit-text-stroke: 0;
+    text-stroke: 0;
+    text-decoration: underline;
+  }
+}

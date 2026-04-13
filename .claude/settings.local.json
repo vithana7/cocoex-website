@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\ndocs: add comprehensive responsive design guide\n\n- Created docs/responsive-design.md (420 lines)\n- Documents fluid typography with clamp()\n- Explains responsive logo sizing system\n- Details adaptive Muse orbit ellipse behavior\n- Includes troubleshooting guide and testing checklist\n- Covers accessibility and performance considerations\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
