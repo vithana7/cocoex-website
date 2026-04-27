@@ -946,11 +946,7 @@
     });
 
     window.addEventListener('load', () => {
-      setTimeout(() => {
-        elements.introLogo.classList.add('visible');
-        elements.dotWhite.classList.add('visible');
-        elements.dotBlack.classList.add('visible');
-      }, 300);
+      ScrollTrigger.refresh();
     });
   }
 
