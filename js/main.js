@@ -12,6 +12,10 @@
   // ==========================================================================
   gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
 
+  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    ScrollTrigger.normalizeScroll(true);
+  }
+
   // ==========================================================================
   // GLSL SHADER UTILITIES (SHARED)
   // ==========================================================================
@@ -410,19 +414,21 @@
 
     void main() {
       vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+      float aspect = u_resolution.x / u_resolution.y;
+      vec2 uvAspect = vec2(uv.x * aspect, uv.y);
 
       // Base cosmic noise
       // Optimized: reduced from 5 to 3 noise layers for better performance
-      float noise1 = snoise(uv * 3.0 + u_time * 0.05);
-      float noise2 = snoise(uv * 5.0 - u_time * 0.03 + 50.0);
-      float noise3 = snoise(uv * 2.0 + u_time * 0.02 + 100.0);
+      float noise1 = snoise(uvAspect * 3.0 + u_time * 0.05);
+      float noise2 = snoise(uvAspect * 5.0 - u_time * 0.03 + 50.0);
+      float noise3 = snoise(uvAspect * 2.0 + u_time * 0.02 + 100.0);
       float combined = (noise1 + noise2 * 0.6 + noise3 * 0.8) / 2.4;
       combined = combined * 0.5 + 0.5;
 
       float base = 0.003;
       float highlight = combined * 0.025;
       float clouds = pow(combined, 2.0) * 0.02;
-      float detail = pow(snoise(uv * 7.0 + u_time * 0.08) * 0.5 + 0.5, 2.5) * 0.01;
+      float detail = pow(snoise(uvAspect * 7.0 + u_time * 0.08) * 0.5 + 0.5, 2.5) * 0.01;
       float brightness = base + highlight + clouds + detail;
 
       // Add twinkling stars
@@ -433,6 +439,7 @@
       if (u_pulse > 0.0) {
         vec2 center = vec2(0.5, 0.5);
         vec2 toCenter = uv - center;
+        toCenter.x *= aspect;
 
         // Add noise to make it less circular and more organic
         float noiseOffset = snoise(uv * 4.0 + u_time * 0.1) * 0.15;
@@ -565,12 +572,13 @@
     const centerX = w / 2;
     const centerY = h / 2;
 
-    const scaleX = w / CONFIG.refWidth;
-    const scaleY = h / CONFIG.refHeight;
+    const scale = Math.min(w / CONFIG.refWidth, h / CONFIG.refHeight) * 0.85;
+    const offsetX = (w - CONFIG.refWidth * scale) / 2;
+    const offsetY = (h - CONFIG.refHeight * scale) / 2;
 
     fireworkDots = CONSTELLATION_REF.map((point, i) => {
-      const targetX = point.x * scaleX;
-      const targetY = point.y * scaleY;
+      const targetX = point.x * scale + offsetX;
+      const targetY = point.y * scale + offsetY;
       const z = point.z || 0; // Depth value
 
       const angle = (i / 7) * Math.PI * 2 + Math.random() * 0.5;
@@ -927,6 +935,13 @@
     }, 150);
 
     window.addEventListener('resize', handleResize, { passive: true });
+
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        ScrollTrigger.refresh();
+        if (phase2Started) { initFireworkDots(); }
+      }, 300);
+    }, { passive: true });
 
     // Page Visibility API - pause rendering when tab hidden (battery optimization)
     document.addEventListener('visibilitychange', () => {
@@ -1373,12 +1388,14 @@
 
         void main() {
           vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+          float aspect = u_resolution.x / u_resolution.y;
+          vec2 uvAspect = vec2(uv.x * aspect, uv.y);
 
           // Create flowing noise patterns
           float time = u_time * 0.15;
-          float noise1 = snoise(uv * 2.0 + vec2(time * 0.3, time * 0.2));
-          float noise2 = snoise(uv * 3.0 - vec2(time * 0.2, time * 0.3));
-          float noise3 = snoise(uv * 1.5 + vec2(time * 0.1, -time * 0.15));
+          float noise1 = snoise(uvAspect * 2.0 + vec2(time * 0.3, time * 0.2));
+          float noise2 = snoise(uvAspect * 3.0 - vec2(time * 0.2, time * 0.3));
+          float noise3 = snoise(uvAspect * 1.5 + vec2(time * 0.1, -time * 0.15));
 
           // Combine noise for complex movement
           float pattern = (noise1 + noise2 * 0.5 + noise3 * 0.3) / 1.8;
@@ -1637,11 +1654,13 @@
 
         void main() {
           vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+          float aspect = u_resolution.x / u_resolution.y;
+          vec2 uvAspect = vec2(uv.x * aspect, uv.y);
 
           float time = u_time * 0.15;
-          float noise1 = snoise(uv * 2.0 + vec2(time * 0.3, time * 0.2));
-          float noise2 = snoise(uv * 3.0 - vec2(time * 0.2, time * 0.3));
-          float noise3 = snoise(uv * 1.5 + vec2(time * 0.1, -time * 0.15));
+          float noise1 = snoise(uvAspect * 2.0 + vec2(time * 0.3, time * 0.2));
+          float noise2 = snoise(uvAspect * 3.0 - vec2(time * 0.2, time * 0.3));
+          float noise3 = snoise(uvAspect * 1.5 + vec2(time * 0.1, -time * 0.15));
 
           float pattern = (noise1 + noise2 * 0.5 + noise3 * 0.3) / 1.8;
           pattern = pattern * 0.5 + 0.5;
@@ -1733,11 +1752,13 @@
 
         void main() {
           vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+          float aspect = u_resolution.x / u_resolution.y;
+          vec2 uvAspect = vec2(uv.x * aspect, uv.y);
 
           float time = u_time * 0.15;
-          float noise1 = snoise(uv * 2.0 + vec2(time * 0.3, time * 0.2));
-          float noise2 = snoise(uv * 3.0 - vec2(time * 0.2, time * 0.3));
-          float noise3 = snoise(uv * 1.5 + vec2(time * 0.1, -time * 0.15));
+          float noise1 = snoise(uvAspect * 2.0 + vec2(time * 0.3, time * 0.2));
+          float noise2 = snoise(uvAspect * 3.0 - vec2(time * 0.2, time * 0.3));
+          float noise3 = snoise(uvAspect * 1.5 + vec2(time * 0.1, -time * 0.15));
 
           float pattern = (noise1 + noise2 * 0.5 + noise3 * 0.3) / 1.8;
           pattern = pattern * 0.5 + 0.5;
