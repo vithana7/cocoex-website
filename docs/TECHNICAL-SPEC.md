@@ -1,1237 +1,483 @@
-# cocoex.xyz - Technical Specification & Expected Behavior
+> UPDATED AT: 2026-05-10
 
-**Version:** 1.0
-**Last Updated:** March 16, 2026
-**Purpose:** Technical review, bug testing, and implementation verification
+# cocoex.xyz — Behavior Specification & Test Checklist
 
----
+## How to use this doc
 
-## Table of Contents
-
-1. [Project Overview](#project-overview)
-2. [Tech Stack](#tech-stack)
-3. [Architecture](#architecture)
-4. [Section Breakdown & Expected Behavior](#section-breakdown--expected-behavior)
-5. [WebGL Implementation](#webgl-implementation)
-6. [Animation System](#animation-system)
-7. [Interactive Features](#interactive-features)
-8. [Performance Expectations](#performance-expectations)
-9. [Browser Compatibility](#browser-compatibility)
-10. [Known Limitations](#known-limitations)
-11. [Testing Checklist](#testing-checklist)
+This is the source of truth for expected behavior on cocoex.xyz. Run the bug checklists after every change to verify no regressions.
 
 ---
 
-## Project Overview
+## Scroll Map
 
-### Description
-Static portfolio website for cocoex e.V., a DAO blending art, blockchain, community, and social impact. The site showcases:
-- **Muse**: 7 planetary muses representing global causes
-- **Comet Collab**: Ecosystem connecting artists, collectors, activists (Stardust & Horizon methods)
-- **Events**: Partnership showcases, campaigns, and future lab projects
+| Section | Scroll Range (vh) | HTML Element | Position Type |
+|---|---|---|---|
+| Landing | 0–400vh | `.intro` | Fixed overlay |
+| Mission Text | 400–550vh | `.text-section-wrapper` | Sticky |
+| Muse Intro Page | 550–900vh | `.muse-intro-page` | Fixed overlay (fades in/out) |
+| Muse Orbiting | 900–1020vh | `.muse-section` | Sticky |
+| Comet Collab Intro | 1020–1380vh | `.comet-collab-intro` | Sticky |
+| Comet Methods Toggle | ~1380–1500vh | `.comet-collab-methods` | Sticky |
+| Comet Connected Images | ~1500–1620vh | `.comet-collab-connected-content` | Sticky |
+| Events Page | 1620vh+ | `.events-page-wrapper` | Normal flow |
+| Footer | Fixed (bottom) | `footer.social-links` + `.footer-logo` | Fixed |
 
-### Core Values
-- **Usability**: Intuitive navigation, accessible interactions
-- **Design**: Minimalist aesthetic, fluid animations
-- **Minimalism**: Question every element, white space as feature
-
-### Total Scroll Height
-**~1350vh** (13.5× viewport height):
-- Landing (Intro): 400vh
-- Text Section: 150vh
-- Muse Intro: 350vh
-- Muse Orbiting: 120vh
-- Comet Intro: 360vh
-- Comet Methods: 120vh
-- Events: 100vh+ (content-based)
+Derived from `SCROLL_TIMING` in `js/main.js:94–122`. Total: ~1620vh + events content height.
 
 ---
 
-## Tech Stack
+## Section 1: Landing (0–400vh)
 
-### Core Technologies
-```
-HTML5          - Semantic markup, 327 lines
-CSS3           - Custom properties, Grid/Flexbox, 1,900+ lines
-Vanilla JS     - ES6+ IIFE pattern, 2,400+ lines
-GSAP 3.12.5    - ScrollTrigger for scroll-driven animations
-WebGL          - Custom GLSL shaders for visual effects
-```
+### Phase 1: Orbiting Dots (0–160vh)
 
-### No Frameworks
-- Pure vanilla JavaScript (no React, Vue, etc.)
-- No CSS frameworks (no Tailwind, Bootstrap)
-- No animation libraries beyond GSAP
-- Static site (no build process required)
+**Expected behavior:**
+- One white dot and one hollow white-bordered black dot orbit the center logo in an ellipse.
+- Logo starts at 80px and scales to 250px (mobile: 180px) over the full 160vh.
+- Logo rotates 2 full turns (720°) during orbit.
+- Both dots shrink from 24px (desktop) / 18px (mobile) toward the center as orbit progress increases.
+- WebGL starfield (`#bg-canvas`) renders twinkling star layers (4 layers) driven by simplex noise.
+- At orbit progress = 0, dots are at top and bottom of a large ellipse.
+- All motion driven by GSAP ScrollTrigger, `scrub: true`.
 
-### External Dependencies
-```html
-<!-- GSAP CDN (only external dependency) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+**Bug checklist:**
+- [ ] White dot visible and orbiting at page load (0vh)
+- [ ] Black dot visible with white border, orbiting opposite white dot
+- [ ] Logo size is 80px at 0vh, increases smoothly to 250px at 160vh
+- [ ] Logo rotates exactly 2× during scroll from 0 to 160vh
+- [ ] `#bg-canvas` fills viewport, no black border or gap
+- [ ] Stars twinkle (brightness fluctuates continuously)
+- [ ] On mobile (≤768px), logo max is 180px, dots max is 18px
 
-<!-- Adobe Fonts (Canela typeface) -->
-<link rel="stylesheet" href="https://use.typekit.net/nvc8nhy.css">
-```
+### Phase 2: Transition Text (160–200vh)
 
-### Bundle Sizes
-```
-HTML:  10.2KB uncompressed (~3.5KB gzipped)
-CSS:   26KB uncompressed (~7KB gzipped)
-JS:    68KB uncompressed (~18KB gzipped)
-GSAP:  47KB (cached after first load)
-Total: ~151KB uncompressed (~85KB gzipped)
-Images: ~1MB (lazy loaded)
-```
+**Expected behavior:**
+- Transition text `"Unleashing the compounds of existence through ART, IMPACT, and COMMUNITY."` fades in below the logo at 160vh (INTRO_PHASE1_END = 40%).
+- Tagline `cocoex · compounds co-exist` appears beneath the quote.
+- Text fades out before 200vh (INTRO_PHASE3_START = 50%).
+- Orbiting dots have converged toward center and are no longer orbiting.
 
----
+**Bug checklist:**
+- [ ] Transition text appears at ~160vh, not earlier
+- [ ] Text fades out cleanly before constellation starts at 200vh
+- [ ] Text is centered and readable on all viewport widths
+- [ ] Tagline renders below the quote
 
-## Architecture
+### Phase 3: Constellation Explosion (200–400vh)
 
-### JavaScript Module Pattern
+**Expected behavior:**
+- 7 colored dots explode outward from center starting at 200vh (50% of 400vh intro).
+- Dot colors (exact hex from `DOT_COLORS`):
+  - `#FF9F5A` — Orange
+  - `#FFEC8A` — Yellow
+  - `#8A6FD1` — Purple
+  - `#7AAFD6` — Blue
+  - `#B0D89F` — Green
+  - `#FF6B4A` — Red
+  - `#A96FD2` — Violet
+- Dots have z-depth rendering: dot at z=0.6 renders largest/brightest, z=−0.5 renders smallest/darkest. Range: −0.5 to 0.6.
+- Constellation rotates continuously at 15° per cycle on the Z axis.
+- 8 connection lines render between dots per `CONNECTIONS` array (pairs: [0,1], [0,2], [1,3], [2,3], [2,4], [4,5], [5,6], [6,3]).
+- Big bang pulse effect (dispersive expanding wave) triggers once at explosion start. Three overlapping soft Gaussian waves expand outward with organic noise offset.
+- Logo scales up to final 250px size and is visible during constellation phase.
 
-```javascript
-(function() {
-  'use strict';
-
-  // 1. GLSL UTILITIES - Shared shader code
-  const GLSL_UTILS = { ... }
-
-  // 2. SCROLL TIMING - Centralized timing constants
-  const SCROLL_TIMING = { ... }
-
-  // 3. CONFIGURATION - Colors, data, constants
-  const CONFIG = { ... }
-
-  // 4. DOM REFERENCES - Cached selectors
-  const dom = { ... }
-
-  // 5. STATE VARIABLES - Runtime state
-  let pulseValue = 0;
-
-  // 6. UTILITY FUNCTIONS
-  function debounce() { ... }
-
-  // 7. MODULES
-  const IntroCanvas = { ... }
-  const ConstellationCanvas = { ... }
-  const MuseBackground = { ... }
-  // ... etc
-
-  // 8. INITIALIZATION
-  window.addEventListener('load', init);
-
-})();
-```
-
-### Key Patterns
-
-**IIFE (Immediately Invoked Function Expression)**
-- Encapsulates all code
-- Prevents global scope pollution
-- Single entry point: `init()`
-
-**Module Objects**
-```javascript
-const ModuleName = {
-  // Properties
-  canvas: null,
-  ctx: null,
-  isInitialized: false,
-
-  // Methods
-  init() { ... },
-  resize() { ... },
-  render() { ... },
-  cleanup() { ... }
-};
-```
-
-**Master Render Loop**
-- Single `requestAnimationFrame` loop
-- Consolidates all WebGL/canvas animations
-- Pauses when tab hidden (battery optimization)
-- ~60fps target
-
-**Centralized Timing**
-- All scroll ranges in `SCROLL_TIMING` object
-- Easy to adjust animation durations
-- Single source of truth
+**Bug checklist:**
+- [ ] All 7 colored dots appear at 200vh
+- [ ] Z-depth: dots closer to z=0.6 are visually larger/brighter than z=−0.5
+- [ ] Constellation rotates continuously (not frozen)
+- [ ] All 8 connection lines render between correct dot pairs
+- [ ] Big bang pulse wave visible once at explosion start, does not repeat
+- [ ] Pulse fades out smoothly (not abrupt cut)
+- [ ] Constellation remains visible through 400vh
+- [ ] `#constellation-canvas` overlays `#bg-canvas` correctly (no z-index conflict)
 
 ---
 
-## Section Breakdown & Expected Behavior
+## Section 2: Mission Text (400–550vh)
 
-### Section 1: Landing (Intro) - 400vh
+**Expected behavior:**
+- `.text-section-wrapper` is sticky for 150vh.
+- Text fades in from opacity 0 to 1 over the scroll range (GSAP `scrub: true`).
+- Full text: *cocoex* is a transdisciplinary social impact lab that uses art, participation, and technology to generate real environmental and social change. We bring artists, creators and collectors together — cultivating a community built on shared purpose, where art and impact are inseparable. / We are a non-profit. We build the infrastructure, hold the space, and set the conditions for something larger than ourselves. / The creation belongs to the artists. The impact belongs to the world.
+- "cocoex" rendered in `<em>` (italic).
+- Text is uppercase, justified alignment, fluid size `clamp(20px, 2.5vw, 36px)`.
 
-**Scroll Range:** 0-400vh
-**Element:** `.intro`
-**Position:** Fixed overlay
-
-#### Phase 1: Orbiting Dots (0-160vh / 0-40%)
-
-**Expected Behavior:**
-- 2 dots orbit center in ellipse pattern:
-  - White dot (right start)
-  - Black dot (left start)
-- Logo scales from 80px → 250px
-- Logo completes 2 full rotations (720°)
-- Smooth interpolation via GSAP ScrollTrigger
-- 60fps scroll scrubbing
-
-**Visual Elements:**
-- WebGL starfield background (twinkling stars)
-- Simplex noise for star movement
-- Big bang pulse effect (dispersive wave)
-
-**Expected Interactions:**
-- Scroll down: Dots converge to center
-- Scroll up: Dots return to orbit
-- No click/touch interactions
-
-**Bug Check:**
-- [ ] Dots maintain ellipse shape at all viewport sizes
-- [ ] Logo rotation is smooth (no jumps)
-- [ ] Starfield renders on all devices
-- [ ] No performance drops below 30fps
-
-#### Phase 2: Transition Text (160-200vh / 40-50%)
-
-**Expected Behavior:**
-- Text appears at 76% orbit completion (152vh)
-- Content: "art as infrastructure for change"
-- Fades in below logo (opacity 0 → 1)
-- Fades out before explosion (opacity 1 → 0)
-- Position: Below logo, centered
-
-**Bug Check:**
-- [ ] Text appears at correct scroll position
-- [ ] Text is legible (sufficient contrast)
-- [ ] Fade timing is smooth
-
-#### Phase 3: Constellation Explosion (200-400vh / 50-100%)
-
-**Expected Behavior:**
-- 7 colored dots explode from center
-- Each dot assigned muse color:
-  - Lunes: `#5783A6` (blue)
-  - Ares: `#D54D2E` (red)
-  - Rabu: `#8CB07F` (green)
-  - Thunor: `#F8D86A` (yellow)
-  - Shukra: `#5E47A1` (purple)
-  - Dosei: `#7F49A2` (violet)
-  - Solis: `#D48348` (orange)
-- Z-depth rendering (-0.5 to 0.6 range)
-- Continuous 15° rotation
-- Big bang pulse continues (dispersive wave)
-
-**Canvas:** `#constellation-canvas`
-**Z-index:** 4 (above starfield)
-
-**Bug Check:**
-- [ ] All 7 dots visible and colored correctly
-- [ ] Explosion spreads outward smoothly
-- [ ] Rotation is consistent
-- [ ] Canvas scales to viewport
+**Bug checklist:**
+- [ ] Text is invisible at 400vh (start of section)
+- [ ] Text reaches full opacity by ~500vh
+- [ ] Text uses Canela font (not fallback Georgia)
+- [ ] Text is uppercase
+- [ ] No horizontal overflow on mobile
 
 ---
 
-### Section 2: Text Reveal - 150vh
+## Section 3: Muse Intro Page (550–900vh)
 
-**Scroll Range:** 400-550vh
-**Element:** `.text-section-wrapper`
-**Position:** Sticky, full viewport
+**Expected behavior:**
+- `.muse-intro-page` fades in at 550vh and holds for 350vh (`MUSE_INTRO_HOLD`).
+- Black inverted Muse logo (`muse_logo_black.png`) centered vertically.
+- Top text: "Muse explores the complexity of nature and life identifying 7 global challenges where collective efforts can reach positive systemic change. The seven Muses are cocoex's guiding framework — each one aligned with a global cause, from reforestation and clean water to human rights and biodiversity."
+- Bottom text: "Together they form a single constellation of orientations that runs through every campaign, every Future Lab, every act of collective creativity within the cocoex ecosystem. Each Muse has its own community and its own body of art growing around it."
+- Section begins crossfading out at 900vh over 120vh (`MUSE_CROSSFADE`), simultaneous with Muse orbiting section fading in.
 
-**Expected Behavior:**
-- Simple fade-in (opacity 0 → 1)
-- No word-by-word highlighting
-- Italic styling on key phrases
-- Content:
-  - cocoex mission statement
-  - Comet Collab overview
-  - Stardust/Horizon intro
-  - Muse framework teaser
-
-**Typography:**
-- Font: Canela Regular 400
-- Size: `clamp(20px, 2.5vw, 36px)`
-- Transform: Uppercase
-- Alignment: Justified
-
-**Bug Check:**
-- [ ] Text fades in smoothly
-- [ ] All text readable at all viewport sizes
-- [ ] No layout shifts during fade
-- [ ] Scroll scrubbing is smooth
+**Bug checklist:**
+- [ ] Muse intro page is not visible before 550vh
+- [ ] Black logo renders (not white logo) on white/light background
+- [ ] Top and bottom paragraphs are both visible
+- [ ] Section holds fully through 900vh without flickering
+- [ ] Crossfade to orbiting section is smooth (no hard cut)
 
 ---
 
-### Section 3: Muse Intro Page - 350vh
+## Section 4: Muse Orbiting (900–1020vh)
 
-**Scroll Range:** 550-900vh
-**Element:** `.muse-intro-page`
-**Position:** Fixed overlay
+### Orbit Behavior
 
-**Expected Behavior:**
-- Black inverted Muse logo (centered)
-- Fades in at 80% viewport entrance (550vh)
-- Holds for 350vh
-- Crossfades out during transition to orbiting (120vh blend)
+**Expected behavior:**
+- 7 muse images orbit a central Muse logo in an ellipse.
+- Orbit completes one full cycle every 240 seconds (continuous CSS rotation).
+- Initial angles per muse (from `data-angle`):
+  - Lunes: 0°, Ares: 51.43°, Rabu: 102.86°, Thunor: 154.29°, Shukra: 205.71°, Dosei: 257.14°, Solis: 308.57°
+- Ellipse ratios by device:
+  - Desktop (>1024px): horizontal — 1.8× wider than tall
+  - Tablet (768–1024px): slightly vertical — 1.4× taller than wide
+  - Mobile (≤768px): vertical — 1.6× taller than wide
+- WebGL animated gradient (`#muse-background-canvas`) renders a 7-color simplex noise blend behind the orbiting layout.
+- Unified starfield (`#unified-starfield-canvas`) renders beneath the gradient.
+- Muse fades in as Muse intro crossfades out (900–1020vh).
 
-**Content Structure:**
-```
-TOP TEXT
---------
-Overview of Muse framework
-(what Muse represents)
+### Muse Popup Modal
 
-CENTERED LOGO
--------------
-Black inverted Muse logo
+**Expected behavior:**
+- Clicking a muse image or pressing Enter on a focused muse opens `.muse-popup`.
+- Popup displays: muse name + cause (from `data-popup-title`, e.g. "Lunes · Water"), muse image, and description text from the muse's `<p>` tag.
+- 3D tilt card effect on the popup card (mouse move drives tilt transform).
+- Colored aura effect uses the muse's `data-color` hex value.
+- 12 floating particles animate around the popup on open.
+- GSAP entrance animation: content scales from 0.8 to 1.0 with `back.out(1.7)` ease.
+- Close methods: click X button, click outside `.muse-popup-content`, press Escape.
+- GSAP exit animation: content scales to 0.8, opacity to 0, duration 0.2s.
+- Popup starfield canvas (`#muse-popup-starfield`) renders twinkling stars inside the popup.
+- Keyboard: Tab navigates between muses; Enter opens popup; Escape closes.
+- Hint text "Click outside or press ESC to close" is visible at popup bottom.
 
-BOTTOM TEXT
------------
-Seven muses introduction
-with hollow "Muse" text effect
-```
-
-**Hollow Text Effect:**
-- Class: `.highlight-muse`
-- Style: Transparent fill, white stroke
-- Applied to word "Muse"
-
-**Bug Check:**
-- [ ] Logo is centered vertically and horizontally
-- [ ] Text is readable (contrast check)
-- [ ] Crossfade is smooth (no flicker)
-- [ ] Hollow text effect renders correctly
-
----
-
-### Section 4: Muse Orbiting - 120vh
-
-**Scroll Range:** 900-1020vh
-**Element:** `.muse-section`
-**Position:** Sticky content
-
-**Expected Behavior:**
-
-#### Central Logo
-- White Muse logo (centered)
-- Size: `clamp(150px, 20vw, 300px)`
-- Always visible
-- No animation (static position)
-
-#### 7 Orbiting Muses
-- Continuous 240-second rotation cycle
-- Ellipse orbit (adaptive to viewport):
-  - **Mobile (≤768px)**: Vertical ellipse (0.35 radius, 1.8× taller)
-  - **Tablet (768-1024px)**: Slightly vertical (0.30 radius, 1.4× taller)
-  - **Desktop (>1024px)**: Horizontal ellipse (0.30 radius, 1.8× wider)
-
-**Each Muse Contains:**
-- Colored planet image
-- Name (colored text, uppercase)
-- Cause subtitle (hidden)
-
-**Muse Data:**
-```
-1. Lunes   (#5783A6)  - 0°    - Water
-2. Ares    (#D54D2E)  - 51.43° - Reforestation
-3. Rabu    (#8CB07F)  - 102.86° - Human Rights
-4. Thunor  (#F8D86A)  - 154.29° - Renewable Energy
-5. Shukra  (#5E47A1)  - 205.71° - Bio-diversity
-6. Dosei   (#7F49A2)  - 257.14° - Zero Hunger
-7. Solis   (#D48348)  - 308.57° - Well-being
-```
-
-**Background Effects:**
-- WebGL animated gradient (7-color simplex noise blend)
-- Unified starfield canvas (shared layer)
-- Hardware-accelerated rotation
-
-**Bug Check:**
-- [ ] All 7 muses visible and colored correctly
-- [ ] Rotation is smooth and consistent
-- [ ] Orbit maintains ellipse shape at all sizes
-- [ ] No layout breaks on viewport resize
-- [ ] Gradient animates without stuttering
-
-#### Interactive: Muse Popup Modal
-
-**Trigger:** Click muse image or name
-**Keyboard:** Tab to navigate, Enter to open, Escape to close
-
-**Expected Behavior:**
-- Modal opens with smooth entrance animation
-- Background overlay (blur + darken)
-- Colored aura effect (matches muse color)
-- 12 floating particles (circular motion)
-- Content:
-  - Large muse image
-  - Muse name (colored, uppercase)
-  - Cause subtitle
-  - Description text
-  - Close button (X)
-
-**Entrance Animation:**
-- Overlay fades in (0.3s)
-- Content scales in (0.4s, overshoot)
-- Particles fade in staggered (0.1s delay each)
-
-**Exit Animation:**
-- Content scales out (0.3s)
-- Overlay fades out (0.2s)
-- Particles removed
-
-**Close Methods:**
-1. Click X button
-2. Click outside modal
-3. Press Escape key
-
-**Bug Check:**
-- [ ] Modal opens on click/Enter
-- [ ] Correct muse data displayed
-- [ ] Aura color matches muse color
-- [ ] Particles animate smoothly
-- [ ] Modal closes via all 3 methods
-- [ ] Focus returns to trigger element on close
-- [ ] Scroll is locked when modal open
+**Bug checklist:**
+- [ ] All 7 muses render in ellipse orbit on desktop
+- [ ] Orbit rotates continuously (no pause or jitter)
+- [ ] Ellipse is horizontal on desktop (wider than tall)
+- [ ] Ellipse is vertical on mobile (taller than wide)
+- [ ] Clicking any muse image opens popup
+- [ ] Popup title matches `data-popup-title` of clicked muse
+- [ ] Muse image loads inside popup (not broken img)
+- [ ] Aura color matches the muse's `data-color`
+- [ ] 12 particles animate on popup open
+- [ ] Popup closes on Escape
+- [ ] Popup closes on overlay click
+- [ ] Popup closes on X button click
+- [ ] Tab navigation cycles through all 7 muses
+- [ ] Enter key opens popup when muse is focused
+- [ ] `#muse-background-canvas` gradient is visible (not black)
+- [ ] `#unified-starfield-canvas` visible beneath gradient
 
 ---
 
-### Section 5: Comet Collab Intro - 360vh
+## Section 5: Comet Collab Intro (1020–1380vh)
 
-**Scroll Range:** 1020-1380vh
-**Element:** `.comet-collab-intro`
-**Position:** Sticky
+### Logo Descent
 
-**Scroll Breakdown:**
-- 0-100vh: Static intro
-- 100-280vh: Logo descent animation (180vh)
-- 280-360vh: Bottom hold (80vh)
-- 360-480vh: Crossfade to methods (120vh)
+**Expected behavior:**
+- Comet Collabs white logo (`comet-collabs-logo-white.png`) starts centered.
+- Static intro hold: 1020–1120vh (`COMET_INTRO_PAUSE: 100`).
+- Logo descent begins at 1120vh and completes at 1300vh (`COMET_LOGO_MOVEMENT: 180`).
+- Logo moves from vertical center to bottom of viewport; text content moves upward simultaneously.
+- Bottom hold: logo stays at bottom position from 1300vh to 1380vh (`COMET_BOTTOM_HOLD: 80`).
+- Animation is fully reversible (scroll back → logo ascends).
 
-#### Logo Descent Animation
+### Floating Draggable Images
 
-**Expected Behavior:**
-- Logo starts at center
-- Moves from center → bottom over 180vh
-- Text content moves up
-- Smooth, reversible on scroll up
+**Expected behavior:**
+- 5 process images (`.floating-process`) are positioned absolutely within `.floating-processes`.
+- Initial positions (percentage-based): process-1 at top:15% left:10%, process-2 at top:25% left:75%, process-3 at top:50% left:15%, process-4 at top:60% left:80%, process-5 at top:75% left:45%.
+- Each image has a continuous `float` CSS animation: 6s ease-in-out, staggered delay of `(index-1) × 1.2s`.
+- Mouse drag: `mousedown` starts drag, `animation: none` disabled while dragging, `mouseup` re-enables float animation.
+- Touch drag: `touchstart`/`touchmove`/`touchend` mirrors mouse behavior (`passive: false` on touchmove).
+- Drag is constrained within parent container bounds (cannot drag outside `.floating-processes`).
+- On drag end, `float` animation resumes with original delay.
 
-**Logo Size:**
-- CSS Variable: `--comet-logo-size`
-- Value: `clamp(180px, 25vw, 320px)`
-- Larger than before (increased March 16, 2026)
+### Shine Animation
 
-**Content:**
-```
-CENTERED LOGO (descends)
-------------------------
-White Comet Collabs logo
+**Expected behavior:**
+- The words "Stardust" and "Horizon" in the intro text have a glow/shine animation.
+- Scroll down (entering from text section): Stardust shines first → 1s delay → Horizon shines.
+- Scroll back (entering from comet-collab-2 / methods): Horizon shines first → 1s delay → Stardust shines.
+- Each shine: 1.6s duration with drop-shadow + stroke-width increase.
+- Animation triggers every time the section enters viewport in either direction (not only once).
 
-TEXT CONTENT (moves up)
------------------------
-"Comet Collab is the ecosystem where artists,
-collectors, activists, and communities converge
-through STARDUST AND HORIZON, guided by Muse,
-in a continuous loop of creation and impact."
-```
-
-**Text Styling:**
-- "Stardust and Horizon": Uppercase, normal weight (not italic)
-- Matches rest of paragraph style
-- No shine animation (removed March 16, 2026)
-
-#### Floating Draggable Process Images
-
-**Expected Behavior:**
-- 5 process images float on screen
-- Initial positions (percentage-based):
-  1. Top-left (15%, 10%)
-  2. Top-right (25%, 75%)
-  3. Mid-left (50%, 15%)
-  4. Mid-right (60%, 80%)
-  5. Bottom-center (75%, 45%)
-
-**Visual Style:**
-- Inverted colors (white on dark background)
-- Size: `clamp(80px, 12vw, 140px)` desktop
-- Size: `clamp(60px, 15vw, 100px)` mobile
-- Floating animation (6s up/down, staggered delays)
-- Drop shadow: `rgba(255, 255, 255, 0.3)`
-
-**Interaction:**
-- Draggable via mouse (desktop)
-- Draggable via touch (mobile)
-- Cursor: `grab` → `grabbing`
-- Scale: 1.05× on active drag
-- Constrained within parent bounds
-- Animation pauses while dragging
-- Animation resumes on release
-
-**Image Files:**
-```
-assets/images/comet-collabs/process-one.png
-assets/images/comet-collabs/process-two.png
-assets/images/comet-collabs/process-three.png
-assets/images/comet-collabs/process-four.png
-assets/images/comet-collabs/process-five.png
-```
-
-**Bug Check:**
-- [ ] All 5 images visible and inverted (white)
-- [ ] Images can be dragged with mouse
-- [ ] Images can be dragged with touch
-- [ ] Images stay within bounds
-- [ ] Floating animation is smooth
-- [ ] No scroll conflict on touch drag
-- [ ] Images return to floating after drag release
-
-**Background:**
-- WebGL gradient (same shader as Muse section)
-- Unified starfield beneath
+**Bug checklist:**
+- [ ] White Comet Collabs logo visible and centered at 1020vh
+- [ ] Logo does not move before 1120vh
+- [ ] Logo reaches bottom by 1300vh
+- [ ] Logo holds at bottom from 1300–1380vh
+- [ ] Scrolling back moves logo back to center (reversible)
+- [ ] All 5 floating images are visible in intro section
+- [ ] Each image floats (bobbing animation) when not being dragged
+- [ ] Mouse drag moves images freely within bounds
+- [ ] Touch drag works on mobile
+- [ ] Images do not escape parent container
+- [ ] Float resumes after drag release
+- [ ] Stardust word shines before Horizon when scrolling down
+- [ ] Horizon word shines before Stardust when scrolling back
+- [ ] Shine repeats every time section enters viewport
 
 ---
 
-### Section 6: Comet Collab Methods - 120vh
+## Section 6: Comet Methods Toggle (~1380–1500vh)
 
-**Scroll Range:** 1380-1500vh
-**Element:** `.comet-collab-methods`
-**Position:** Sticky
+### Toggle Pill
 
-**Expected Behavior:**
-- Crossfades in from intro (120vh transition)
-- Toggle pill centered at top
-- Active panel displayed below
+**Expected behavior:**
+- Two-button pill: "I · Stardust" (default active) and "II · Horizon".
+- Clicking a button calls `window.switchTab(method)`.
+- Active button gets `.active` class; pill slider (`#pillSlider`) animates to underline the active tab.
+- Switching tabs shows the corresponding `.comet-panel` and hides the other.
+- Active panel has `.active` class. Default: `#panel-stardust` is active.
 
-#### Toggle Pill
+### Stardust Panel (4 steps)
 
-**Structure:**
-```
-┌─────────────────────────────┐
-│ [I · Stardust] [II · Horizon]│
-└─────────────────────────────┘
-     ^^^^^^^^^^^^
-     Animated slider
-```
+Panel description: "Artists select one cause, create a work, and launch a fundraising campaign through its sale — funds split between artist and NGO, facilitated by cocoex. The art is the vehicle. The impact is the destination."
 
-**Expected Behavior:**
-- Pill background: `rgba(255, 255, 255, 0.1)` + blur
-- Active button: White background
-- Inactive button: Transparent
-- Slider animates position on switch (0.3s ease)
-- Click switches between methods
+CTA link: `#stardust` → "View campaigns →"
 
-**Bug Check:**
-- [ ] Pill is centered horizontally
-- [ ] Slider animates smoothly
-- [ ] Active state updates correctly
-- [ ] Click switches panels
+Steps (exact text from HTML):
 
-#### Method Panels
+| # | Title | Body |
+|---|---|---|
+| 01 | Choose | Select a social cause aligned with one of the seven Muses |
+| 02 | Create | Transform it into art — any form, any medium |
+| 03 | Raise | Launch the fundraising campaign through sales and events |
+| 04 | Impact | Funds reach the NGO. cocoex does not profit. |
 
-**Stardust Panel:**
-```
-COMET COLLAB I
-STARDUST
+### Horizon Panel (5 steps)
 
-Artists select a cause, create a work, and launch
-a fundraising campaign through its sale — funds split
-between artist and NGO, facilitated by cocoex.
-The art is the vehicle. The impact is the destination.
+Panel description: "A Future Lab where communities collectively define a cause, choose their partner organisation, and transform their shared vision into art — and the funds it raises into real-world change."
 
-[View campaigns →]
+CTA link: `#horizon` → "View Future Labs →"
 
-STEPS:
-01 - Choose: Select a cause that resonates
-02 - Partner: Connect with an NGO
-03 - Create: Transform it into art — any form, any medium
-04 - Raise: Launch the fundraising campaign through sales and events
-05 - Impact: Funds reach the chosen organisation. cocoex does not profit.
-```
+Steps (exact text from HTML):
 
-**Horizon Panel:**
-```
-COMET COLLAB II
-HORIZON
+| # | Title | Body |
+|---|---|---|
+| 01 | Choose | Select a social cause aligned with one of the seven Muses |
+| 02 | Future Lab | A participatory process where the community explores the challenge and votes on the partner organisation |
+| 03 | Create | Transform it into art — any form, any medium |
+| 04 | Raise | Launch the fundraising campaign through sales and events |
+| 05 | Impact | Funds reach the chosen organisation. cocoex does not profit. |
 
-Communities design their own futures through
-4 steps of the Horizon method — from critique
-to realization. Vision becomes art. Art becomes change.
+Step 02 in Horizon has an addon badge: `+ Horizon` rendered in `.step-addon-badge`.
 
-[Explore projects →]
+Note: `STEP_DATA` in `js/main.js:198–243` contains placeholder Lorem Ipsum descriptions used by the step popup. The step titles/bodies shown above are the HTML display text; popup descriptions come from `STEP_DATA`.
 
-STEPS:
-01 - Critique: Analyze current reality
-02 - Dream: Envision the future
-03 - Design: Plan the transformation
-04 - Realize: Bring the vision to life
-```
-
-**Panel Switching:**
-- Fade out current panel (0.4s)
-- Fade in new panel (0.4s)
-- No layout shift
-
-**Bug Check:**
-- [ ] Only one panel visible at a time
-- [ ] Panel content displays correctly
-- [ ] Steps are numbered and formatted
-- [ ] CTA buttons are visible
-- [ ] Panel switches smoothly
+**Bug checklist:**
+- [ ] Stardust tab is active by default (pill slider under "I · Stardust")
+- [ ] Clicking "II · Horizon" shows Horizon panel, hides Stardust panel
+- [ ] Clicking back to "I · Stardust" restores Stardust panel
+- [ ] Pill slider animates smoothly between tabs
+- [ ] Stardust: exactly 4 step rows render
+- [ ] Horizon: exactly 5 step rows render, step 02 has `+ Horizon` badge
+- [ ] Stardust step 04 text: "Funds reach the NGO. cocoex does not profit."
+- [ ] Horizon step 05 text: "Funds reach the chosen organisation. cocoex does not profit."
+- [ ] `#comet-collab-background-canvas` WebGL gradient visible behind panel
+- [ ] CTA links "View campaigns →" and "View Future Labs →" present
 
 ---
 
-### Section 7: Events Page - 100vh+
+## Section 7: Comet Connected Images (~1500–1620vh)
 
-**Scroll Range:** 1500vh+
-**Element:** `.events-page-wrapper`
-**Position:** Relative (natural flow)
+### Connection Lines
 
-**Height:** `min-height: 100vh` (reduced March 16, 2026)
+**Expected behavior:**
+- 5 process images (`#comet-image-item[data-step=1..5]`) displayed in a flex row.
+- `#comet-connection-canvas` overlays the images and draws white lines connecting them in sequence.
+- `#comet-collab-background-canvas-2` renders the same WebGL gradient shader as the methods section for visual continuity.
+- Images have hover scale transform (1.05×).
 
-**Expected Behavior:**
-- Black background
-- Starfield canvas (landing style)
-- Content sections:
-  1. Partnership slideshow
-  2. Stardust campaigns
-  3. Horizon projects
+### Step Popup
 
-#### Partnership Slideshow
+**Expected behavior:**
+- Clicking a `.comet-image-item.clickable` opens `.step-popup` modal.
+- Popup reads the currently active method from `MethodToggle.getCurrentMethod()` (stardust or horizon).
+- `STEP_DATA[method][step]` provides title and description.
+- Popup content animates in: scale 0.8 → 1.0, opacity 0 → 1, `back.out(1.7)` ease, 0.3s.
+- Popup content animates out: scale 1 → 0.8, opacity 1 → 0, `power2.in` ease, 0.2s.
+- Close methods: X button (`.step-popup-close`), overlay click (`.step-popup-overlay`), Escape key.
+- Keyboard: Enter or Space on focused image opens popup.
+- Focus is trapped to close button on popup open.
 
-**Expected Behavior:**
-- Title: "Partnership"
-- Auto-scrolling horizontal slideshow
-- Partner logos displayed
-- Infinite loop
-- Smooth scroll animation
-
-**Bug Check:**
-- [ ] Slideshow auto-scrolls
-- [ ] Logos are visible and sized correctly
-- [ ] Loop is seamless
-- [ ] No layout breaks
-
-#### Stardust Campaigns
-
-**Expected Behavior:**
-- Section label: "Stardust" (white, 28% opacity)
-- Headline: "Where art meets cause."
-- Campaign cards displayed
-- Dynamic content loaded
-
-**Bug Check:**
-- [ ] Section is visible
-- [ ] Cards render correctly
-- [ ] Content is readable
-
-#### Horizon Projects
-
-**Expected Behavior:**
-- Section label: "Horizon · Future Lab"
-- Headline: "Communities designing their own futures."
-- Project cards displayed
-
-**Bug Check:**
-- [ ] Section is visible
-- [ ] Cards render correctly
+**Bug checklist:**
+- [ ] All 5 images render in a row
+- [ ] White connection lines visible between images
+- [ ] `#comet-collab-background-canvas-2` gradient matches methods section
+- [ ] Images scale on hover (1.05×)
+- [ ] Clicking a `.comet-image-item` opens step popup
+- [ ] Popup title and description match `STEP_DATA` for current method + step number
+- [ ] Popup closes on overlay click
+- [ ] Popup closes on X button
+- [ ] Popup closes on Escape
+- [ ] Enter/Space keyboard opens popup on focused image
+- [ ] Popup reflects active method (switching tab then clicking image shows correct method's data)
 
 ---
 
-## WebGL Implementation
+## Section 8: Events Page (~1620vh+)
 
-### Active Canvases (4 Total)
+### Partnership Carousel
 
-```javascript
-1. Intro Starfield     - #bg-canvas
-2. Constellation       - #constellation-canvas
-3. Unified Starfield   - #unified-starfield-canvas
-4. Muse/Comet Gradient - #muse-background-canvas
-                         #comet-collab-background-canvas (same shader)
-```
+**Expected behavior:**
+- Title "Partnership" (`h2.partnership-title`) above the carousel.
+- `PartnershipSlider` module builds a `.partnership-track` inside `#partnership-slideshow`.
+- Logos are loaded from `data/events.json` `partnerships` array (5 entries: Partner 1–5).
+- Track contains logos duplicated (10 total) for seamless infinite CSS scroll loop.
+- Each logo is wrapped in an `<a>` tag with `target="_blank" rel="noopener noreferrer"`.
+- Images use `loading="lazy"`.
 
-### Shader Programs (3 Unique)
+Current partnership data (from `data/events.json`):
 
-#### 1. Intro Starfield + Pulse
+| Name | Logo Path | URL |
+|---|---|---|
+| Partner 1 | assets/images/partnerships/partner-1.png | # |
+| Partner 2 | assets/images/partnerships/partner-2.png | # |
+| Partner 3 | assets/images/partnerships/partner-3.png | # |
+| Partner 4 | assets/images/partnerships/partner-4.png | # |
+| Partner 5 | assets/images/partnerships/partner-5.png | # |
 
-**Canvas:** `#bg-canvas`
-**Position:** Fixed, z-index 1
+Note: `PartnershipSlider` in `main.js:2563` hardcodes paths as `partner1.png` (no hyphen), while `events.json` uses `partner-1.png`. Verify which path is used at runtime.
 
-**Features:**
-- Twinkling stars (200 total)
-- Simplex noise for organic movement
-- Big bang pulse effect (dispersive wave)
-- Star brightness variation
+### Stardust Campaigns
 
-**Vertex Shader:**
-```glsl
-attribute vec2 a_position;
-void main() {
-  gl_Position = vec4(a_position, 0.0, 1.0);
-}
-```
+**Expected behavior:**
+- Section `#stardust` with headline: "Where *art* meets cause." (italic "art").
+- Campaign cards dynamically inserted into `#stardust-campaigns`.
+- Each card shows: campaign number, status badge, name, subtitle, NGO name, muse tag(s) with symbol + color, and a link.
 
-**Fragment Shader:**
-```glsl
-uniform vec2 u_resolution;
-uniform float u_time;
-uniform float u_pulse;
+Current campaign data (from `data/events.json`):
 
-// Simplex noise function
-// Star generation with early exit
-// Twinkling effect (sin wave)
-// Pulse wave effect (dispersive)
-```
+| # | Status | Name | Subtitle | NGO | Muses | Link |
+|---|---|---|---|---|---|---|
+| 003 | active | La Luna 007 | Silat Beksi × Wex Records × La Luna · Silent Rixdorf, Berlin · August 2026 | Repair Together — rebuilding communities in war-affected Ukraine | ♀ Shukra (Bio-diversity, `--shukra`) | # |
+| 002 | open | Practicing the Futures | Vinili e Vinelli Festival · Italy · July 7–19, 2026 | Terra Nuda — art and culture in rural communities | ✕ Ares (Reforestation, `--ares`), ◉ Solis (Well-being, `--solis`) | #now (Apply →) |
+| 001 | archive | Cantine Volpi | Limited wine release · first proof of concept | Art embedded in product to generate charitable funds | ✕ Ares (Reforestation, `--ares`), ◉ Solis (Well-being, `--solis`) | null (Archive) |
 
-**Expected Behavior:**
-- Stars twinkle at varying speeds
-- Pulse radiates from center on scroll
-- Smooth 60fps rendering
-- Scales to device pixel ratio
+### Horizon Future Labs
 
-**Bug Check:**
-- [ ] Stars visible and twinkling
-- [ ] Pulse effect triggers during explosion
-- [ ] No WebGL errors in console
-- [ ] Performance stays above 30fps
+**Expected behavior:**
+- Section `#horizon` with headline: "Communities designing their own *futures.*" (italic "futures.").
+- Right column header text: "What if the people most affected by a challenge were also the ones designing its solution?"
+- Body text references Robert Jungk's Zukunftswerkstatt.
+- Labs rendered in `#horizon-labs` as a 3-column grid: Event | Outcome | Conclusion.
+- Footnote: "* Inspired by Robert Jungk's Zukunftswerkstatt — a participatory futures methodology developed as a democratic counterweight to top-down planning. Structural partner: Robert Jungk Bibliothek (JBZ)."
 
-#### 2. Unified Starfield
+Current lab data (from `data/events.json`):
 
-**Canvas:** `#unified-starfield-canvas`
-**Position:** Fixed, z-index 1 (beneath Muse/Comet sections)
+**Future Lab, Carezzano · 2024**
+- Event: "Held during Vinili e Vinelli, September 2024. Communities co-created four visions for the future of sustainable local tourism in the Colli Tortonesi."
+- Outcome: "A community's choice" — "Participants chose Slow Food Terre Derthona to carry the community's vision forward — strengthening the territory and its agricultural culture."
+- Conclusion: "Art as closure · September 2025" — "Works exhibited and sold for charity at the same location where the Future Lab began. The circle closed."
 
-**Features:**
-- Static starfield (no pulse)
-- Shared between Muse and Comet sections
-- Same star generation algorithm
-
-**Expected Behavior:**
-- Stars appear during Muse/Comet sections
-- Continuous across both sections
-- Layered beneath gradient canvases
-
-**Bug Check:**
-- [ ] Stars visible in Muse section
-- [ ] Stars visible in Comet section
-- [ ] No flicker between sections
-
-#### 3. Animated Gradient (Muse/Comet)
-
-**Canvases:**
-- `#muse-background-canvas` (Muse section)
-- `#comet-collab-background-canvas` (Comet intro)
-- `#comet-collab-background-canvas-2` (Comet methods)
-
-**Colors (7 Muse Colors):**
-```javascript
-const vec3 color1 = vec3(0.34, 0.51, 0.65); // Lunes
-const vec3 color2 = vec3(0.84, 0.30, 0.18); // Ares
-const vec3 color3 = vec3(0.55, 0.69, 0.50); // Rabu
-const vec3 color4 = vec3(0.97, 0.85, 0.42); // Thunor
-const vec3 color5 = vec3(0.37, 0.28, 0.63); // Shukra
-const vec3 color6 = vec3(0.50, 0.29, 0.64); // Dosei
-const vec3 color7 = vec3(0.83, 0.51, 0.28); // Solis
-```
-
-**Fragment Shader:**
-```glsl
-uniform vec2 u_resolution;
-uniform float u_time;
-
-// Simplex noise (3D)
-// Multi-octave noise layers
-// 7-zone color blending
-// Strength: 15% (subtle)
-```
-
-**Expected Behavior:**
-- Slow, organic color movement
-- 7 colors blend smoothly
-- Subtle effect (15% strength)
-- Continuous animation
-
-**Bug Check:**
-- [ ] Gradient visible and animating
-- [ ] All 7 colors appear over time
-- [ ] No harsh color transitions
-- [ ] Performance stable
-
-### WebGL Optimizations
-
-**Device Pixel Ratio Capping:**
-```javascript
-const dpr = Math.min(window.devicePixelRatio, 2);
-canvas.width = canvas.clientWidth * dpr;
-canvas.height = canvas.clientHeight * dpr;
-```
-
-**Program State Caching:**
-```javascript
-let lastActiveProgram = null;
-if (lastActiveProgram !== program) {
-  gl.useProgram(program);
-  lastActiveProgram = program;
-}
-```
-
-**Master Render Loop:**
-```javascript
-function masterRender() {
-  if (!isPageVisible || webglContextsLost) return;
-
-  IntroCanvas.render();
-  ConstellationCanvas.render();
-  MuseBackground.render();
-  UnifiedStarfield.render();
-  CometCollabBackground.render();
-  MuseScroll.updateOrbitPositions();
-
-  masterRenderLoop = requestAnimationFrame(masterRender);
-}
-```
-
-**Expected Behavior:**
-- Single RAF loop consolidates all animations
-- Pauses when tab hidden (battery save)
-- Program switches minimized
-- DPR capped at 2× on mobile (33% pixel reduction)
-
-**Bug Check:**
-- [ ] All WebGL canvases render in sync
-- [ ] Rendering pauses when tab hidden
-- [ ] No duplicate RAF loops
-- [ ] Memory usage stable (50-70MB)
+**Bug checklist:**
+- [ ] Partnership carousel is visible and logos display
+- [ ] Carousel scrolls horizontally in a loop without a visible seam
+- [ ] All 3 stardust campaign cards render
+- [ ] Campaign 003 shows status "active"
+- [ ] Campaign 002 shows status "open" with "Apply →" link
+- [ ] Campaign 001 shows status "archive" with no link
+- [ ] Muse tags display correct symbol and color for each campaign
+- [ ] Horizon section headline renders with italic "futures."
+- [ ] 1 Future Lab row renders with all 3 columns
+- [ ] Footnote with Robert Jungk / JBZ credit is visible
+- [ ] `#events-background-canvas` renders starfield background
 
 ---
 
-## Animation System
+## Footer (Fixed)
 
-### GSAP ScrollTrigger
+**Expected behavior:**
+- `footer.social-links` is fixed position, revealed at comet section end (ScrollTrigger).
+- Three social links: Telegram (`https://t.me/coco_ex`), Instagram (`https://instagram.com/cocoex_`), LinkedIn (`https://www.linkedin.com/company/cocoex/`).
+- All links: `target="_blank" rel="noopener noreferrer"`.
+- Icon touch targets: 52px minimum.
+- Icons scale on hover.
+- `.footer-logo` (`cocoex-text.png`, 172px width) appears alongside social links; scales on hover.
+- Footer is separate from page scroll flow; does not push content.
 
-**All scroll-driven animations use GSAP ScrollTrigger with:**
-```javascript
-{
-  scrub: true,           // Smooth 60fps scrubbing
-  invalidateOnRefresh: true, // Recalculate on resize
-  anticipatePin: 1       // Prevent layout shift
-}
-```
-
-### Animation Timeline
-
-| Scroll Position (vh) | Section | Animation |
-|---------------------|---------|-----------|
-| 0-160 | Intro | Orbiting dots convergence |
-| 152-200 | Intro | Transition text fade in/out |
-| 200-400 | Intro | Constellation explosion |
-| 400-550 | Text | Simple fade-in |
-| 550-900 | Muse Intro | Crossfade in/hold/out |
-| 900-1020 | Muse Orbit | Continuous rotation (240s) |
-| 1020-1100 | Comet Intro | Static hold |
-| 1100-1280 | Comet Intro | Logo descent + text rise |
-| 1280-1360 | Comet Intro | Bottom hold |
-| 1360-1480 | Comet Methods | Crossfade + panel display |
-| 1480+ | Events | Natural scroll |
-
-### Hardware Acceleration
-
-**Only animate transform/opacity:**
-```css
-.animated-element {
-  will-change: transform, opacity;
-  transform: translate3d(0, 0, 0); /* Force GPU layer */
-}
-```
-
-**Never animate:**
-- `width`, `height`
-- `top`, `left`, `right`, `bottom`
-- `margin`, `padding`
-- `color`, `background-color` (except via opacity)
-
-### Performance Targets
-
-| Metric | Target | Notes |
-|--------|--------|-------|
-| Desktop FPS | 60fps | All animations |
-| Mobile FPS | 30fps+ | WebGL may throttle |
-| Scroll scrub | 60fps | GSAP interpolation |
-| Master loop | 16.67ms | 60fps frame budget |
-
-**Bug Check:**
-- [ ] Scroll is smooth (no jank)
-- [ ] No layout shifts during animations
-- [ ] FPS stays within targets
-- [ ] `will-change` applied to animated elements
+**Bug checklist:**
+- [ ] Footer not visible during landing and text sections
+- [ ] Footer becomes visible when comet section ends
+- [ ] All 3 social icons render as SVG (not broken image)
+- [ ] Telegram link opens `t.me/coco_ex` in new tab
+- [ ] Instagram link opens `instagram.com/cocoex_` in new tab
+- [ ] LinkedIn link opens `linkedin.com/company/cocoex/` in new tab
+- [ ] Footer logo image loads
+- [ ] Touch targets are ≥44px on mobile
+- [ ] `rel="noopener noreferrer"` present on all external links
 
 ---
 
-## Interactive Features
+## WebGL Canvases
 
-### 1. Muse Popup Modal
+| Canvas ID | Section | Shader | Expected Visual | Bug Checks |
+|---|---|---|---|---|
+| `#bg-canvas` | Landing (0–400vh) | Intro starfield + simplex noise + big bang pulse uniform | Dark cosmic background, twinkling stars (4 layers), single dispersive pulse wave at constellation trigger | Stars twinkle continuously; pulse fires once; canvas fills viewport |
+| `#constellation-canvas` | Landing Phase 3 (200–400vh) | 2D Canvas (not WebGL) | 7 colored dots with z-depth, white connection lines, Z-axis rotation | Dots visible at 200vh; rotation continuous; lines connect correct pairs |
+| `#unified-starfield-canvas` | Muse + Comet sections (550–1620vh) | Unified starfield shader | Sparse twinkling stars shared across Muse and Comet backgrounds | Stars visible in both Muse and Comet sections; no seam at section boundary |
+| `#muse-background-canvas` | Muse Orbiting (900–1020vh) | Animated gradient (7-color simplex blend) | Slow-moving multicolor gradient blending 7 muse colors | Gradient visible behind orbiting muses; colors shift slowly |
+| `#comet-collab-background-canvas` | Comet Methods Toggle (~1380–1500vh) | Same animated gradient shader as Muse | Continuous visual flow from Muse gradient | Gradient present; no black flash on section enter |
+| `#comet-collab-background-canvas-2` | Comet Connected Images (~1500–1620vh) | Same animated gradient shader | Seamless continuation of comet methods background | Gradient matches methods section; no discontinuity |
 
-**Trigger:** Click/tap muse image or name
-**Module:** `MusePopup`
-
-**Expected Behavior:**
-- Opens with GSAP timeline:
-  1. Overlay fade in (0.3s)
-  2. Content scale in (0.4s, overshoot)
-  3. Particles fade in staggered (0.1s delay)
-- Closes with GSAP timeline:
-  1. Content scale out (0.3s)
-  2. Overlay fade out (0.2s)
-- Focus management:
-  - Focus trapped inside modal
-  - Focus returns to trigger on close
-- Scroll lock:
-  - Body scroll disabled when open
-  - Modal content scrollable if needed
-
-**Keyboard Navigation:**
-```
-Tab       - Navigate between muses
-Enter     - Open focused muse popup
-Escape    - Close popup
-Shift+Tab - Navigate backward
-```
-
-**Bug Check:**
-- [ ] Modal opens on click/Enter
-- [ ] Modal closes on X/outside click/Escape
-- [ ] Focus is trapped in modal
-- [ ] Focus returns to trigger on close
-- [ ] Body scroll is locked
-- [ ] Particles animate correctly
-- [ ] Aura color matches muse
-
-### 2. Floating Process Images Drag
-
-**Elements:** `.floating-process` (5 total)
-**Module:** `FloatingProcesses`
-
-**Expected Behavior:**
-
-**Mouse (Desktop):**
-- Mousedown starts drag
-- Mousemove updates position
-- Mouseup ends drag
-
-**Touch (Mobile/Tablet):**
-- Touchstart starts drag
-- Touchmove updates position
-- Touchend ends drag
-- Prevents default scroll behavior
-
-**During Drag:**
-- Cursor changes to `grabbing`
-- Element scales to 1.05×
-- Floating animation disabled
-- Position constrained to parent bounds
-
-**After Drag:**
-- Cursor returns to `grab`
-- Scale returns to 1×
-- Floating animation resumes
-
-**Bug Check:**
-- [ ] Images respond to mouse drag
-- [ ] Images respond to touch drag
-- [ ] No scroll conflict on mobile
-- [ ] Images stay within bounds
-- [ ] Animation resumes after drag
-- [ ] Cursor changes correctly
-
-### 3. Comet Method Toggle
-
-**Element:** `.comet-pill`
-**Buttons:** "I · Stardust", "II · Horizon"
-**Module:** `MethodToggle`
-
-**Expected Behavior:**
-- Click switches between methods
-- Slider animates to active button (0.3s ease)
-- Panels cross-fade (0.4s)
-- Only one panel visible at a time
-
-**Bug Check:**
-- [ ] Click switches methods
-- [ ] Slider animates smoothly
-- [ ] Panels fade correctly
-- [ ] No layout shift during switch
-
-### 4. Partnership Slideshow
-
-**Element:** `.partnership-slideshow`
-**Module:** `PartnershipSlider`
-
-**Expected Behavior:**
-- Auto-scrolls horizontally
-- Infinite loop
-- Smooth scroll animation
-- Logos evenly spaced
-
-**Bug Check:**
-- [ ] Slideshow auto-scrolls
-- [ ] Loop is seamless
-- [ ] Animation is smooth
+CDN: GSAP loaded from `https://cdn.jsdelivr.net/npm/gsap@3.12.5/` (gsap.min.js, ScrollTrigger.min.js, MotionPathPlugin.min.js).
 
 ---
 
-## Performance Expectations
+## Performance Targets
 
-### Lighthouse Targets
-
-| Category | Target | Current |
-|----------|--------|---------|
-| Performance | 95+ | TBD |
-| Accessibility | 95+ | TBD |
-| Best Practices | 95+ | TBD |
-| SEO | 95+ | TBD |
-
-### Core Web Vitals
-
-| Metric | Target | Description |
-|--------|--------|-------------|
-| FCP (First Contentful Paint) | <1.5s | When first content renders |
-| LCP (Largest Contentful Paint) | <2.5s | When largest element visible |
-| TTI (Time to Interactive) | <3s | When page fully interactive |
-| CLS (Cumulative Layout Shift) | <0.1 | Visual stability during load |
-
-### WebGL Performance
-
-| Metric | Target | Notes |
-|--------|--------|-------|
-| GPU Memory | 50-70MB | Viewport-dependent |
-| Composited Layers | 15-25 | Hardware-accelerated elements |
-| WebGL Contexts | 4 active | Intro, Constellation, Starfield, Gradient |
-| Program Switches | Minimal | Cached state reduces switches |
-
-### Battery Impact
-
-**Expected Behavior:**
-- Rendering pauses when tab hidden
-- Passive event listeners used
-- Debounced resize (150ms)
-- Mobile DPR capped at 2×
-
-**Known:**
-- Extended mobile viewing drains battery (continuous WebGL)
-- Low-end devices may drop below 30fps during explosion
+| Metric | Target |
+|---|---|
+| First Contentful Paint | < 1.5s (4G) |
+| Largest Contentful Paint | < 2.5s (4G) |
+| Time to Interactive | < 3s (4G) |
+| Cumulative Layout Shift | < 0.1 |
+| Lighthouse Score | 95+ (all categories) |
+| Scroll animation | 60fps desktop |
+| Mobile WebGL | ≥ 30fps (DPR capped at 2×) |
+| Resize debounce | 150ms |
 
 ---
 
-## Browser Compatibility
+## Cross-Browser Checklist
 
-### Tested Browsers
-
-| Browser | Version | Status |
-|---------|---------|--------|
-| Chrome | 120+ | ✅ Primary target |
-| Firefox | 115+ | ✅ Full support |
-| Safari | 17+ | ⚠️ Backdrop-filter glitch |
-| Edge | 120+ | ✅ Full support |
-
-### Required Features
-
-```
-✅ ES6+ JavaScript (const, let, arrow functions, template literals)
-✅ CSS Custom Properties (--variables)
-✅ CSS Grid & Flexbox
-✅ WebGL 1.0
-✅ requestAnimationFrame
-✅ IntersectionObserver (via GSAP ScrollTrigger)
-✅ Touch Events API
-✅ Pointer Events API
-```
-
-### Mobile Browsers
-
-| Browser | Status | Notes |
-|---------|--------|-------|
-| iOS Safari | ✅ | May throttle WebGL on older devices |
-| Android Chrome | ✅ | Full support |
-| Samsung Internet | ✅ | Full support |
-
-### Known Issues
-
-**Safari:**
-- Rare `backdrop-filter` glitch on rapid scroll
-- Workaround: None (cosmetic only)
-
-**Low-End Devices:**
-- May drop below 30fps during constellation explosion
-- No workaround (hardware limitation)
-
-**DevTools Open:**
-- ~30% WebGL performance reduction
-- Expected behavior (instrumentation overhead)
+- [ ] **Chrome (latest)**: Full animation, WebGL, GSAP — baseline
+- [ ] **Firefox (latest)**: Scroll behavior, WebGL context, thin scrollbar (Firefox CSS)
+- [ ] **Safari (latest)**: `backdrop-filter` on rapid scroll, WebGL context loss, scroll normalization
+- [ ] **Edge (latest)**: Same as Chrome; verify GSAP ScrollTrigger normalizeScroll
+- [ ] **iOS Safari (latest)**: Touch drag on floating images, touch orbit navigation, scroll normalization active (`ScrollTrigger.normalizeScroll(true)`)
+- [ ] **Android Chrome (latest)**: Touch events, DPR capping at 2×, floating image drag
+- [ ] All external links open in new tab with no opener
+- [ ] Keyboard navigation (Tab/Enter/Escape) works in all browsers
+- [ ] `prefers-reduced-motion`: all animations and particles disabled
+- [ ] No console errors on clean page load in any browser
 
 ---
 
-## Known Limitations
+## Responsive Checklist
 
-### 1. Battery Drain
-**Issue:** Extended mobile viewing drains battery
-**Cause:** Continuous WebGL rendering
-**Impact:** 10-20% faster battery drain vs. static page
-**Mitigation:** Rendering pauses when tab hidden
-
-### 2. Low-End Device Performance
-**Issue:** FPS drops below 30 during explosion
-**Cause:** WebGL overdraw + particle count
-**Impact:** Slightly choppy animation
-**Mitigation:** DPR capped at 2×, consider reducing particle count
-
-### 3. High DPI Scaling
-**Issue:** Increased memory usage on 3× devices
-**Cause:** Canvas scales to device pixel ratio
-**Impact:** 50-70MB GPU memory
-**Mitigation:** DPR capped at 2×
-
-### 4. No Fallback
-**Issue:** No non-WebGL fallback
-**Cause:** WebGL is core to experience
-**Impact:** Blank screen if WebGL unavailable
-**Mitigation:** Browser compatibility check recommended
-
-### 5. Accessibility - Motion
-**Issue:** Heavy animations may cause motion sickness
-**Mitigation:** `prefers-reduced-motion` disables animations + particles
-**Status:** ✅ Implemented
-
----
-
-## Testing Checklist
-
-### Visual Regression
-
-- [ ] All sections render at correct scroll positions
-- [ ] No layout shifts during animations
-- [ ] Colors match design spec
-- [ ] Typography is consistent
-- [ ] Images load and display correctly
-- [ ] WebGL canvases render on all devices
-
-### Functional
-
-- [ ] Scroll scrubbing is smooth (60fps target)
-- [ ] All interactive elements respond to click/tap
-- [ ] Keyboard navigation works (Tab, Enter, Escape)
-- [ ] Modal opens/closes correctly
-- [ ] Drag functionality works (mouse + touch)
-- [ ] Toggle switches between methods
-- [ ] Slideshow auto-scrolls
-
-### Performance
-
-- [ ] Lighthouse score >95 all categories
-- [ ] FCP <1.5s, LCP <2.5s, TTI <3s, CLS <0.1
-- [ ] FPS stays above targets (60fps desktop, 30fps mobile)
-- [ ] No memory leaks (test 5+ minutes scrolling)
-- [ ] WebGL contexts initialize correctly
-- [ ] Master render loop pauses when tab hidden
-
-### Cross-Browser
-
-- [ ] Chrome (desktop + mobile)
-- [ ] Firefox (desktop + mobile)
-- [ ] Safari (desktop + iOS)
-- [ ] Edge (desktop)
-- [ ] Samsung Internet (mobile)
-
-### Responsive
-
-- [ ] Test at 320px (iPhone SE)
-- [ ] Test at 768px (iPad)
-- [ ] Test at 1024px (iPad Pro)
-- [ ] Test at 1920px (Desktop)
-- [ ] Test at 4K (5120px)
-- [ ] Orbit ellipse adjusts correctly
-- [ ] Typography scales smoothly (clamp)
-
-### Accessibility
-
-- [ ] Semantic HTML elements used
-- [ ] ARIA labels on decorative elements
-- [ ] Focus visible styles (2px outline + offset)
-- [ ] Keyboard navigation complete
-- [ ] Screen reader announces sections
-- [ ] WCAG AA color contrast
-- [ ] `prefers-reduced-motion` disables animations
-- [ ] Touch targets ≥44px (52px social icons)
-
-### Edge Cases
-
-- [ ] Rapid scroll up/down (no flicker)
-- [ ] Resize during animation (no break)
-- [ ] DevTools open (expect 30% perf drop)
-- [ ] Tab switch while animating (pause/resume)
-- [ ] Long-term use (no memory leak after 10+ mins)
-- [ ] Mobile landscape orientation
-- [ ] High DPI displays (3× devices)
-
----
-
-## Debugging Tips
-
-### Console Logging
-
-**Scroll Position:**
-```javascript
-const scrollY = window.scrollY || window.pageYOffset ||
-                document.documentElement.scrollTop || 0;
-const vh = (scrollY / window.innerHeight).toFixed(2);
-console.log(`[${vh}vh | ${scrollY}px]`);
-```
-
-**WebGL Context:**
-```javascript
-if (!gl) {
-  console.error('WebGL context lost or unavailable');
-  return;
-}
-```
-
-**CSS Computed Styles:**
-```javascript
-const computed = window.getComputedStyle(element);
-console.log({
-  color: computed.color,
-  opacity: computed.opacity,
-  transform: computed.transform
-});
-```
-
-### Performance Profiling
-
-**Chrome DevTools:**
-1. Open Performance tab
-2. Record 10 seconds of scrolling
-3. Analyze: FPS, long tasks, GPU memory, paint operations
-
-**Optimization Priorities:**
-1. Eliminate redundant work (cached programs)
-2. Reduce pixel count (DPR capping)
-3. Increase scroll distances (longer durations)
-4. Hardware acceleration (transform/opacity only)
-
----
-
-## Revision History
-
-| Date | Version | Changes |
-|------|---------|---------|
-| 2026-03-16 | 1.0 | Initial technical specification created |
-
----
-
-**End of Technical Specification**
-
-For implementation details, see:
-- `CLAUDE.md` - Project context and development guide
-- `docs/responsive-design.md` - Responsive implementation
-- `README.md` - User-facing documentation
+- [ ] **320px**: Text no overflow, logo min-size, dots visible, no horizontal scroll
+- [ ] **375px (iPhone SE)**: Vertical ellipse orbit, floating images within bounds
+- [ ] **390px (iPhone 14)**: Touch drag, popup readable, all sections scroll
+- [ ] **480px**: Small breakpoint — fine-tuned spacing
+- [ ] **768px**: Transition from vertical to slightly-vertical ellipse (1.4× taller)
+- [ ] **1024px**: Tablet — touch optimization active, ellipse shifts to horizontal
+- [ ] **1280px**: Standard desktop — horizontal ellipse (1.8× wider)
+- [ ] **1440px**: Large desktop — typography at upper clamp values
+- [ ] **1920px**: Full HD — no layout stretching, canvases fill viewport
+- [ ] **4K (3840px)**: Canvas DPR capped at 2×; layout scales without overflow
+- [ ] Footer social icons ≥ 44px touch target at all sizes
+- [ ] Comet Methods toggle pill readable and tappable on mobile
+- [ ] Muse popup readable on all viewport widths (no overflow)
