@@ -12,7 +12,9 @@
   // ==========================================================================
   gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
 
-  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!isIOS && 'ontouchstart' in window) {
     ScrollTrigger.normalizeScroll(true);
   }
 
@@ -2322,7 +2324,9 @@
       // Global mouse/touch move and end events
       document.addEventListener('mousemove', (e) => this.drag(e));
       document.addEventListener('mouseup', () => this.endDrag());
-      document.addEventListener('touchmove', (e) => this.drag(e), { passive: false });
+      document.addEventListener('touchmove', (e) => {
+        if (this.isDragging) this.drag(e);
+      }, { passive: true });
       document.addEventListener('touchend', () => this.endDrag());
     },
 
@@ -2347,6 +2351,7 @@
       e.preventDefault();
       this.isDragging = true;
       this.draggedElement = element;
+      element.style.touchAction = 'none';
 
       // Disable floating animation while dragging
       element.style.animation = 'none';
@@ -2363,8 +2368,6 @@
 
     drag(e) {
       if (!this.isDragging || !this.draggedElement) return;
-
-      e.preventDefault();
 
       // Get cursor/touch position
       const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
@@ -2398,6 +2401,7 @@
         const processIndex = this.draggedElement.getAttribute('data-process');
         const delay = (parseInt(processIndex) - 1) * 1.2;
         this.draggedElement.style.animation = `float 6s ease-in-out ${delay}s infinite`;
+        this.draggedElement.style.touchAction = '';
 
         this.draggedElement = null;
       }
