@@ -9,6 +9,17 @@
 
 Ground-truth context for any Claude session working on this codebase. Read this before touching any file. When in doubt about a line number, verify with the actual file — this document can lag behind the code.
 
+**On session start — read these docs before writing any code:**
+
+| Priority | File | Read when |
+|---|---|---|
+| Always | `docs/js-reference.md` | Any JS work |
+| Always | `docs/css-reference.md` | Any CSS work |
+| Always | `docs/html-reference.md` | Any HTML work |
+| Always | `docs/TECHNICAL-SPEC.md` | Architecture decisions, scroll timing, WebGL |
+| Layout work | `docs/responsive-design.md` | Fluid typography, orbit ellipse, breakpoints |
+| Dependencies | `docs/libraries.md` | GSAP API, external lib usage patterns |
+
 ---
 
 ## Project Identity
@@ -424,12 +435,28 @@ Pre-push checklist:
 
 ## Related Docs
 
+### Code Reference (`docs/`)
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `docs/TECHNICAL-SPEC.md` | 483 | Deep-dive: scroll architecture, WebGL system, GSAP timeline details |
+| `docs/js-reference.md` | 947 | Full JS function map, module APIs, event listener inventory |
+| `docs/css-reference.md` | 949 | Full CSS rule reference, design tokens, animation classes |
+| `docs/html-reference.md` | 834 | Full DOM tree, element roles, ARIA, data attributes |
+| `docs/responsive-design.md` | 545 | Fluid typography, orbit ellipse ratios, breakpoint behaviour |
+| `docs/libraries.md` | 402 | GSAP 3.12.5 API patterns, WebGL utilities, CDN dependency notes |
+
+### Brand & Concept (`.claude/memo/`)
+
 | File | Purpose |
 |------|---------|
-| `docs/TECHNICAL-SPEC.md` | Deep-dive implementation specs |
-| `docs/responsive-design.md` | Fluid typography + orbit ellipse guide |
-| `.claude/memo/The Seven Muses.md` | Muse canon (planet, day, cause) |
+| `.claude/memo/The Seven Muses.md` | Muse canon (planet, day, cause, color) |
 | `.claude/memo/Stardust.md` | Stardust programme concept |
 | `.claude/memo/Horizon.md` | Horizon + Future Lab methodology |
 | `.claude/memo/cocoex Brand Rules.md` | Tone, typography, visual identity |
-| `tools/coordinate-picker.html` | Dev tool for constellation positioning |
+
+### Dev Tools
+
+| File | Purpose |
+|------|---------|
+| `tools/coordinate-picker.html` | Interactive dev tool for constellation dot positioning |
