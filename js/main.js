@@ -1151,10 +1151,10 @@
         { opacity: 1, ease: 'none' },
         0
       )
-      // Fade in black center logo
+      // Fade in black center logo (xPercent/yPercent keeps it centered through scale)
       .fromTo(museCenterLogo,
-        { opacity: 0, scale: 0.95 },
-        { opacity: 1, scale: 1, ease: 'none' },
+        { opacity: 0, scale: 0.95, xPercent: -50, yPercent: -50 },
+        { opacity: 1, scale: 1, xPercent: -50, yPercent: -50, ease: 'none' },
         0
       );
     }
@@ -1684,21 +1684,25 @@
     calculateOrbitRadius() {
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
+      const aspect = viewportWidth / viewportHeight;
 
-      // Mobile: Vertical ellipse (taller than wide) for better centering
-      if (viewportWidth <= 768) {
-        this.orbitRadiusX = Math.min(viewportHeight, viewportWidth) * 0.35;
-        this.orbitRadiusY = this.orbitRadiusX * 1.8; // Vertical ellipse - taller
-      }
-      // Tablet: Slightly more vertical ellipse
-      else if (viewportWidth <= 1024) {
-        this.orbitRadiusX = Math.min(viewportHeight, viewportWidth) * 0.30;
-        this.orbitRadiusY = this.orbitRadiusX * 1.4; // Slightly vertical
-      }
-      // Desktop: Horizontal ellipse (original behavior)
-      else {
-        this.orbitRadiusY = Math.min(viewportHeight, viewportWidth) * 0.30;
-        this.orbitRadiusX = this.orbitRadiusY * 1.8; // Horizontal ellipse - wider
+      // Smoothly interpolate ellipse shape based on viewport aspect ratio.
+      // Wide viewports (aspect ≥ 1.4) → horizontal ellipse 1.8× wider than tall.
+      // Square-ish (aspect ≈ 1.0)     → near-circle.
+      // Tall viewports (aspect ≤ 0.6) → vertical ellipse 1.8× taller than wide.
+      const t = Math.max(0, Math.min(1, (aspect - 0.6) / 0.8)); // 0 (tall) → 1 (wide)
+      const horizontalBias = -1 + t * 2; // -1 (tall) → 0 (square) → 1 (wide)
+      const ellipseStretch = 1 + Math.abs(horizontalBias) * 0.8; // 1 (square) → 1.8 (extreme)
+
+      const minDim = Math.min(viewportHeight, viewportWidth);
+      const baseRadius = minDim * 0.32;
+
+      if (horizontalBias >= 0) {
+        this.orbitRadiusX = baseRadius * ellipseStretch;
+        this.orbitRadiusY = baseRadius;
+      } else {
+        this.orbitRadiusX = baseRadius;
+        this.orbitRadiusY = baseRadius * ellipseStretch;
       }
     },
 
@@ -1727,8 +1731,14 @@
         const x = Math.cos(currentAngle) * this.orbitRadiusX;
         const y = Math.sin(currentAngle) * this.orbitRadiusY;
 
-        // Apply position
-        item.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+        // Depth illusion: muses on the far side (sin < 0) recede slightly.
+        // sin(angle) = -1 (top of ellipse, farthest) → scale 0.65
+        // sin(angle) =  1 (bottom, nearest)         → scale 1.05
+        const depth = (Math.sin(currentAngle) + 1) * 0.5; // 0..1
+        const scale = 0.65 + depth * 0.40;
+
+        item.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(${scale})`;
+        item.style.zIndex = Math.round(depth * 100);
       });
     },
 

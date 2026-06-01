@@ -508,7 +508,7 @@ img {
   width: 100%;
   height: 100vh;
   height: 100dvh;
-  padding: clamp(2rem, 5vw, 4rem);
+  padding: clamp(4rem, 8vh, 6rem) clamp(2rem, 5vw, 4rem);
   z-index: 50;
   opacity: 0;
   will-change: opacity;
@@ -517,8 +517,7 @@ img {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: clamp(4rem, 8vh, 6rem);
-  padding-top: clamp(6rem, 12vh, 8rem);
+  gap: clamp(2rem, 5vh, 4rem);
 }
 
 /* Gradient background canvas for Comet section */
@@ -680,9 +679,9 @@ img {
   width: 100%;
   max-width: 1200px;
   z-index: 10;
-  min-height: 500px;
-  flex-shrink: 0;
-  flex-grow: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
 }
 
 /* Individual Panel */
@@ -704,6 +703,8 @@ img {
   opacity: 1;
   animation: fadeInPanel 0.5s ease;
   position: relative;
+  width: 100%;
+  align-content: center;
 }
 
 /* Panel Description (Left Side) */
@@ -774,7 +775,8 @@ img {
 .comet-steps {
   display: flex;
   flex-direction: column;
-  gap: clamp(1.5rem, 3vh, 2rem);
+  gap: clamp(0.75rem, 2vh, 1.5rem);
+  justify-content: center;
 }
 
 .step-row {
@@ -1257,12 +1259,11 @@ img {
   pointer-events: none;
 }
 
-/* Central Logo */
+/* Central Logo - centered via GSAP xPercent/yPercent so scale composes correctly */
 .muse-center-logo {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
   z-index: 20;
   opacity: 0; /* Start invisible, GSAP will fade in */
   will-change: opacity, transform;
@@ -1855,22 +1856,14 @@ img {
 .events-page-wrapper {
   position: relative;
   width: 100%;
-  min-height: 100vh;
-  min-height: 100svh;
+  min-height: 60vh;
+  min-height: 60svh;
   background: var(--color-black);
-  padding: clamp(4rem, 8vh, 8rem) clamp(2rem, 5vw, 4rem);
+  padding: clamp(3rem, 6vh, 5rem) clamp(2rem, 5vw, 4rem);
   z-index: 40;
-}
-
-/* Events Background Canvas (landing style starfield) */
-.events-background-canvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ==========================================================================
@@ -1879,17 +1872,17 @@ img {
 .partnership-section {
   width: 100%;
   max-width: 1400px;
-  margin: 0 auto clamp(6rem, 12vh, 10rem);
+  margin: 0 auto;
   text-align: center;
 }
 
 .partnership-title {
   font-family: var(--font-canela);
-  font-size: clamp(28px, 4vw, 56px);
+  font-size: clamp(24px, 3vw, 42px);
   font-weight: var(--font-h1-weight);
   text-transform: uppercase;
   color: var(--color-white);
-  margin-bottom: clamp(3rem, 6vh, 5rem);
+  margin-bottom: clamp(2rem, 4vh, 3rem);
   letter-spacing: 0.02em;
 }
 
@@ -1939,288 +1932,9 @@ img {
 }
 
 /* ==========================================================================
-   Stardust Section
-   ========================================================================== */
-.stardust {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto clamp(8rem, 15vh, 12rem);
-}
-
-.stardust-header {
-  margin-bottom: clamp(4rem, 8vh, 6rem);
-}
-
-.section-label {
-  font-family: var(--font-canela);
-  font-size: clamp(12px, 1.2vw, 16px);
-  font-weight: var(--font-body-weight);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: var(--spacing-md);
-}
-
-.stardust-headline {
-  font-family: var(--font-canela);
-  font-size: clamp(28px, 4.5vw, 56px);
-  font-weight: var(--font-h1-weight);
-  line-height: 1.1;
-  text-transform: uppercase;
-  color: var(--color-white);
-  margin: 0;
-}
-
-.stardust-headline em {
-  font-style: italic;
-  color: rgba(0, 0, 0, 0);
-  -webkit-text-stroke: 1px var(--color-white);
-  text-stroke: 1px var(--color-white);
-}
-
-/* Campaign Card */
-.campaign {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: clamp(1.5rem, 3vw, 2.5rem);
-  align-items: start;
-  padding: clamp(2rem, 4vh, 3rem) 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.campaign:last-child {
-  border-bottom: none;
-}
-
-.campaign-num {
-  font-family: var(--font-canela);
-  font-size: clamp(18px, 2vw, 24px);
-  font-weight: var(--font-h1-weight);
-  color: rgba(255, 255, 255, 0.4);
-  min-width: clamp(60px, 8vw, 80px);
-}
-
-.campaign-status {
-  font-family: var(--font-canela);
-  font-size: clamp(11px, 1.1vw, 14px);
-  font-weight: var(--font-body-weight);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 4px 12px;
-  border-radius: 20px;
-  display: inline-block;
-  margin-bottom: var(--spacing-sm);
-}
-
-.status-active {
-  background: rgba(76, 175, 80, 0.2);
-  color: #4CAF50;
-}
-
-.status-open {
-  background: rgba(33, 150, 243, 0.2);
-  color: #2196F3;
-}
-
-.status-archive {
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.3);
-}
-
-.campaign-name {
-  font-family: var(--font-canela);
-  font-size: clamp(22px, 3vw, 36px);
-  font-weight: var(--font-h1-weight);
-  text-transform: uppercase;
-  color: var(--color-white);
-  margin-bottom: var(--spacing-xs);
-}
-
-.campaign-sub {
-  font-family: var(--font-canela);
-  font-size: clamp(13px, 1.4vw, 18px);
-  font-weight: var(--font-body-weight);
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: var(--spacing-sm);
-}
-
-.campaign-ngo {
-  font-family: var(--font-canela);
-  font-size: clamp(14px, 1.5vw, 19px);
-  font-weight: var(--font-body-weight);
-  color: rgba(255, 255, 255, 0.85);
-  font-style: italic;
-  margin-bottom: var(--spacing-md);
-}
-
-.campaign-muse-tags {
-  display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-}
-
-.muse-tag {
-  font-family: var(--font-canela);
-  font-size: clamp(12px, 1.2vw, 15px);
-  font-weight: var(--font-body-weight);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  opacity: 0.9;
-}
-
-.campaign-link {
-  font-family: var(--font-canela);
-  font-size: clamp(16px, 1.8vw, 22px);
-  font-weight: var(--font-body-weight);
-  color: var(--color-white);
-  text-decoration: none;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-  transition: transform var(--transition-medium);
-}
-
-.campaign-link:hover {
-  transform: translateX(4px);
-}
-
-/* ==========================================================================
-   Horizon Section
-   ========================================================================== */
-.horizon {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.horizon-header {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(3rem, 6vw, 6rem);
-  margin-bottom: clamp(4rem, 8vh, 6rem);
-}
-
-.horizon-header-left .section-label {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.horizon-headline {
-  font-family: var(--font-canela);
-  font-size: clamp(36px, 6vw, 72px);
-  font-weight: var(--font-h1-weight);
-  line-height: 1.1;
-  text-transform: uppercase;
-  color: var(--color-white);
-  margin: 0;
-}
-
-.horizon-headline em {
-  font-style: italic;
-  color: rgba(0, 0, 0, 0);
-  -webkit-text-stroke: 1px var(--color-white);
-  text-stroke: 1px var(--color-white);
-}
-
-.horizon-question {
-  font-family: var(--font-canela);
-  font-size: clamp(18px, 2.2vw, 28px);
-  font-weight: var(--font-body-weight);
-  font-style: italic;
-  color: rgba(255, 255, 255, 0.9);
-  line-height: 1.4;
-  margin-bottom: var(--spacing-md);
-}
-
-.horizon-body {
-  font-family: var(--font-canela);
-  font-size: clamp(14px, 1.6vw, 20px);
-  font-weight: var(--font-body-weight);
-  color: rgba(255, 255, 255, 0.75);
-  line-height: 1.6;
-  text-align: justify;
-}
-
-/* Proof of Concept Grid */
-.horizon-proof {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(2rem, 4vw, 3rem);
-  margin-bottom: clamp(3rem, 6vh, 4rem);
-  padding: clamp(2rem, 4vh, 3rem);
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 16px;
-}
-
-.proof-cell {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.proof-cell-label {
-  font-family: var(--font-canela);
-  font-size: clamp(11px, 1.1vw, 13px);
-  font-weight: var(--font-body-weight);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.proof-cell-title {
-  font-family: var(--font-canela);
-  font-size: clamp(18px, 2.2vw, 26px);
-  font-weight: var(--font-h1-weight);
-  text-transform: uppercase;
-  color: var(--color-white);
-  line-height: 1.2;
-}
-
-.proof-cell-body {
-  font-family: var(--font-canela);
-  font-size: clamp(13px, 1.4vw, 17px);
-  font-weight: var(--font-body-weight);
-  color: rgba(255, 255, 255, 0.7);
-  line-height: 1.5;
-  text-align: justify;
-}
-
-.horizon-footnote {
-  font-family: var(--font-canela);
-  font-size: clamp(11px, 1.1vw, 14px);
-  font-weight: var(--font-body-weight);
-  color: rgba(255, 255, 255, 0.4);
-  font-style: italic;
-  line-height: 1.6;
-  text-align: justify;
-}
-
-/* ==========================================================================
    Events Page Responsive
    ========================================================================== */
-@media screen and (max-width: 1024px) {
-  .horizon-header {
-    grid-template-columns: 1fr;
-    gap: clamp(2rem, 4vh, 3rem);
-  }
-
-  .horizon-proof {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media screen and (max-width: 768px) {
-  .campaign {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
-  }
-
-  .campaign-num {
-    order: -1;
-  }
-
-  .campaign-link {
-    text-align: left;
-  }
-
   .partnership-track {
     gap: clamp(2rem, 4vw, 3rem);
   }
