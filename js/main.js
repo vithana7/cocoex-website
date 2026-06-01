@@ -142,7 +142,7 @@
     INTRO_PHASE3_START: 0.50,  // 50% = 200vh - constellation explosion starts
 
     // Text section (simplified - no word highlighting)
-    TEXT_SECTION_HEIGHT: 150,  // vh - total height for text section
+    TEXT_SECTION_HEIGHT: 180,  // vh - matches .text-section-wrapper { height: 180vh } (40vh dwell + 100vh reveal + 40vh dwell)
 
     // Muse section: longer intro hold for read time, shorter post-crossfade tail
     MUSE_INTRO_HOLD: 400,      // vh - hold intro text/logo before transition
@@ -315,6 +315,9 @@
   let isPageVisible = true; // Track page visibility for RAF optimization
   let webglContextsLost = false; // Track if any WebGL context was lost
   let contextListenersAdded = false; // Prevent duplicate event listeners
+  // Tracks which section is currently visible. Drives off-screen WebGL gating in masterRender().
+  // Defaults to 'intro' so the intro renders before any ScrollTrigger fires.
+  let currentSection = 'intro';
 
   // ==========================================================================
   // DEBUG SYSTEM - Set to true to enable logging
@@ -878,7 +881,8 @@
     }
 
     // Render intro WebGL background (optimized with state caching)
-    if (gl && program) {
+    // Off-screen gate: only intro section needs this canvas.
+    if (gl && program && currentSection === 'intro') {
       if (lastActiveProgram !== program) {
         gl.useProgram(program);
         gl.enableVertexAttribArray(posAttr);
@@ -893,7 +897,8 @@
     }
 
     // Render Muse background (inverted starfield: black stars on offwhite)
-    if (MuseBackground.gl && MuseBackground.program) {
+    // Off-screen gate: muse section only.
+    if (MuseBackground.gl && MuseBackground.program && currentSection === 'muse') {
       const museGL = MuseBackground.gl;
       if (lastActiveProgram !== MuseBackground.program) {
         museGL.useProgram(MuseBackground.program);
@@ -909,7 +914,9 @@
     }
 
     // Render Unified Starfield (batch uniforms, minimize state changes)
-    if (UnifiedStarfield.gl && UnifiedStarfield.program) {
+    // Off-screen gate: shared backdrop spans text, muse, and comet sections.
+    if (UnifiedStarfield.gl && UnifiedStarfield.program &&
+        (currentSection === 'text' || currentSection === 'muse' || currentSection === 'comet')) {
       const starGL = UnifiedStarfield.gl;
       if (lastActiveProgram !== UnifiedStarfield.program) {
         starGL.useProgram(UnifiedStarfield.program);
@@ -925,8 +932,9 @@
     }
 
     // Render Comet background canvas 1 (methods section, inverted starfield)
+    // Off-screen gate: comet section only.
     const cometSF1 = CometBgPrimary;
-    if (cometSF1.gl && cometSF1.program) {
+    if (cometSF1.gl && cometSF1.program && currentSection === 'comet') {
       const cometGL = cometSF1.gl;
       if (lastActiveProgram !== cometSF1.program) {
         cometGL.useProgram(cometSF1.program);
@@ -942,8 +950,9 @@
     }
 
     // Render Comet background canvas 2 (connected images section)
+    // Off-screen gate: comet section only.
     const cometSF2 = CometBgSecondary;
-    if (cometSF2.gl && cometSF2.program) {
+    if (cometSF2.gl && cometSF2.program && currentSection === 'comet') {
       const cometGL2 = cometSF2.gl;
       if (lastActiveProgram !== cometSF2.program) {
         cometGL2.useProgram(cometSF2.program);
@@ -958,8 +967,9 @@
       cometGL2.drawArrays(cometGL2.TRIANGLES, 0, 6);
     }
 
-    // Update Muse orbit positions
-    if (MuseScroll.isInitialized) {
+    // Update Muse orbit positions — only when muse section is visible.
+    // Saves 7 element style writes per frame outside the muse section.
+    if (MuseScroll.isInitialized && currentSection === 'muse') {
       MuseScroll.updateOrbitPositions();
     }
 
@@ -976,7 +986,57 @@
       trigger: '.scroll-container',
       start: 'top top',
       end: 'bottom bottom',
-      onUpdate: (self) => updatePositions(self),
+      onUpdate: (self) => {
+        updatePositions(self);
+        // Off-screen WebGL gating — derive currentSection from scroll position.
+        // Section vh boundaries (cumulative): intro 0-400, text 400-580, muse 580-1040, comet 1040-1720, events 1720+.
+        // Sources: SCROLL_TIMING.INTRO_TOTAL (400), .text-section-wrapper (180vh CSS),
+        // .muse-section-wrapper (460vh CSS = MUSE_TOTAL), .comet-collab-wrapper (680vh CSS = COMET_TOTAL).
+        // BUFFER: shift each upcoming threshold ~75vh earlier so the next section's
+        // starfield is already drawing before it scrolls into view (no pop-in).
+        const vhPx = window.innerHeight / 100;
+        const BUFFER_VH = 75;
+        const bufferPx = BUFFER_VH * vhPx;
+        // Lead-buffered thresholds: shift earlier so the next section's
+        // starfield is already drawing before it scrolls into view (no pop-in
+        // for the white-on-black/inverted shaders waking up).
+        const introEndPx = SCROLL_TIMING.INTRO_TOTAL * vhPx - bufferPx;
+        const textEndPx  = (SCROLL_TIMING.INTRO_TOTAL + SCROLL_TIMING.TEXT_SECTION_HEIGHT) * vhPx - bufferPx;
+        const museEndPx  = (SCROLL_TIMING.INTRO_TOTAL + SCROLL_TIMING.TEXT_SECTION_HEIGHT + SCROLL_TIMING.MUSE_TOTAL) * vhPx - bufferPx;
+        const cometEndPx = (SCROLL_TIMING.INTRO_TOTAL + SCROLL_TIMING.TEXT_SECTION_HEIGHT + SCROLL_TIMING.MUSE_TOTAL + SCROLL_TIMING.COMET_TOTAL) * vhPx - bufferPx;
+        // Unbuffered intro end: we don't want to hide .intro until phase 3 is
+        // visually done. The lead buffer is for waking other shaders, not for
+        // tearing down the current one.
+        const introHideAtPx = SCROLL_TIMING.INTRO_TOTAL * vhPx;
+        const y = self.scroll();
+        let next;
+        if      (y < introEndPx) next = 'intro';
+        else if (y < textEndPx)  next = 'text';
+        else if (y < museEndPx)  next = 'muse';
+        else if (y < cometEndPx) next = 'comet';
+        else                     next = 'events';
+        if (next !== currentSection) currentSection = next;
+
+        // .intro is a fixed full-screen overlay (z=10) holding both
+        // #bg-canvas (cosmic-noise WebGL) and #constellation-canvas (2D).
+        // .white-section (z=30) sits above but is transparent; .muse-intro-page
+        // has no background. The last drawn frames of both intro canvases
+        // bleed through during/after the muse crossfade. Hide the whole .intro
+        // overlay past the unbuffered intro end; restore on scroll-back so
+        // re-entering phase 3 redraws cleanly.
+        if (elements.introSection) {
+          const shouldHideIntro = y >= introHideAtPx;
+          const isHidden = elements.introSection.style.visibility === 'hidden';
+          if (shouldHideIntro && !isHidden) {
+            if (constCtx && elements.constCanvas) {
+              constCtx.clearRect(0, 0, elements.constCanvas.width, elements.constCanvas.height);
+            }
+            elements.introSection.style.visibility = 'hidden';
+          } else if (!shouldHideIntro && isHidden) {
+            elements.introSection.style.visibility = '';
+          }
+        }
+      },
       invalidateOnRefresh: true,
     });
 
@@ -1483,6 +1543,42 @@
   const CometBgSecondary = createStarfield('comet-collab-background-canvas-2', { invert: true, intensity: 0.9 });
 
   // ==========================================================================
+  // FOCUS TRAP (shared by MusePopup + StepPopup)
+  // ==========================================================================
+  const FOCUSABLE_SELECTOR = [
+    'a[href]', 'button:not([disabled])', 'input:not([disabled])',
+    'select:not([disabled])', 'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])'
+  ].join(',');
+
+  function getFocusable(container) {
+    if (!container) return [];
+    return Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR))
+      .filter(el => el.offsetParent !== null || el === document.activeElement);
+  }
+
+  function createFocusTrap(container) {
+    const handler = (e) => {
+      if (e.key !== 'Tab') return;
+      const focusable = getFocusable(container);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    return {
+      activate() { document.addEventListener('keydown', handler); },
+      deactivate() { document.removeEventListener('keydown', handler); }
+    };
+  }
+
+  // ==========================================================================
   // MUSE POPUP MODAL - ORBITAL FOCUS
   // ==========================================================================
   const MusePopup = {
@@ -1500,6 +1596,8 @@
     closeTimeline: null,
     isOpen: false,
     currentColor: '#ffffff',
+    focusTrap: null,
+    previouslyFocused: null,
 
     init() {
       this.popup = document.getElementById('muse-popup');
@@ -1534,12 +1632,16 @@
           this.close();
         }
       });
+
+      // Focus trap is created lazily on open (content not yet measured here).
+      this.focusTrap = createFocusTrap(this.content);
     },
 
     open(causeTitle, description, color, imageSrc) {
       if (!this.popup || this.isOpen) return;
       this.isOpen = true;
       this.currentColor = color;
+      this.previouslyFocused = document.activeElement;
 
       // Update content - cause and description below image
       this.cause.textContent = causeTitle; // e.g., "Lunes · Water"
@@ -1597,11 +1699,24 @@
           duration: 0.4,
           ease: 'power2.out',
         }, '-=0.3');
+
+      // A11y: trap focus inside popup; move focus to close button.
+      if (this.focusTrap) this.focusTrap.activate();
+      if (this.closeBtn && typeof this.closeBtn.focus === 'function') {
+        this.closeBtn.focus();
+      }
     },
 
     close() {
       if (!this.popup || !this.isOpen) return;
       this.isOpen = false;
+
+      // A11y: release focus trap and restore focus to the originally-focused element.
+      if (this.focusTrap) this.focusTrap.deactivate();
+      if (this.previouslyFocused && typeof this.previouslyFocused.focus === 'function') {
+        try { this.previouslyFocused.focus(); } catch (_) { /* element may be gone */ }
+      }
+      this.previouslyFocused = null;
 
       // Kill any running animations
       if (this.openTimeline) this.openTimeline.kill();
@@ -1700,6 +1815,7 @@
     animationTime: 0,
     orbitSpeed: 0.00015, // 240 seconds per rotation
     isMobile: false,
+    orbitPauseUntil: 0, // performance.now() timestamp; auto-rotation paused while < now
 
     init() {
       this.container = document.getElementById('muse-section');
@@ -1758,8 +1874,12 @@
       const deltaTime = currentTime - this.lastTime;
       this.lastTime = currentTime;
 
-      // Update animation time
-      this.animationTime += deltaTime * this.orbitSpeed;
+      // Pause-on-touch: skip the angle increment for 2s after touchstart
+      // to give mobile users a stable tap target on the slow 240s rotation.
+      // Note: lastTime is advanced regardless so resume isn't a jump.
+      if (!this.orbitPauseUntil || performance.now() >= this.orbitPauseUntil) {
+        this.animationTime += deltaTime * this.orbitSpeed;
+      }
 
       // Update each muse position (mobile only)
       this.items.forEach((item, index) => {
@@ -1782,14 +1902,10 @@
     },
 
     applyColors() {
-      this.items.forEach((item) => {
-        const color = item.getAttribute('data-color');
-        const heading = item.querySelector('.muse-text h3');
-
-        if (color && heading) {
-          heading.style.color = color;
-        }
-      });
+      // Headings now render in solid black for WCAG AA contrast on the off-white
+      // backdrop (per-muse hex tones — esp. Thunor #F8D86A — failed AA).
+      // Per-muse colour is still surfaced via popup aura, glow, and orbit dot.
+      // No inline colour write here.
     },
 
     attachClickHandlers() {
@@ -1799,9 +1915,15 @@
         const heading = item.querySelector('.muse-text h3');
         const paragraph = item.querySelector('.muse-text p');
         const imageElement = item.querySelector('.muse-image img');
-        const imageContainer = item.querySelector('.muse-image');
 
-        // Make both image and heading clickable
+        // A11y: each orbit item is the focusable activator. The whole item
+        // is the hit surface (mobile padding lives in CSS), keyboard reaches
+        // it via Tab, and Enter/Space activates.
+        item.setAttribute('tabindex', '0');
+        item.setAttribute('role', 'button');
+        if (popupTitle) item.setAttribute('aria-label', popupTitle);
+        item.style.cursor = 'pointer';
+
         const clickHandler = () => {
           const cause = popupTitle || (heading ? heading.textContent : '');
           const description = paragraph ? paragraph.textContent : '';
@@ -1809,16 +1931,23 @@
           MusePopup.open(cause, description, color, imageSrc);
         };
 
-        if (imageContainer) {
-          imageContainer.style.cursor = 'pointer';
-          imageContainer.addEventListener('click', clickHandler);
-        }
-
-        if (heading) {
-          heading.style.cursor = 'pointer';
-          heading.addEventListener('click', clickHandler);
-        }
+        item.addEventListener('click', clickHandler);
+        item.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            clickHandler();
+          }
+        });
       });
+
+      // Pause-on-touch (2s): on touchstart anywhere in the muse section,
+      // freeze the auto-rotation so the user has a stable target. Touch only —
+      // desktop mouse keeps perpetual motion.
+      if (this.container) {
+        this.container.addEventListener('touchstart', () => {
+          this.orbitPauseUntil = performance.now() + 2000;
+        }, { passive: true });
+      }
     },
 
     handleResize() {
@@ -2141,6 +2270,8 @@
     title: null,
     description: null,
     isOpen: false,
+    focusTrap: null,
+    previouslyFocused: null,
 
     init() {
       // Get popup elements
@@ -2152,6 +2283,8 @@
       this.description = document.querySelector('.step-popup-description');
 
       if (!this.popup) return;
+
+      this.focusTrap = createFocusTrap(this.content);
 
       // Get all clickable image items
       const imageItems = document.querySelectorAll('.comet-image-item.clickable');
@@ -2199,6 +2332,8 @@
 
       if (!stepData) return;
 
+      this.previouslyFocused = document.activeElement;
+
       // Update content
       this.title.textContent = stepData.title;
       this.description.textContent = stepData.description;
@@ -2221,12 +2356,20 @@
         }
       );
 
-      // Trap focus in popup
+      // A11y: trap focus inside popup; move focus to close button.
+      if (this.focusTrap) this.focusTrap.activate();
       this.closeBtn.focus();
     },
 
     close() {
       if (!this.isOpen) return;
+
+      // A11y: release focus trap and restore focus to the originally-focused element.
+      if (this.focusTrap) this.focusTrap.deactivate();
+      if (this.previouslyFocused && typeof this.previouslyFocused.focus === 'function') {
+        try { this.previouslyFocused.focus(); } catch (_) { /* element may be gone */ }
+      }
+      this.previouslyFocused = null;
 
       // GSAP animation
       gsap.to(this.content, {
