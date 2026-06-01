@@ -10,7 +10,7 @@
   // ==========================================================================
   // GSAP SETUP
   // ==========================================================================
-  gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
+  gsap.registerPlugin(ScrollTrigger);
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -75,7 +75,7 @@
             float dist = length(gridFract - starPos);
 
             // Twinkle effect - each star has its own rhythm
-            float twinkle = sin(time * (1.5 + starHash * 2.5) + starHash * 6.28) * 0.5 + 0.5;
+            float twinkle = sin(time * (0.75 + starHash * 1.25) + starHash * 6.28) * 0.5 + 0.5;
             twinkle = 0.3 + twinkle * 0.7; // Never fully off
 
             // Star brightness based on distance and twinkle
@@ -856,7 +856,7 @@
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 
-    // Render Muse background (batch uniforms, minimize state changes)
+    // Render Muse background (inverted starfield: black stars on offwhite)
     if (MuseBackground.gl && MuseBackground.program) {
       const museGL = MuseBackground.gl;
       if (lastActiveProgram !== MuseBackground.program) {
@@ -865,6 +865,10 @@
       }
       museGL.uniform2f(MuseBackground.resUniform, MuseBackground.canvas.width, MuseBackground.canvas.height);
       museGL.uniform1f(MuseBackground.timeUniform, time);
+      museGL.uniform3f(MuseBackground.bgColorUniform, MuseBackground.bgColor[0], MuseBackground.bgColor[1], MuseBackground.bgColor[2]);
+      museGL.uniform3f(MuseBackground.starColorUniform, MuseBackground.starColor[0], MuseBackground.starColor[1], MuseBackground.starColor[2]);
+      museGL.uniform1f(MuseBackground.invertUniform, MuseBackground.invert);
+      museGL.uniform1f(MuseBackground.intensityUniform, MuseBackground.intensity);
       museGL.drawArrays(museGL.TRIANGLES, 0, 6);
     }
 
@@ -877,30 +881,44 @@
       }
       starGL.uniform2f(UnifiedStarfield.resUniform, UnifiedStarfield.canvas.width, UnifiedStarfield.canvas.height);
       starGL.uniform1f(UnifiedStarfield.timeUniform, time);
+      starGL.uniform3f(UnifiedStarfield.bgColorUniform, UnifiedStarfield.bgColor[0], UnifiedStarfield.bgColor[1], UnifiedStarfield.bgColor[2]);
+      starGL.uniform3f(UnifiedStarfield.starColorUniform, UnifiedStarfield.starColor[0], UnifiedStarfield.starColor[1], UnifiedStarfield.starColor[2]);
+      starGL.uniform1f(UnifiedStarfield.invertUniform, UnifiedStarfield.invert);
+      starGL.uniform1f(UnifiedStarfield.intensityUniform, UnifiedStarfield.intensity);
       starGL.drawArrays(starGL.TRIANGLES, 0, 6);
     }
 
-    // Render Comet background (batch uniforms, minimize state changes)
-    if (CometCollabBackground.gl && CometCollabBackground.program) {
-      const cometGL = CometCollabBackground.gl;
-      if (lastActiveProgram !== CometCollabBackground.program) {
-        cometGL.useProgram(CometCollabBackground.program);
-        lastActiveProgram = CometCollabBackground.program;
+    // Render Comet background canvas 1 (methods section, inverted starfield)
+    const cometSF1 = CometBgPrimary;
+    if (cometSF1.gl && cometSF1.program) {
+      const cometGL = cometSF1.gl;
+      if (lastActiveProgram !== cometSF1.program) {
+        cometGL.useProgram(cometSF1.program);
+        lastActiveProgram = cometSF1.program;
       }
-      cometGL.uniform2f(CometCollabBackground.resUniform, CometCollabBackground.canvas.width, CometCollabBackground.canvas.height);
-      cometGL.uniform1f(CometCollabBackground.timeUniform, time);
+      cometGL.uniform2f(cometSF1.resUniform, cometSF1.canvas.width, cometSF1.canvas.height);
+      cometGL.uniform1f(cometSF1.timeUniform, time);
+      cometGL.uniform3f(cometSF1.bgColorUniform, cometSF1.bgColor[0], cometSF1.bgColor[1], cometSF1.bgColor[2]);
+      cometGL.uniform3f(cometSF1.starColorUniform, cometSF1.starColor[0], cometSF1.starColor[1], cometSF1.starColor[2]);
+      cometGL.uniform1f(cometSF1.invertUniform, cometSF1.invert);
+      cometGL.uniform1f(cometSF1.intensityUniform, cometSF1.intensity);
       cometGL.drawArrays(cometGL.TRIANGLES, 0, 6);
     }
 
-    // Render Comet background 2 (connected images section)
-    if (CometCollabBackground.gl2 && CometCollabBackground.program2) {
-      const cometGL2 = CometCollabBackground.gl2;
-      if (lastActiveProgram !== CometCollabBackground.program2) {
-        cometGL2.useProgram(CometCollabBackground.program2);
-        lastActiveProgram = CometCollabBackground.program2;
+    // Render Comet background canvas 2 (connected images section)
+    const cometSF2 = CometBgSecondary;
+    if (cometSF2.gl && cometSF2.program) {
+      const cometGL2 = cometSF2.gl;
+      if (lastActiveProgram !== cometSF2.program) {
+        cometGL2.useProgram(cometSF2.program);
+        lastActiveProgram = cometSF2.program;
       }
-      cometGL2.uniform2f(CometCollabBackground.resUniform2, CometCollabBackground.canvas2.width, CometCollabBackground.canvas2.height);
-      cometGL2.uniform1f(CometCollabBackground.timeUniform2, time);
+      cometGL2.uniform2f(cometSF2.resUniform, cometSF2.canvas.width, cometSF2.canvas.height);
+      cometGL2.uniform1f(cometSF2.timeUniform, time);
+      cometGL2.uniform3f(cometSF2.bgColorUniform, cometSF2.bgColor[0], cometSF2.bgColor[1], cometSF2.bgColor[2]);
+      cometGL2.uniform3f(cometSF2.starColorUniform, cometSF2.starColor[0], cometSF2.starColor[1], cometSF2.starColor[2]);
+      cometGL2.uniform1f(cometSF2.invertUniform, cometSF2.invert);
+      cometGL2.uniform1f(cometSF2.intensityUniform, cometSF2.intensity);
       cometGL2.drawArrays(cometGL2.TRIANGLES, 0, 6);
     }
 
@@ -932,7 +950,8 @@
       MuseScroll.handleResize();
       MuseBackground.resize();
       UnifiedStarfield.resize();
-      CometCollabBackground.resize();
+      CometBgPrimary.resize();
+      CometBgSecondary.resize();
       ScrollTrigger.refresh();
     }, 150);
 
@@ -1071,33 +1090,10 @@
       { opacity: 1, ease: 'power2.out' }
     );
 
-    // Footer reveal at end of page (horizon section)
-    const socialLinks = document.querySelector('.social-links');
-    const footerLogo = document.querySelector('.footer-logo');
-    const horizonSection = document.querySelector('#horizon');
-
-    if (horizonSection) {
-      ScrollTrigger.create({
-        trigger: '#horizon',
-        start: 'top 80%', // Footer appears when horizon section enters viewport
-        invalidateOnRefresh: true,
-        anticipatePin: 1,
-        onEnter: () => {
-          socialLinks?.classList.add('visible');
-          footerLogo?.classList.add('visible');
-          log('👣 FOOTER: Visible at page end (horizon section)');
-        },
-        onLeaveBack: () => {
-          socialLinks?.classList.remove('visible');
-          footerLogo?.classList.remove('visible');
-        }
-      });
-    }
-
     // Muse intro page overlay transition
     const museIntroPage = document.getElementById('muse-intro-page');
     const museIntroLogo = document.querySelector('.muse-intro-logo');
-    const museIntroText = document.querySelector('.muse-intro-text');
+    const museIntroText = document.querySelectorAll('.muse-intro-text-top, .muse-intro-text-bottom');
     const whiteContent = document.querySelector('.white-section-content');
     const museCenterLogo = document.querySelector('.muse-center-logo');
 
@@ -1138,7 +1134,7 @@
         }
       })
       // Fade out intro logo and text
-      .fromTo([museIntroLogo, museIntroText],
+      .fromTo([museIntroLogo, ...museIntroText],
         { opacity: 1 },
         { opacity: 0, ease: 'none' },
         0
@@ -1320,509 +1316,132 @@
 
 
   // ==========================================================================
-  // MUSE SECTION BACKGROUND - ANIMATED GRADIENT
-  // ==========================================================================
-  const MuseBackground = {
-    canvas: null,
-    gl: null,
-    program: null,
-    startTime: Date.now(),
-
-    colors: [
-      [0.34, 0.51, 0.65], // Lunes - #5783A6
-      [0.84, 0.30, 0.18], // Ares - #D54D2E
-      [0.55, 0.69, 0.50], // Rabu - #8CB07F
-      [0.97, 0.85, 0.42], // Thunor - #F8D86A
-      [0.37, 0.28, 0.63], // Shukra - #5E47A1
-      [0.50, 0.29, 0.64], // Dosei - #7F49A2
-      [0.83, 0.51, 0.28], // Solis - #D48348
-    ],
-
-    init() {
-      this.canvas = document.getElementById('muse-background-canvas');
-      if (!this.canvas) return;
-
-      this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
-      if (!this.gl) return;
-
-      this.resize();
-      this.initShaders();
-      // Render handled by master loop
-    },
-
-    resize() {
-      const dpr = window.devicePixelRatio || 1;
-      const rect = this.canvas.parentElement.getBoundingClientRect();
-
-      this.canvas.width = rect.width * dpr;
-      this.canvas.height = rect.height * dpr;
-      this.canvas.style.width = rect.width + 'px';
-      this.canvas.style.height = rect.height + 'px';
-
-      if (this.gl) {
-        this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-      }
-    },
-
-    initShaders() {
-      const vertexShaderSource = `
-        attribute vec2 a_position;
-        void main() {
-          gl_Position = vec4(a_position, 0.0, 1.0);
-        }
-      `;
-
-      const fragmentShaderSource = `
-        precision highp float;
-        uniform vec2 u_resolution;
-        uniform float u_time;
-
-        // Muse colors
-        const vec3 color1 = vec3(0.34, 0.51, 0.65); // Lunes
-        const vec3 color2 = vec3(0.84, 0.30, 0.18); // Ares
-        const vec3 color3 = vec3(0.55, 0.69, 0.50); // Rabu
-        const vec3 color4 = vec3(0.97, 0.85, 0.42); // Thunor
-        const vec3 color5 = vec3(0.37, 0.28, 0.63); // Shukra
-        const vec3 color6 = vec3(0.50, 0.29, 0.64); // Dosei
-        const vec3 color7 = vec3(0.83, 0.51, 0.28); // Solis
-
-        ${GLSL_UTILS.SIMPLEX_NOISE}
-
-        void main() {
-          vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-          float aspect = u_resolution.x / u_resolution.y;
-          vec2 uvAspect = vec2(uv.x * aspect, uv.y);
-
-          // Create flowing noise patterns
-          float time = u_time * 0.15;
-          float noise1 = snoise(uvAspect * 2.0 + vec2(time * 0.3, time * 0.2));
-          float noise2 = snoise(uvAspect * 3.0 - vec2(time * 0.2, time * 0.3));
-          float noise3 = snoise(uvAspect * 1.5 + vec2(time * 0.1, -time * 0.15));
-
-          // Combine noise for complex movement
-          float pattern = (noise1 + noise2 * 0.5 + noise3 * 0.3) / 1.8;
-          pattern = pattern * 0.5 + 0.5; // Normalize to 0-1
-
-          // Create color zones
-          float zone = pattern * 7.0;
-          vec3 baseColor;
-
-          // Interpolate between muse colors
-          if (zone < 1.0) {
-            baseColor = mix(color1, color2, fract(zone));
-          } else if (zone < 2.0) {
-            baseColor = mix(color2, color3, fract(zone));
-          } else if (zone < 3.0) {
-            baseColor = mix(color3, color4, fract(zone));
-          } else if (zone < 4.0) {
-            baseColor = mix(color4, color5, fract(zone));
-          } else if (zone < 5.0) {
-            baseColor = mix(color5, color6, fract(zone));
-          } else if (zone < 6.0) {
-            baseColor = mix(color6, color7, fract(zone));
-          } else {
-            baseColor = mix(color7, color1, fract(zone));
-          }
-
-          // Mix with white and black for subtle effect
-          float whiteAmount = 0.75; // Strong white base
-          float colorStrength = 0.15; // Subtle color touches
-
-          vec3 finalColor = mix(vec3(1.0), baseColor, colorStrength);
-          finalColor = mix(finalColor, vec3(0.0), 0.02); // Tiny bit of black depth
-
-          gl_FragColor = vec4(finalColor, 1.0);
-        }
-      `;
-
-      const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexShaderSource);
-      const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentShaderSource);
-
-      this.program = this.gl.createProgram();
-      this.gl.attachShader(this.program, vertexShader);
-      this.gl.attachShader(this.program, fragmentShader);
-      this.gl.linkProgram(this.program);
-
-      const posAttr = this.gl.getAttribLocation(this.program, 'a_position');
-      this.resUniform = this.gl.getUniformLocation(this.program, 'u_resolution');
-      this.timeUniform = this.gl.getUniformLocation(this.program, 'u_time');
-
-      const buffer = this.gl.createBuffer();
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), this.gl.STATIC_DRAW);
-
-      this.gl.enableVertexAttribArray(posAttr);
-      this.gl.vertexAttribPointer(posAttr, 2, this.gl.FLOAT, false, 0, 0);
-    },
-
-    createShader(type, source) {
-      const shader = this.gl.createShader(type);
-      this.gl.shaderSource(shader, source);
-      this.gl.compileShader(shader);
-      if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
-        console.error('Muse shader error:', this.gl.getShaderInfoLog(shader));
-        return null;
-      }
-      return shader;
-    }
-  };
-
-  // ==========================================================================
   // UNIFIED STARFIELD BACKGROUND (MUSE + COMET SECTIONS)
+  // Factory: parameterized by canvas id + bg/star color so the same shader
+  // can render an inverted (black-on-offwhite) variant for the muse intro.
   // ==========================================================================
-  const UnifiedStarfield = {
-    canvas: null,
-    gl: null,
-    program: null,
-    startTime: Date.now(),
+  function createStarfield(canvasId, options) {
+    options = options || {};
+    return {
+      canvas: null,
+      gl: null,
+      program: null,
+      canvasId: canvasId,
+      bgColor: options.bgColor || [0.0, 0.0, 0.0],
+      starColor: options.starColor || [1.0, 1.0, 1.0],
+      // When true, fragment output is inverted (1.0 - color) so the canonical
+      // white-on-black starfield renders as black-on-white at full contrast.
+      invert: options.invert ? 1.0 : 0.0,
+      // Multiplies star brightness pre-mix. Default 0.25 matches the original
+      // intensity; inverted variants need a higher value to make dark stars
+      // read against an off-white surface.
+      intensity: options.intensity != null ? options.intensity : 0.25,
+      startTime: Date.now(),
 
-    init() {
-      this.canvas = document.getElementById('unified-starfield-canvas');
-      if (!this.canvas) return;
+      init() {
+        this.canvas = document.getElementById(this.canvasId);
+        if (!this.canvas) return;
 
-      this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
-      if (!this.gl) return;
-
-      this.resize();
-      this.initShaders();
-      // Render handled by master loop
-    },
-
-    resize() {
-      const dpr = window.devicePixelRatio || 1;
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-
-      this.canvas.width = w * dpr;
-      this.canvas.height = h * dpr;
-      this.canvas.style.width = w + 'px';
-      this.canvas.style.height = h + 'px';
-
-      if (this.gl) {
-        this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-      }
-    },
-
-    initShaders() {
-      // Use starfield shader same as landing intro
-      const vertexShaderSource = `
-        attribute vec2 a_position;
-        void main() {
-          gl_Position = vec4(a_position, 0.0, 1.0);
-        }
-      `;
-
-      const fragmentShaderSource = `
-        precision highp float;
-        uniform vec2 u_resolution;
-        uniform float u_time;
-
-        ${GLSL_UTILS.STAR_FIELD}
-
-        void main() {
-          vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-
-          // Add twinkling stars
-          float starLight = stars(uv, u_time);
-          float brightness = starLight * 0.25;
-
-          gl_FragColor = vec4(vec3(brightness), 1.0);
-        }
-      `;
-
-      const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexShaderSource);
-      const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentShaderSource);
-
-      this.program = this.gl.createProgram();
-      this.gl.attachShader(this.program, vertexShader);
-      this.gl.attachShader(this.program, fragmentShader);
-      this.gl.linkProgram(this.program);
-
-      const posAttr = this.gl.getAttribLocation(this.program, 'a_position');
-      this.resUniform = this.gl.getUniformLocation(this.program, 'u_resolution');
-      this.timeUniform = this.gl.getUniformLocation(this.program, 'u_time');
-
-      const buffer = this.gl.createBuffer();
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), this.gl.STATIC_DRAW);
-
-      this.gl.enableVertexAttribArray(posAttr);
-      this.gl.vertexAttribPointer(posAttr, 2, this.gl.FLOAT, false, 0, 0);
-    },
-
-    createShader(type, source) {
-      const shader = this.gl.createShader(type);
-      this.gl.shaderSource(shader, source);
-      this.gl.compileShader(shader);
-      if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
-        console.error('Starfield shader error:', this.gl.getShaderInfoLog(shader));
-        return null;
-      }
-      return shader;
-    }
-  };
-
-  // ==========================================================================
-  // COMET COLLAB PHASES BACKGROUND - EXTENDED GRADIENT
-  // ==========================================================================
-  const CometCollabBackground = {
-    canvas: null,
-    gl: null,
-    program: null,
-    canvas2: null,
-    gl2: null,
-    program2: null,
-    resUniform2: null,
-    timeUniform2: null,
-    startTime: Date.now(),
-
-    init() {
-      // Initialize first canvas (methods section)
-      this.canvas = document.getElementById('comet-collab-background-canvas');
-      if (this.canvas) {
         this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
-        if (this.gl) {
-          this.initShaders();
-        }
-      }
+        if (!this.gl) return;
 
-      // Initialize second canvas (connected images section)
-      this.canvas2 = document.getElementById('comet-collab-background-canvas-2');
-      if (this.canvas2) {
-        this.gl2 = this.canvas2.getContext('webgl') || this.canvas2.getContext('experimental-webgl');
-        if (this.gl2) {
-          this.initShaders2();
-        }
-      }
+        this.resize();
+        this.initShaders();
+      },
 
-      this.resize();
-      // Render handled by master loop
-    },
+      resize() {
+        // DPR cap at 2x (non-negotiable per CLAUDE.md mobile perf rule)
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = window.innerWidth;
+        const h = window.innerHeight;
 
-    resize() {
-      const dpr = window.devicePixelRatio || 1;
-
-      // Resize first canvas
-      if (this.canvas && this.canvas.parentElement) {
-        const rect = this.canvas.parentElement.getBoundingClientRect();
-        this.canvas.width = rect.width * dpr;
-        this.canvas.height = rect.height * dpr;
-        this.canvas.style.width = rect.width + 'px';
-        this.canvas.style.height = rect.height + 'px';
+        this.canvas.width = w * dpr;
+        this.canvas.height = h * dpr;
+        this.canvas.style.width = w + 'px';
+        this.canvas.style.height = h + 'px';
 
         if (this.gl) {
           this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         }
-      }
+      },
 
-      // Resize second canvas
-      if (this.canvas2 && this.canvas2.parentElement) {
-        const rect2 = this.canvas2.parentElement.getBoundingClientRect();
-        this.canvas2.width = rect2.width * dpr;
-        this.canvas2.height = rect2.height * dpr;
-        this.canvas2.style.width = rect2.width + 'px';
-        this.canvas2.style.height = rect2.height + 'px';
-
-        if (this.gl2) {
-          this.gl2.viewport(0, 0, this.canvas2.width, this.canvas2.height);
-        }
-      }
-    },
-
-    initShaders() {
-      // Reuse the same shader code as MuseBackground
-      const vertexShaderSource = `
-        attribute vec2 a_position;
-        void main() {
-          gl_Position = vec4(a_position, 0.0, 1.0);
-        }
-      `;
-
-      const fragmentShaderSource = `
-        precision highp float;
-        uniform vec2 u_resolution;
-        uniform float u_time;
-
-        // Same muse colors for continuity
-        const vec3 color1 = vec3(0.34, 0.51, 0.65); // Lunes
-        const vec3 color2 = vec3(0.84, 0.30, 0.18); // Ares
-        const vec3 color3 = vec3(0.55, 0.69, 0.50); // Rabu
-        const vec3 color4 = vec3(0.97, 0.85, 0.42); // Thunor
-        const vec3 color5 = vec3(0.37, 0.28, 0.63); // Shukra
-        const vec3 color6 = vec3(0.50, 0.29, 0.64); // Dosei
-        const vec3 color7 = vec3(0.83, 0.51, 0.28); // Solis
-
-        ${GLSL_UTILS.SIMPLEX_NOISE}
-
-        void main() {
-          vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-          float aspect = u_resolution.x / u_resolution.y;
-          vec2 uvAspect = vec2(uv.x * aspect, uv.y);
-
-          float time = u_time * 0.15;
-          float noise1 = snoise(uvAspect * 2.0 + vec2(time * 0.3, time * 0.2));
-          float noise2 = snoise(uvAspect * 3.0 - vec2(time * 0.2, time * 0.3));
-          float noise3 = snoise(uvAspect * 1.5 + vec2(time * 0.1, -time * 0.15));
-
-          float pattern = (noise1 + noise2 * 0.5 + noise3 * 0.3) / 1.8;
-          pattern = pattern * 0.5 + 0.5;
-
-          float zone = pattern * 7.0;
-          vec3 baseColor;
-
-          if (zone < 1.0) {
-            baseColor = mix(color1, color2, fract(zone));
-          } else if (zone < 2.0) {
-            baseColor = mix(color2, color3, fract(zone));
-          } else if (zone < 3.0) {
-            baseColor = mix(color3, color4, fract(zone));
-          } else if (zone < 4.0) {
-            baseColor = mix(color4, color5, fract(zone));
-          } else if (zone < 5.0) {
-            baseColor = mix(color5, color6, fract(zone));
-          } else if (zone < 6.0) {
-            baseColor = mix(color6, color7, fract(zone));
-          } else {
-            baseColor = mix(color7, color1, fract(zone));
+      initShaders() {
+        const vertexShaderSource = `
+          attribute vec2 a_position;
+          void main() {
+            gl_Position = vec4(a_position, 0.0, 1.0);
           }
+        `;
 
-          float whiteAmount = 0.75;
-          float colorStrength = 0.15;
+        const fragmentShaderSource = `
+          precision highp float;
+          uniform vec2 u_resolution;
+          uniform float u_time;
+          uniform vec3 u_bgColor;
+          uniform vec3 u_starColor;
+          uniform float u_invert;
+          uniform float u_intensity;
 
-          vec3 finalColor = mix(vec3(1.0), baseColor, colorStrength);
-          finalColor = mix(finalColor, vec3(0.0), 0.02);
+          ${GLSL_UTILS.STAR_FIELD}
 
-          gl_FragColor = vec4(finalColor, 1.0);
-        }
-      `;
-
-      const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexShaderSource);
-      const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentShaderSource);
-
-      this.program = this.gl.createProgram();
-      this.gl.attachShader(this.program, vertexShader);
-      this.gl.attachShader(this.program, fragmentShader);
-      this.gl.linkProgram(this.program);
-
-      const posAttr = this.gl.getAttribLocation(this.program, 'a_position');
-      this.resUniform = this.gl.getUniformLocation(this.program, 'u_resolution');
-      this.timeUniform = this.gl.getUniformLocation(this.program, 'u_time');
-
-      const buffer = this.gl.createBuffer();
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), this.gl.STATIC_DRAW);
-
-      this.gl.enableVertexAttribArray(posAttr);
-      this.gl.vertexAttribPointer(posAttr, 2, this.gl.FLOAT, false, 0, 0);
-    },
-
-    createShader(type, source) {
-      const shader = this.gl.createShader(type);
-      this.gl.shaderSource(shader, source);
-      this.gl.compileShader(shader);
-      if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
-        console.error('Comet shader error:', this.gl.getShaderInfoLog(shader));
-        return null;
-      }
-      return shader;
-    },
-
-    // Initialize second canvas shaders (reuses same shader source)
-    initShaders2() {
-      const vertexShaderSource = `
-        attribute vec2 a_position;
-        void main() {
-          gl_Position = vec4(a_position, 0.0, 1.0);
-        }
-      `;
-
-      const fragmentShaderSource = `
-        precision highp float;
-        uniform vec2 u_resolution;
-        uniform float u_time;
-
-        // Same muse colors for continuity
-        const vec3 color1 = vec3(0.34, 0.51, 0.65); // Lunes
-        const vec3 color2 = vec3(0.84, 0.30, 0.18); // Ares
-        const vec3 color3 = vec3(0.55, 0.69, 0.50); // Rabu
-        const vec3 color4 = vec3(0.97, 0.85, 0.42); // Thunor
-        const vec3 color5 = vec3(0.37, 0.28, 0.63); // Shukra
-        const vec3 color6 = vec3(0.50, 0.29, 0.64); // Dosei
-        const vec3 color7 = vec3(0.83, 0.51, 0.28); // Solis
-
-        ${GLSL_UTILS.SIMPLEX_NOISE}
-
-        void main() {
-          vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-          float aspect = u_resolution.x / u_resolution.y;
-          vec2 uvAspect = vec2(uv.x * aspect, uv.y);
-
-          float time = u_time * 0.15;
-          float noise1 = snoise(uvAspect * 2.0 + vec2(time * 0.3, time * 0.2));
-          float noise2 = snoise(uvAspect * 3.0 - vec2(time * 0.2, time * 0.3));
-          float noise3 = snoise(uvAspect * 1.5 + vec2(time * 0.1, -time * 0.15));
-
-          float pattern = (noise1 + noise2 * 0.5 + noise3 * 0.3) / 1.8;
-          pattern = pattern * 0.5 + 0.5;
-
-          float zone = pattern * 7.0;
-          vec3 baseColor;
-
-          if (zone < 1.0) {
-            baseColor = mix(color1, color2, fract(zone));
-          } else if (zone < 2.0) {
-            baseColor = mix(color2, color3, fract(zone));
-          } else if (zone < 3.0) {
-            baseColor = mix(color3, color4, fract(zone));
-          } else if (zone < 4.0) {
-            baseColor = mix(color4, color5, fract(zone));
-          } else if (zone < 5.0) {
-            baseColor = mix(color5, color6, fract(zone));
-          } else if (zone < 6.0) {
-            baseColor = mix(color6, color7, fract(zone));
-          } else {
-            baseColor = mix(color7, color1, fract(zone));
+          void main() {
+            vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+            float starLight = stars(uv, u_time);
+            float brightness = clamp(starLight * u_intensity, 0.0, 1.0);
+            vec3 color = mix(u_bgColor, u_starColor, brightness);
+            color = mix(color, vec3(1.0) - color, u_invert);
+            gl_FragColor = vec4(color, 1.0);
           }
+        `;
 
-          float colorStrength = 0.15;
-          vec3 finalColor = mix(vec3(1.0), baseColor, colorStrength);
-          finalColor = mix(finalColor, vec3(0.0), 0.02);
+        const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentShaderSource);
 
-          gl_FragColor = vec4(finalColor, 1.0);
+        this.program = this.gl.createProgram();
+        this.gl.attachShader(this.program, vertexShader);
+        this.gl.attachShader(this.program, fragmentShader);
+        this.gl.linkProgram(this.program);
+
+        const posAttr = this.gl.getAttribLocation(this.program, 'a_position');
+        this.resUniform = this.gl.getUniformLocation(this.program, 'u_resolution');
+        this.timeUniform = this.gl.getUniformLocation(this.program, 'u_time');
+        this.bgColorUniform = this.gl.getUniformLocation(this.program, 'u_bgColor');
+        this.starColorUniform = this.gl.getUniformLocation(this.program, 'u_starColor');
+        this.invertUniform = this.gl.getUniformLocation(this.program, 'u_invert');
+        this.intensityUniform = this.gl.getUniformLocation(this.program, 'u_intensity');
+
+        const buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), this.gl.STATIC_DRAW);
+
+        this.gl.enableVertexAttribArray(posAttr);
+        this.gl.vertexAttribPointer(posAttr, 2, this.gl.FLOAT, false, 0, 0);
+      },
+
+      createShader(type, source) {
+        const shader = this.gl.createShader(type);
+        this.gl.shaderSource(shader, source);
+        this.gl.compileShader(shader);
+        if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+          console.error('Starfield shader error:', this.gl.getShaderInfoLog(shader));
+          return null;
         }
-      `;
-
-      const vertexShader = this.createShader2(this.gl2.VERTEX_SHADER, vertexShaderSource);
-      const fragmentShader = this.createShader2(this.gl2.FRAGMENT_SHADER, fragmentShaderSource);
-
-      this.program2 = this.gl2.createProgram();
-      this.gl2.attachShader(this.program2, vertexShader);
-      this.gl2.attachShader(this.program2, fragmentShader);
-      this.gl2.linkProgram(this.program2);
-
-      const posAttr = this.gl2.getAttribLocation(this.program2, 'a_position');
-      this.resUniform2 = this.gl2.getUniformLocation(this.program2, 'u_resolution');
-      this.timeUniform2 = this.gl2.getUniformLocation(this.program2, 'u_time');
-
-      const buffer = this.gl2.createBuffer();
-      this.gl2.bindBuffer(this.gl2.ARRAY_BUFFER, buffer);
-      this.gl2.bufferData(this.gl2.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), this.gl2.STATIC_DRAW);
-
-      this.gl2.enableVertexAttribArray(posAttr);
-      this.gl2.vertexAttribPointer(posAttr, 2, this.gl2.FLOAT, false, 0, 0);
-    },
-
-    createShader2(type, source) {
-      const shader = this.gl2.createShader(type);
-      this.gl2.shaderSource(shader, source);
-      this.gl2.compileShader(shader);
-      if (!this.gl2.getShaderParameter(shader, this.gl2.COMPILE_STATUS)) {
-        console.error('Comet shader 2 error:', this.gl2.getShaderInfoLog(shader));
-        return null;
+        return shader;
       }
-      return shader;
-    }
-  };
+    };
+  }
+
+  const UnifiedStarfield = createStarfield('unified-starfield-canvas');
+
+  // Muse section uses an inverted starfield: black stars on off-white surface.
+  const MuseBackground = createStarfield('muse-background-canvas', { invert: true, intensity: 0.9 });
+
+  // ==========================================================================
+  // COMET COLLAB PHASES BACKGROUND - INVERTED STARFIELD (BLACK ON OFFWHITE)
+  // Two starfield instances rendered in masterRender().
+  // ==========================================================================
+  const CometBgPrimary   = createStarfield('comet-collab-background-canvas',   { invert: true, intensity: 0.9 });
+  const CometBgSecondary = createStarfield('comet-collab-background-canvas-2', { invert: true, intensity: 0.9 });
 
   // ==========================================================================
   // MUSE POPUP MODAL - ORBITAL FOCUS
@@ -2227,7 +1846,7 @@
       ];
 
       // Enhanced astral line style with glow
-      this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
       this.ctx.lineWidth = 2;
       this.ctx.lineCap = 'round';
 
@@ -2238,7 +1857,7 @@
 
         // Outer glow (larger, softer)
         this.ctx.shadowBlur = 15;
-        this.ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
         this.ctx.beginPath();
         this.ctx.moveTo(from.x, from.y);
         this.ctx.lineTo(centerPos.x, centerPos.y);
@@ -2246,8 +1865,8 @@
 
         // Inner glow (brighter core)
         this.ctx.shadowBlur = 8;
-        this.ctx.shadowColor = 'rgba(255, 255, 255, 1)';
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        this.ctx.shadowColor = 'rgba(0, 0, 0, 1)';
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
         this.ctx.lineWidth = 1.5;
         this.ctx.beginPath();
         this.ctx.moveTo(from.x, from.y);
@@ -2255,7 +1874,7 @@
         this.ctx.stroke();
 
         // Reset for next line
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
         this.ctx.lineWidth = 2;
       });
 
@@ -2268,7 +1887,7 @@
 
         // Outer glow (larger, softer)
         this.ctx.shadowBlur = 15;
-        this.ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
         this.ctx.beginPath();
         this.ctx.moveTo(from.x, from.y);
         this.ctx.lineTo(to.x, to.y);
@@ -2276,8 +1895,8 @@
 
         // Inner glow (brighter core)
         this.ctx.shadowBlur = 8;
-        this.ctx.shadowColor = 'rgba(255, 255, 255, 1)';
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        this.ctx.shadowColor = 'rgba(0, 0, 0, 1)';
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
         this.ctx.lineWidth = 1.5;
         this.ctx.beginPath();
         this.ctx.moveTo(from.x, from.y);
@@ -2285,7 +1904,7 @@
         this.ctx.stroke();
 
         // Reset for next line
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
         this.ctx.lineWidth = 2;
       });
 
@@ -2318,7 +1937,7 @@
         process.addEventListener('mousedown', (e) => this.startDrag(e, process));
 
         // Touch events
-        process.addEventListener('touchstart', (e) => this.startDrag(e, process), { passive: false });
+        process.addEventListener('touchstart', (e) => this.startDrag(e, process), { passive: true });
       });
 
       // Global mouse/touch move and end events
@@ -2348,7 +1967,6 @@
     },
 
     startDrag(e, element) {
-      e.preventDefault();
       this.isDragging = true;
       this.draggedElement = element;
       element.style.touchAction = 'none';
@@ -2413,145 +2031,6 @@
   // ==========================================================================
   const MethodToggle = {
     currentMethod: 'stardust',
-    buttons: [],
-    imageItems: [],
-    isAnimating: false,
-
-    init() {
-      this.buttons = Array.from(document.querySelectorAll('.method-toggle-btn'));
-      this.imageItems = Array.from(document.querySelectorAll('.comet-image-item'));
-
-      if (this.buttons.length === 0) return;
-
-      this.buttons.forEach(btn => {
-        btn.addEventListener('click', () => this.toggle(btn.dataset.method));
-      });
-
-      // Initialize with random positions on page load
-      setTimeout(() => {
-        this.randomizePositions();
-
-        // Draw connection lines after positioning
-        if (CometConnections && CometConnections.draw) {
-          setTimeout(() => {
-            CometConnections.draw();
-          }, 50);
-        }
-      }, 100);
-    },
-
-    toggle(method) {
-      if (this.currentMethod === method || this.isAnimating) return;
-
-      this.isAnimating = true;
-      this.currentMethod = method;
-
-      // Update button states
-      this.buttons.forEach(btn => {
-        if (btn.dataset.method === method) {
-          btn.classList.add('active');
-          btn.setAttribute('aria-pressed', 'true');
-        } else {
-          btn.classList.remove('active');
-          btn.setAttribute('aria-pressed', 'false');
-        }
-      });
-
-      // Trigger merge-and-explode animation
-      this.animateMergeExplode();
-    },
-
-    animateMergeExplode() {
-      // Phase 1: Merge to center (0.6s)
-      this.imageItems.forEach(item => {
-        item.classList.add('merging');
-      });
-
-      // Redraw connection lines during animation
-      if (CometConnections && CometConnections.draw) {
-        const mergeInterval = setInterval(() => {
-          CometConnections.draw();
-        }, 16); // ~60fps
-
-        // Phase 2: Randomize positions and explode (after 0.6s)
-        setTimeout(() => {
-          clearInterval(mergeInterval);
-
-          // Randomize positions before exploding
-          this.randomizePositions();
-
-          this.imageItems.forEach(item => {
-            item.classList.remove('merging');
-          });
-
-          // Redraw lines during explode
-          const explodeInterval = setInterval(() => {
-            CometConnections.draw();
-          }, 16);
-
-          // Phase 3: Animation complete (after another 0.6s)
-          setTimeout(() => {
-            clearInterval(explodeInterval);
-            this.isAnimating = false;
-
-            // Final redraw
-            if (CometConnections && CometConnections.draw) {
-              CometConnections.draw();
-            }
-          }, 600);
-
-        }, 600);
-      } else {
-        // Fallback if CometConnections not available
-        setTimeout(() => {
-          this.randomizePositions();
-          this.imageItems.forEach(item => {
-            item.classList.remove('merging');
-          });
-
-          setTimeout(() => {
-            this.isAnimating = false;
-          }, 600);
-        }, 600);
-      }
-    },
-
-    randomizePositions() {
-      // Generate random positions around the center logo
-      // Keep images in a circular/orbital pattern but fully randomized (not consecutive)
-      const baseAngles = [0, 72, 144, 216, 288]; // 5 points evenly distributed (360/5)
-
-      // Shuffle angles using Fisher-Yates algorithm for true randomization
-      const shuffledAngles = [...baseAngles];
-      for (let i = shuffledAngles.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledAngles[i], shuffledAngles[j]] = [shuffledAngles[j], shuffledAngles[i]];
-      }
-
-      const radiusMin = 35; // % from center
-      const radiusMax = 45; // % from center
-
-      this.imageItems.forEach((item, index) => {
-        // Use shuffled angle for this image
-        const baseAngle = shuffledAngles[index];
-        const angleVariation = (Math.random() - 0.5) * 30; // ±15 degrees
-        const angle = (baseAngle + angleVariation) * (Math.PI / 180);
-
-        // Randomize radius slightly
-        const radius = radiusMin + Math.random() * (radiusMax - radiusMin);
-
-        // Convert polar to cartesian coordinates
-        const x = 50 + radius * Math.cos(angle); // 50% = center
-        const y = 50 + radius * Math.sin(angle);
-
-        // Apply positions
-        item.style.left = `${x}%`;
-        item.style.top = `${y}%`;
-        item.style.right = 'auto';
-        item.style.bottom = 'auto';
-        item.style.transform = 'translate(-50%, -50%)';
-      });
-    },
 
     getCurrentMethod() {
       return this.currentMethod;
@@ -2793,16 +2272,14 @@
     }, 100);
 
     // Initialize comet collab phases background
-    CometCollabBackground.init();
+    CometBgPrimary.init();
+    CometBgSecondary.init();
 
     // Initialize comet connection lines
     CometConnections.init();
 
     // Initialize floating draggable process images
     FloatingProcesses.init();
-
-    // Initialize method toggle (Stardust/Horizon)
-    MethodToggle.init();
 
     // Initialize partnership slider
     PartnershipSlider.init();
@@ -2830,6 +2307,8 @@
     const slider = document.getElementById('pillSlider');
 
     if (!stardust || !horizon || !tabStardust || !tabHorizon || !slider) return;
+
+    MethodToggle.currentMethod = method;
 
     if (method === 'stardust') {
       // Show Stardust panel

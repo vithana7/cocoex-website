@@ -9,16 +9,15 @@
 
 Ground-truth context for any Claude session working on this codebase. Read this before touching any file. When in doubt about a line number, verify with the actual file — this document can lag behind the code.
 
+**Source code is the reference.** `index.html`, `css/styles.css`, and `js/main.js` are authoritative — grep them directly. The `docs/` folder explains *why*, not *what*.
+
 **On session start — read these docs before writing any code:**
 
 | Priority | File | Read when |
 |---|---|---|
-| Always | `docs/js-reference.md` | Any JS work |
-| Always | `docs/css-reference.md` | Any CSS work |
-| Always | `docs/html-reference.md` | Any HTML work |
-| Always | `docs/TECHNICAL-SPEC.md` | Architecture decisions, scroll timing, WebGL |
-| Layout work | `docs/responsive-design.md` | Fluid typography, orbit ellipse, breakpoints |
-| Dependencies | `docs/libraries.md` | GSAP API, external lib usage patterns |
+| Always | `docs/TECHNICAL-SPEC.md` | Architecture decisions, scroll timing, WebGL rationale |
+| Layout work | `docs/responsive-design.md` | Fluid typography strategy, orbit ellipse, breakpoint philosophy |
+| Dependencies | `docs/libraries.md` | GSAP version + iOS guard, Typekit, project-specific patterns |
 
 ---
 
@@ -62,9 +61,9 @@ Muse colors are used for: orbit dot fills, popup aura glow, muse tags in campaig
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `index.html` | 468 | Semantic structure |
-| `css/styles.css` | 2,481 | All styling |
-| `js/main.js` | 2,859 | All animation + interaction |
+| `index.html` | 467 | Semantic structure |
+| `css/styles.css` | 2,424 | All styling |
+| `js/main.js` | 2,481 | All animation + interaction |
 | `data/events.json` | 107 | Dynamic content (campaigns, partners) |
 
 **External dependencies:**
@@ -85,7 +84,7 @@ Muse colors are used for: orbit dot fills, popup aura glow, muse tags in campaig
 ## Page Sections (Top → Bottom)
 
 ### 1. Landing / Intro (`0–400vh`)
-**HTML:** `index.html:27–53` · **CSS:** `styles.css:156–348` · **JS:** `main.js:399–648`
+**HTML:** `index.html:27–53` · **CSS:** `styles.css:165–350` · **JS:** `main.js:401–820`
 
 Fixed overlay with three animation phases:
 - **Phase 1 (0–160vh):** White + black dots orbit center. Logo scales `80px → 250px`, 2 full rotations.
@@ -97,45 +96,43 @@ Key elements: `#bg-canvas` (WebGL starfield), `#dot-white`, `#dot-black`, `#intr
 ---
 
 ### 2. Mission Text (`400–550vh`)
-**HTML:** `index.html:55–62` · **CSS:** `styles.css:362–406` · **JS:** `main.js:914–967`
+**HTML:** `index.html:55–62` · **CSS:** `styles.css:365–408` · **JS:** `main.js:1076–1090`
 
 Sticky section. `#reveal-text` paragraph fades in. `<em>` tags render as hollow outlined text (white stroke, transparent fill).
 
 ---
 
 ### 3. Muse Intro Page (`550–900vh`)
-**HTML:** `index.html:74–80` · **CSS:** `styles.css:1326–1435` · **JS:** `main.js:979–1000`
+**HTML:** `index.html:74–80` · **CSS:** `styles.css:1294–1420` · **JS:** `main.js:1093–1158`
 
-Fixed black overlay. Black inverted Muse logo centered. Top + bottom text paragraphs. `.highlight-muse` class produces hollow letter effect.
+Fixed white overlay. Black inverted Muse logo centered. Top + bottom text paragraphs.
 Holds for 350vh, then crossfades to orbiting layout.
 
 ---
 
 ### 4. Muse Orbiting (`900–1020vh`)
-**HTML:** `index.html:82–176` · **CSS:** `styles.css:1437–1583` · **JS:** `main.js:2034–2160`
+**HTML:** `index.html:82–176` · **CSS:** `styles.css:1422–1539` · **JS:** `main.js:1659–1784` (`MuseScroll`)
 
 7 `muse-orbit-item` elements rotate on an adaptive ellipse (240s cycle):
 - **Desktop (>1024px):** Horizontal ellipse (1.8× wider than tall)
 - **Tablet (768–1024px):** Slightly vertical (1.4×)
-- **Mobile (≤768px):** Vertical ellipse (1.6× taller than wide)
+- **Mobile (≤768px):** Vertical ellipse (1.8× taller than wide)
 
-Click any muse → **Muse Popup** opens (`main.js:1828–2030`): 3D tilt card, colored aura, 12 floating particles, GSAP entrance. Close: Escape / click outside / X.
+Click any muse → **Muse Popup** opens (`main.js:1453–1654`): 3D tilt card, colored aura, 12 floating particles, GSAP entrance. Close: Escape / click outside / X.
 
-WebGL: `#muse-background-canvas` (7-color simplex gradient, `main.js:1323–1467`).
+WebGL: `#muse-background-canvas` (inverted starfield — black stars on off-white). Driven by `MuseBackground` factory instance (`main.js:1436`).
 
 ---
 
 ### 5. Comet Collab Intro (`1020–1380vh`)
-**HTML:** `index.html:183–212` · **CSS:** `styles.css:424–602` · **JS:** `main.js:1080–1253`
+**HTML:** `index.html:183–212` · **CSS:** `styles.css:437–511` · **JS:** `main.js:1161–1249`
 
-Sticky section. White Comet Collabs logo descends from center to bottom over 180vh. 5 **draggable** floating process images (`FloatingProcesses` module, `main.js:2300–2409`). Touch-enabled drag.
-
-Shine animation on `<em>` words (Stardust / Horizon): direction-aware, 1.6s glow. Scroll down → Stardust shines first. Scroll back → Horizon shines first.
+Sticky section. White Comet Collabs logo descends from center to bottom over 180vh. 5 **draggable** floating process images (`FloatingProcesses` module, `main.js:1923–2031`). Touch-enabled drag.
 
 ---
 
 ### 6. Comet Methods Toggle (`~1380–1500vh`)
-**HTML:** `index.html:215–322` · **CSS:** `styles.css:624–858` · **JS:** `main.js:2410–2556`
+**HTML:** `index.html:215–322` · **CSS:** `styles.css:513–991` · **JS:** `main.js:2036–2181` (`MethodToggle`) + `main.js:2447` (`window.switchTab`)
 
 Pill toggle (`.comet-pill`) switches between:
 - **Stardust:** 4-step flow (artist selects cause → creates work → launches campaign → funds split)
@@ -146,18 +143,18 @@ Global function: `window.switchTab('stardust' | 'horizon')` (inline onclick).
 ---
 
 ### 7. Comet Connected Images (`~1500–1620vh`)
-**HTML:** `index.html:326–350` · **CSS:** `styles.css:1051–1092` · **JS:** `main.js:2164–2293`
+**HTML:** `index.html:326–350` · **CSS:** `styles.css:1039–1078` · **JS:** `main.js:1789–1918` (`CometConnections`)
 
-5 process images in flex layout. White connection lines drawn between them via `#comet-connection-canvas` (`CometConnections` module). Click any image → **Step Popup** (`StepPopup` module, `main.js:2606–2716`) shows step title + description.
+5 process images in flex layout. Black connection lines drawn between them via `#comet-connection-canvas`. Click any image → **Step Popup** (`StepPopup`, `main.js:2230–2337`) shows step title + description.
 
 ---
 
 ### 8. Events Page (`~1620vh+`)
-**HTML:** `index.html:365–406` · **CSS:** `styles.css:2103–2478` · **JS:** `main.js:2560–2712`
+**HTML:** `index.html:365–406` · **CSS:** `styles.css:2050–2424` · **JS:** `main.js:2186–2225` (`PartnershipSlider`)
 
-Three subsections, all populated dynamically from `data/events.json`:
+Currently only the partnership carousel is JS-rendered. Stardust campaigns and Horizon labs sections exist in the HTML but are not yet populated from `data/events.json` — see "Known divergences" below.
 
-**Partnership Carousel** (`PartnershipSlider`, `main.js:2562–2604`): Scrolling logo strip (30s CSS animation). 5 partner logos.
+**Partnership Carousel** (`PartnershipSlider`): Scrolling logo strip. The module currently uses a hardcoded 5-entry array (`partner1.png`…`partner5.png`, no hyphen). `data/events.json` `partnerships[]` exists but is **not read** by the current code — paths there use `partner-1.png` (with hyphen) so they would mismatch the assets the code requests.
 
 **Stardust Campaigns** (`#stardust-campaigns`): Campaign cards with number badge, status (`active` / `open` / `archive`), name, subtitle, NGO description, muse tags (color-coded), CTA link.
 
@@ -166,7 +163,7 @@ Three subsections, all populated dynamically from `data/events.json`:
 ---
 
 ### Footer (Fixed, revealed at events section)
-**HTML:** `index.html:410–429` · **CSS:** `styles.css:1259–1325`
+**HTML:** `index.html:410–429` · **CSS:** `styles.css:1247–1292`
 
 Fixed bottom. 3 social icons (Telegram, Instagram, LinkedIn) — 52px touch targets. cocoex text logo.
 
@@ -232,33 +229,34 @@ All text sizes use `clamp()` — never hardcode px values for typography.
 ```
 main.js module order:
   13   GSAP setup + ScrollTrigger.normalizeScroll (iOS-guarded)
-  24   GLSL_UTILS          — shared SIMPLEX_NOISE + STAR_FIELD shaders
-  96   SCROLL_TIMING        — all scroll ranges (single source of truth)
- 129   CONFIG + DATA        — layout params, dot colors, constellation coords
- 250   DOM elements cache   — all major element references
- 285   State variables
- 401   WebGL intro shader   — intro starfield + pulse
- 545   resize()             — debounced 150ms, DPR capped at 2x
- 571   initFireworkDots()   — 7 constellation dots
- 608   Constellation explosion
- 677   Firework animation loop
- 827   masterRender()       — single RAF loop for ALL WebGL canvases
- 919   initEventListeners()
- 973   initGSAPAnimations() — all ScrollTrigger timelines
-1260   updateOrbitPositions() — ellipse math
-1325   MuseBackground       — WebGL 7-color gradient
-1473   UnifiedStarfield     — shared Muse + Comet background
-1568   CometCollabBackground — same shader as MuseBackground
-1830   MusePopup            — modal, 3D tilt, particles
-2036   MuseScroll           — orbit rotation, adaptive ellipse
-2166   CometConnections     — canvas connection lines
-2300   FloatingProcesses    — drag + touch on process images (passive touchmove)
-2412   MethodToggle         — Stardust/Horizon pill switch
-2562   PartnershipSlider    — load + render from events.json
-2606   StepPopup            — step detail modal
-2720   setInitialState()
-2774   init()
-2824   window.switchTab()   — global, called by inline onclick
+  24   GLSL_UTILS            — shared SIMPLEX_NOISE + STAR_FIELD shaders
+  96   SCROLL_TIMING         — all scroll ranges (single source of truth)
+ 129   CONFIG + DATA         — layout params, dot colors, constellation coords
+ 250   DOM elements cache
+ 271   State variables
+ 401   WebGL intro shader    — intro starfield + big bang pulse
+ 545   resize()              — debounced 150ms, DPR capped at 2x
+ 571   initFireworkDots()    — 7 constellation dots
+ 608   updateConstellationExplosion()
+ 677   updateFireworkDots()  — draw loop for constellation
+ 827   masterRender()        — single RAF loop for ALL WebGL canvases
+ 937   initEventListeners()
+ 991   initGSAPAnimations()  — all ScrollTrigger timelines
+1255   updateOrbitPositions()
+1322   createStarfield()     — factory: starfield shader (canonical or inverted)
+1433   UnifiedStarfield      — factory instance, white-on-black (Muse + Comet)
+1436   MuseBackground        — factory instance, inverted (black-on-offwhite)
+1443   CometCollabBackground — wraps two inverted instances (canvas1, canvas2)
+1453   MusePopup             — modal, 3D tilt, 12 particles
+1659   MuseScroll            — orbit rotation, adaptive ellipse
+1789   CometConnections      — 2D-canvas connection lines
+1923   FloatingProcesses     — drag + touch (passive document touchmove)
+2036   MethodToggle          — Stardust/Horizon pill switch
+2186   PartnershipSlider     — partnership logo strip (currently hardcoded array)
+2230   StepPopup             — step detail modal
+2342   setInitialState()
+2396   init()
+2447   window.switchTab()    — global, called by inline onclick in HTML
 ```
 
 ### SCROLL_TIMING (centralized — `main.js:96–124`)
@@ -282,7 +280,7 @@ COMET_TOTAL: 600
 
 ## Data Layer (`data/events.json`)
 
-All campaigns, events, and partners live here. JS modules populate the DOM dynamically at load.
+Schema documented below. **Heads-up:** the JSON file is currently *not read* by `main.js` — `PartnershipSlider` uses a hardcoded array, and the Stardust/Horizon sections render their static HTML markup unchanged. Wiring this up is a follow-up. The schema is preserved as intent.
 
 ```json
 {
@@ -313,28 +311,29 @@ All campaigns, events, and partners live here. JS modules populate the DOM dynam
 
 ## WebGL System
 
-4 active canvases, all managed in `masterRender()` (single RAF loop):
+All canvases render inside `masterRender()` (single RAF loop). Four of the five WebGL canvases share one shader via the `createStarfield()` factory (`main.js:1322`).
 
-| Canvas | ID | JS Module | Purpose |
-|--------|-----|-----------|---------|
-| Intro starfield | `#bg-canvas` | `initWebGL()` | Twinkling stars + big bang pulse |
-| Constellation | `#constellation-canvas` | `updateConstellationExplosion()` | 7-dot explosion |
-| Unified starfield | `#unified-starfield-canvas` | `UnifiedStarfield` | Shared Muse + Comet background |
-| Muse gradient | `#muse-background-canvas` | `MuseBackground` | 7-color simplex blend |
-| Comet gradient 1 | `#comet-collab-background-canvas` | `CometCollabBackground` | Same shader as Muse |
-| Comet gradient 2 | `#comet-collab-background-canvas-2` | `CometCollabBackground` | Continuation canvas |
+| Canvas | ID | Source | Purpose |
+|---|---|---|---|
+| Intro starfield | `#bg-canvas` | `initWebGL()` | Twinkling stars + cosmic noise + big bang pulse |
+| Constellation | `#constellation-canvas` | `updateConstellationExplosion()` (2D Canvas, not WebGL) | 7-dot explosion |
+| Unified starfield | `#unified-starfield-canvas` | `UnifiedStarfield` (factory, white-on-black) | Shared Muse + Comet background |
+| Muse backdrop | `#muse-background-canvas` | `MuseBackground` (factory, **inverted**) | Black stars on off-white |
+| Comet backdrop 1 | `#comet-collab-background-canvas` | `CometCollabBackground.canvas1` (factory, inverted) | Methods toggle section |
+| Comet backdrop 2 | `#comet-collab-background-canvas-2` | `CometCollabBackground.canvas2` (factory, inverted) | Connected images section |
 
 **Rules:**
-- DPR capped at `Math.min(devicePixelRatio, 2)` — never remove this cap
-- UV space uses aspect-ratio correction: `vec2 uvAspect = vec2(uv.x * aspect, uv.y)` — keeps noise/circles proportional on portrait viewports
-- Constellation uses uniform scale (`Math.min(w/refW, h/refH)`) — preserves shape on all aspect ratios
+- DPR capped at `Math.min(devicePixelRatio, 2)` on mobile — the factory respects this; never remove the cap.
+- UV aspect-ratio correction (`vec2 uvAspect = vec2(uv.x * aspect, uv.y)`) is required for any noise / circle math. Star tiling uses raw `uv` so stars distribute evenly.
+- `lastActiveProgram` cache in `masterRender()` means we only `gl.useProgram()` on switches.
+- Stay under 8 concurrent WebGL contexts (Safari cap). Currently 5 active. Adding more starfield surfaces should reuse the factory, not introduce new shaders.
 
 ---
 
 ## Accessibility
 
 - Keyboard: Tab through muses, Enter opens popup, Escape closes
-- `prefers-reduced-motion`: disables all animations + particles
+- `prefers-reduced-motion`: disables CSS animations, transitions, and popup particles. WebGL canvases continue rendering (visual ambience, not vestibular motion).
 - Touch targets: 44px minimum (social icons 52px)
 - ARIA labels on interactive + decorative elements
 - Focus indicators: 2px outline + 2px offset
@@ -364,33 +363,33 @@ assets/images/
 ## DOM Quick Reference
 
 | Element | Selector | HTML:line | CSS:line | JS:line |
-|---------|----------|-----------|----------|---------|
-| Intro starfield | `#bg-canvas` | 28 | 156 | 401 |
-| White orbit dot | `#dot-white` | 32 | 224 | 1260 |
-| Black orbit dot | `#dot-black` | 33 | 224 | 1260 |
-| Intro logo | `#intro-logo` | 37 | 200 | 571 |
-| Merged dot | `#final-dot` | 41 | 271 | 608 |
-| Transition text | `#transition-text` | 44 | 300 | 973 |
-| Constellation canvas | `#constellation-canvas` | 50 | 336 | 608 |
-| Mission text | `#reveal-text` | 59 | 362 | 916 |
-| Unified starfield | `#unified-starfield-canvas` | 65 | 349 | 1473 |
-| Muse intro page | `#muse-intro-page` | 74 | 1326 | 981 |
-| Muse gradient | `#muse-background-canvas` | 87 | — | 1325 |
-| Muse orbit items | `.muse-orbit-item` (×7) | 98–172 | 1454 | 2036 |
-| Muse popup | `#muse-popup` | 433 | 1584 | 1830 |
-| Comet intro | `#comet-collab-intro` | 183 | 424 | 1082 |
-| Comet gradient | `#comet-collab-background-canvas` | 217 | — | 1568 |
-| Comet pill toggle | `.comet-pill` | 221 | 624 | 2412 |
-| Stardust panel | `.comet-panel[data-panel="stardust"]` | 231 | 697 | 2412 |
-| Horizon panel | `.comet-panel[data-panel="horizon"]` | 273 | 697 | 2412 |
-| Connected images | `#comet-collab-connected-content` | 326 | 1051 | 2166 |
-| Connection canvas | `#comet-connection-canvas` | 331 | 1083 | 2166 |
-| Step popup | `.step-popup` | 354 | 1159 | 2606 |
-| Events page | `#events-page` | 365 | 2103 | 2562 |
-| Partnership slideshow | `#partnership-slideshow` | 372 | 2127 | 2562 |
-| Stardust campaigns | `#stardust-campaigns` | 383 | 2192 | 2562 |
-| Horizon labs | `#horizon-labs` | 400 | 2337 | 2562 |
-| Footer | `.social-links` | 410 | 1259 | — |
+|---|---|---|---|---|
+| Intro starfield | `#bg-canvas` | 28 | 165 | 401 |
+| White orbit dot | `#dot-white` | 32 | 227 | 1255 |
+| Black orbit dot | `#dot-black` | 33 | 244 | 1255 |
+| Intro logo | `#intro-logo` | 37 | 218 | 1255 |
+| Merged dot | `#final-dot` | 41 | 274 | 608 |
+| Transition text | `#transition-text` | 44 | 303 | 1029 |
+| Constellation canvas | `#constellation-canvas` | 50 | 339 | 608 |
+| Mission text | `#reveal-text` | 59 | 365 | 1076 |
+| Unified starfield | `#unified-starfield-canvas` | 65 | 352 | 1433 |
+| Muse intro page | `#muse-intro-page` | 74 | 1294 | 1093 |
+| Muse backdrop | `#muse-background-canvas` | 87 | — | 1436 |
+| Muse orbit items | `.muse-orbit-item` (×7) | 98–172 | 1422 | 1659 |
+| Muse popup | `#muse-popup` | 433 | 1541 | 1453 |
+| Comet intro | `#comet-collab-intro` | 183 | 437 | 1162 |
+| Comet backdrop | `#comet-collab-background-canvas` | 217 | 535 | 1444 |
+| Comet pill toggle | `.comet-pill` | 221 | 626 | 2036 |
+| Stardust panel | `#panel-stardust` | 231 | 513 | 2447 |
+| Horizon panel | `#panel-horizon` | 273 | 513 | 2447 |
+| Connected images | `#comet-collab-connected-content` | 326 | 1039 | 1789 |
+| Connection canvas | `#comet-connection-canvas` | 331 | 1083 | 1789 |
+| Step popup | `.step-popup` | 354 | 1147 | 2230 |
+| Events page | `#events-page` | 365 | 2050 | — |
+| Partnership slideshow | `#partnership-slideshow` | 372 | 2074 | 2186 |
+| Stardust campaigns | `#stardust-campaigns` | 383 | 2139 | — |
+| Horizon labs | `#horizon-labs` | 400 | 2284 | — |
+| Footer | `.social-links` | 410 | 1247 | — |
 
 ---
 
@@ -435,16 +434,15 @@ Pre-push checklist:
 
 ## Related Docs
 
-### Code Reference (`docs/`)
+### Architecture Docs (`docs/`)
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `docs/TECHNICAL-SPEC.md` | 483 | Deep-dive: scroll architecture, WebGL system, GSAP timeline details |
-| `docs/js-reference.md` | 947 | Full JS function map, module APIs, event listener inventory |
-| `docs/css-reference.md` | 949 | Full CSS rule reference, design tokens, animation classes |
-| `docs/html-reference.md` | 834 | Full DOM tree, element roles, ARIA, data attributes |
-| `docs/responsive-design.md` | 545 | Fluid typography, orbit ellipse ratios, breakpoint behaviour |
-| `docs/libraries.md` | 402 | GSAP 3.12.5 API patterns, WebGL utilities, CDN dependency notes |
+| File | Purpose |
+|---|---|
+| `docs/TECHNICAL-SPEC.md` | Why: scroll budget rationale, single-RAF master loop, factory shader, iOS guard, DPR cap |
+| `docs/responsive-design.md` | Why: clamp-first strategy, adaptive orbit ellipse, mobile touch + scroll coexistence |
+| `docs/libraries.md` | GSAP version + iOS-guarded normalize, Typekit kit ID, project-specific WebGL patterns |
+
+For *what* the code does, read `index.html`, `css/styles.css`, and `js/main.js` directly. Those files are the reference.
 
 ### Brand & Concept (`.claude/memo/`)
 

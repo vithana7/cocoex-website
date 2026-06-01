@@ -42,7 +42,7 @@ html, body {
   /* Colors */
   --color-black: #000;
   --color-white: #fff;
-  --color-text-outline: #fff;
+  --color-offwhite: #FAFAFA;
 
   /* Muse Colors */
   --lunes: #5783A6;
@@ -89,7 +89,6 @@ html, body {
   --transition-slow: 0.5s ease-out;
 
   /* Z-index layers */
-  --z-background: 1;
   --z-intro: 10;
   --z-text-section: 20;
   --z-white-section: 30;
@@ -123,14 +122,6 @@ html {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-
-  .comet-collab-bouncing-logo .comet-collab-logo-image {
-    animation: none !important;
-  }
-
-  .spark {
-    display: none !important;
   }
 }
 
@@ -365,7 +356,7 @@ img {
    ========================================================================== */
 .text-section-wrapper {
   position: relative;
-  height: 250vh; /* Longer fade-in duration */
+  height: 150vh; /* TEXT_SECTION_HEIGHT */
 }
 
 .text-section {
@@ -496,7 +487,7 @@ img {
 .comet-methods-text em {
   font-style: italic;
   color: rgba(0, 0, 0, 0); /* Transparent fill */
-  -webkit-text-stroke: 1px var(--color-white); /* White stroke */
+  -webkit-text-stroke: 1px var(--color-white);
   text-stroke: 1px var(--color-white);
 }
 
@@ -521,7 +512,7 @@ img {
   z-index: 50;
   opacity: 0;
   will-change: opacity;
-  background: transparent;
+  background: var(--color-offwhite);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -540,19 +531,6 @@ img {
   height: 100%;
   z-index: 1;
   opacity: 1;
-  pointer-events: none;
-}
-
-/* Dark overlay for better text contrast */
-.comet-collab-methods::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 2;
   pointer-events: none;
 }
 
@@ -639,8 +617,8 @@ img {
   position: relative;
   display: inline-flex;
   flex-wrap: nowrap;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--color-white);
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--color-black);
   border-radius: 50px;
   padding: 4px;
   backdrop-filter: blur(10px);
@@ -653,7 +631,7 @@ img {
   left: 4px;
   width: calc(50% - 4px);
   height: calc(100% - 8px);
-  background: var(--color-white);
+  background: var(--color-black);
   border-radius: 50px;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1;
@@ -670,7 +648,7 @@ img {
   font-size: clamp(14px, 1.5vw, 18px);
   font-weight: var(--font-body-weight);
   text-transform: uppercase;
-  color: var(--color-white);
+  color: var(--color-black);
   background: transparent;
   border: none;
   padding: clamp(10px, 1.2vw, 14px) clamp(24px, 3vw, 36px);
@@ -684,15 +662,15 @@ img {
 }
 
 .pill-opt.active {
-  color: var(--color-black);
+  color: var(--color-white);
 }
 
 .pill-opt:hover:not(.active) {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(0, 0, 0, 0.6);
 }
 
 .pill-opt:focus {
-  outline: 2px solid var(--color-white);
+  outline: 2px solid var(--color-black);
   outline-offset: 4px;
 }
 
@@ -740,10 +718,9 @@ img {
   font-size: clamp(14px, 1.2vw, 16px);
   font-weight: var(--font-body-weight);
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(0, 0, 0, 0.8);
   letter-spacing: 0.1em;
   margin-bottom: var(--spacing-xs);
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .comet-panel-title {
@@ -752,9 +729,8 @@ img {
   font-weight: var(--font-h1-weight);
   line-height: 0.9;
   text-transform: uppercase;
-  color: var(--color-white);
+  color: var(--color-black);
   margin-bottom: var(--spacing-md);
-  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.9);
 }
 
 .comet-panel-body {
@@ -762,10 +738,9 @@ img {
   font-size: var(--font-h2-size);
   line-height: var(--font-h2-height);
   font-weight: var(--font-body-weight);
-  color: var(--color-white);
+  color: var(--color-black);
   text-align: justify;
   margin-bottom: var(--spacing-lg);
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
 }
 
 .comet-cta {
@@ -775,9 +750,9 @@ img {
   font-size: clamp(16px, 1.8vw, 20px);
   font-weight: var(--font-body-weight);
   text-transform: uppercase;
-  color: var(--color-white);
+  color: var(--color-black);
   text-decoration: none;
-  border: 1px solid var(--color-white);
+  border: 1px solid var(--color-black);
   padding: clamp(12px, 1.5vw, 16px) clamp(24px, 3vw, 32px);
   border-radius: 50px;
   transition: all 0.3s ease;
@@ -785,13 +760,13 @@ img {
 }
 
 .comet-cta:hover {
-  background: var(--color-white);
-  color: var(--color-black);
+  background: var(--color-black);
+  color: var(--color-white);
   transform: translateX(4px);
 }
 
 .comet-cta:focus {
-  outline: 2px solid var(--color-white);
+  outline: 2px solid var(--color-black);
   outline-offset: 4px;
 }
 
@@ -814,7 +789,7 @@ img {
   font-family: var(--font-canela);
   font-size: clamp(20px, 2.5vw, 32px);
   font-weight: var(--font-h1-weight);
-  color: var(--color-white);
+  color: var(--color-black);
   min-width: clamp(40px, 5vw, 60px);
 }
 
@@ -829,7 +804,7 @@ img {
   font-size: clamp(20px, 2.5vw, 28px);
   font-weight: var(--font-h1-weight);
   text-transform: uppercase;
-  color: var(--color-white);
+  color: var(--color-black);
 }
 
 .step-body {
@@ -837,7 +812,7 @@ img {
   font-size: clamp(14px, 1.6vw, 18px);
   font-weight: var(--font-body-weight);
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(0, 0, 0, 0.7);
 }
 
 /* Horizon Special Step */
@@ -851,38 +826,11 @@ img {
   font-size: clamp(12px, 1.2vw, 14px);
   font-weight: var(--font-body-weight);
   text-transform: uppercase;
-  color: var(--color-black);
-  background: var(--color-white);
+  color: var(--color-white);
+  background: var(--color-black);
   padding: 4px 12px;
   border-radius: 20px;
   margin-bottom: var(--spacing-xs);
-}
-
-/* Images Container - absolute positioning for custom layout */
-.comet-images-container {
-  position: absolute;
-  top: 15%; /* Move entire container up closer to toggle */
-  left: 0;
-  width: 100%;
-  height: 50%; /* Reduce height to compress layout */
-  z-index: 2;
-}
-
-/* Central Comet Collab Logo */
-.comet-central-logo {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  max-width: clamp(120px, 18vw, 200px);
-  z-index: 3;
-}
-
-.comet-central-logo img {
-  width: 100%;
-  height: auto;
-  display: block;
-  filter: drop-shadow(0 4px 20px rgba(255, 255, 255, 0.3));
 }
 
 /* Individual image items - absolute positioning around center */
@@ -923,18 +871,6 @@ img {
 
 .comet-image-item[data-step="5"] {
   animation-delay: 3.2s;
-}
-
-/* Step number - simple black text */
-.step-number {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  font-family: var(--font-canela);
-  font-size: clamp(14px, 1.4vw, 18px);
-  font-weight: bold;
-  color: var(--color-black);
-  z-index: 5;
 }
 
 /* Default orbit positions (randomized on load by JS) */
@@ -982,74 +918,6 @@ img {
   }
 }
 
-/* Static Colored Logo at Bottom (for overlay with white logo) */
-.comet-collab-static-logo {
-  position: absolute;
-  bottom: var(--spacing-xl); /* Changed from top to bottom */
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 15;
-  opacity: 0; /* Start invisible, appears during overlay */
-  will-change: opacity;
-}
-
-.comet-collab-static-logo img {
-  width: auto;
-  height: auto;
-  max-width: 182px;
-  max-height: 91px;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
-}
-
-/* Gradient background canvas for Comet section - MOVED to line 566 */
-
-/* ==========================================================================
-   Method Toggle (Stardust/Horizon)
-   ========================================================================== */
-.method-toggle-container {
-  position: absolute;
-  top: var(--spacing-lg);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 0;
-  background: transparent;
-  border: 1px solid var(--color-white);
-  border-radius: 50px;
-  padding: 4px;
-  z-index: 10;
-}
-
-.method-toggle-btn {
-  font-family: var(--font-canela);
-  font-size: clamp(14px, 1.5vw, 18px);
-  font-weight: var(--font-body-weight);
-  text-transform: uppercase;
-  color: var(--color-white);
-  background: transparent;
-  border: none;
-  padding: clamp(8px, 1vw, 12px) clamp(20px, 3vw, 32px);
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-}
-
-.method-toggle-btn.active {
-  background: var(--color-white);
-  color: var(--color-black);
-}
-
-.method-toggle-btn:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.method-toggle-btn:focus {
-  outline: 2px solid var(--color-white);
-  outline-offset: 2px;
-}
-
 /* ==========================================================================
    Comet Collab Connected Images (Static Display)
    ========================================================================== */
@@ -1065,7 +933,7 @@ img {
   z-index: 5;
   opacity: 0;
   will-change: opacity;
-  background: transparent;
+  background: var(--color-offwhite);
 }
 
 .comet-connected-images {
@@ -1090,72 +958,6 @@ img {
   height: 100%;
   pointer-events: none;
   z-index: 9;
-}
-
-/* ==========================================================================
-   RSS Feed Scrolling Ticker
-   ========================================================================== */
-.rss-feed-section {
-  position: absolute;
-  bottom: calc(var(--spacing-md) + 140px); /* Higher above social footer (was 80px) */
-  left: 0;
-  width: 100%;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.rss-feed-title {
-  font-family: var(--font-canela);
-  font-size: clamp(18px, 2vw, 24px);
-  font-weight: var(--font-h1-weight);
-  text-transform: uppercase;
-  color: var(--color-white);
-  text-align: center;
-  letter-spacing: 0.05em;
-  margin: 0;
-  padding: 0;
-}
-
-.rss-feed-ticker {
-  width: 100%;
-  overflow: hidden;
-  background: transparent;
-  border: 1px solid var(--color-white);
-  border-left: none;
-  border-right: none;
-  padding: clamp(14px, 2vw, 20px) 0;
-}
-
-.rss-ticker-content {
-  display: inline-flex;
-  white-space: nowrap;
-  animation: ticker-scroll 30s linear infinite;
-  gap: clamp(20px, 2.5vw, 32px);
-}
-
-@keyframes ticker-scroll {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.rss-ticker-item {
-  font-family: var(--font-canela);
-  font-size: clamp(18px, 2.2vw, 26px);
-  font-weight: var(--font-body-weight);
-  text-transform: uppercase;
-  /* Color applied inline with muse colors */
-}
-
-.rss-ticker-separator {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: clamp(18px, 2.2vw, 26px);
-  margin: 0 clamp(16px, 2vw, 24px);
 }
 
 /* ==========================================================================
@@ -1233,7 +1035,7 @@ img {
 .step-popup-title {
   font-family: var(--font-canela);
   font-size: clamp(24px, 4vw, 36px);
-  font-weight: var(--font-heading-weight);
+  font-weight: var(--font-h1-weight);
   color: var(--color-black);
   margin-bottom: var(--spacing-md);
   text-transform: uppercase;
@@ -1262,21 +1064,11 @@ img {
    Social Links
    ========================================================================== */
 .social-links {
-  position: fixed;
-  bottom: calc(var(--spacing-md) + 60px);
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
+  justify-content: center;
   gap: var(--spacing-sm);
-  z-index: 100;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--transition-medium);
-}
-
-.social-links.visible {
-  opacity: 1;
-  pointer-events: auto;
+  width: 100%;
+  padding: var(--spacing-lg) 0 var(--spacing-md);
 }
 
 .social-link {
@@ -1308,21 +1100,11 @@ img {
 }
 
 .footer-logo {
-  position: fixed;
-  bottom: var(--spacing-md);
-  left: 50%;
-  transform: translateX(-50%);
+  display: block;
+  margin: 0 auto;
+  padding-bottom: var(--spacing-md);
   width: clamp(120px, 18vw, 172px);
   height: auto;
-  z-index: 100;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--transition-medium);
-}
-
-.footer-logo.visible {
-  opacity: 1;
-  pointer-events: auto;
 }
 
 /* ==========================================================================
@@ -1331,7 +1113,7 @@ img {
 .muse-section-wrapper {
   position: relative;
   width: 100%;
-  height: 350vh; /* 250vh intro hold + 100vh crossfade */
+  height: 470vh; /* MUSE_INTRO_HOLD (350) + MUSE_CROSSFADE (120) */
   background: transparent;
 }
 
@@ -1429,13 +1211,6 @@ img {
   opacity: 0.7;
 }
 
-/* Highlighted "Muse" text - hollow letters with transparent fill */
-.highlight-muse {
-  color: transparent;
-  -webkit-text-stroke: 1px var(--color-white);
-  text-stroke: 1px var(--color-white);
-}
-
 /* White Section Content - Sticky positioning */
 .white-section-content {
   position: sticky;
@@ -1461,7 +1236,7 @@ img {
   height: 100vh;
   height: 100dvh;
   position: relative;
-  background: transparent; /* Allow gradient + starfield to show through */
+  background: var(--color-offwhite);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1470,7 +1245,7 @@ img {
   z-index: 10;
 }
 
-/* Animated Background Canvas - Overlay on starfield */
+/* Animated Background Canvas - Inverted starfield */
 .muse-background-canvas {
   position: absolute;
   top: 0;
@@ -1478,20 +1253,7 @@ img {
   width: 100%;
   height: 100%;
   z-index: 1;
-  opacity: 0.9; /* Allow starfield to show through slightly */
-  pointer-events: none;
-}
-
-/* Dark overlay for better text contrast */
-.muse-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 2;
+  opacity: 1;
   pointer-events: none;
 }
 
@@ -1570,10 +1332,11 @@ img {
   letter-spacing: -0.02em;
   margin-bottom: 0;
   cursor: pointer;
+  color: var(--color-black);
   transition: transform var(--transition-medium);
-  filter: drop-shadow(0 4px 1px rgba(0, 0, 0, 0.2));
-  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.3);
-  text-stroke: 0.5px rgba(0, 0, 0, 0.3);
+  filter: drop-shadow(0 4px 1px rgba(255, 255, 255, 0.5));
+  -webkit-text-stroke: 0.5px rgba(255, 255, 255, 0.4);
+  text-stroke: 0.5px rgba(255, 255, 255, 0.4);
 }
 
 .muse-orbit-item .muse-text h3:hover {
@@ -1600,16 +1363,6 @@ img {
   opacity: 0;
   background: #000;
   /* GSAP handles transitions */
-}
-
-.muse-popup-starfield {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  pointer-events: none;
 }
 
 .muse-popup-overlay {
@@ -2039,13 +1792,6 @@ img {
   .comet-image-item {
     max-width: clamp(90px, 28vw, 140px);
   }
-
-  .method-toggle-btn {
-    padding: clamp(6px, 1vw, 10px) clamp(16px, 2.5vw, 24px);
-    font-size: clamp(12px, 1.3vw, 16px);
-  }
-
-  /* Old RSS styles removed - now using ticker */
 
   .comet-panels {
     min-height: 280px;
