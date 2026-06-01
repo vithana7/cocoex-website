@@ -35,15 +35,15 @@ Three layout-only breakpoints exist. Each one changes structure, not size.
 
 ## Muse Orbit Ellipse — Adaptive Axis
 
-The orbit aspect ratio flips between viewport classes (computed in `MuseScroll.calculateOrbitRadius`):
+The orbit aspect ratio is computed continuously from `window.innerWidth / window.innerHeight` inside `MuseScroll.calculateOrbitRadius` — there are no breakpoint jumps:
 
-| Viewport | Shape | Why |
+| Viewport aspect | Shape | Why |
 |---|---|---|
-| ≤768px | Vertical 1.8× tall | Portrait phones — orbit reads as a column, fills available height |
-| ≤1024px | Vertical 1.4× tall | Tablet — gentle transition between mobile and desktop |
-| >1024px | Horizontal 1.8× wide | Desktop landscape — wide sweeping motion |
+| ≤ 0.65 (portrait phones) | Vertical 1.8× tall | Orbit reads as a column, fills available height |
+| ~1.0 (square) | Near-circular | Balanced reveal |
+| ≥ 1.5 (desktop landscape) | Horizontal 1.8× wide | Wide sweeping motion |
 
-Switching axes (rather than shrinking a horizontal ellipse) keeps the central logo and the muse images both visible at every size. A horizontal-only ellipse cramps to nothing on a 375px viewport.
+The interpolation between these anchors is smooth, so resizing or device rotation never "pops" the ellipse. Each muse also gets depth scaling derived from `sin(angle)` (front muses ~1.05×, back muses ~0.65×) with matching `zIndex`, so the orbit reads as a 3D ring on every aspect.
 
 ## Mobile Scroll: Drag + Touch Coexistence
 

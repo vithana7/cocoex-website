@@ -6,34 +6,35 @@ Why the codebase is structured this way. For exact behaviour at each scroll posi
 
 ## Scroll Budget
 
-Total page height ≈ **1900vh**. All section heights derive from `SCROLL_TIMING` (`main.js:96–124`). Never hardcode `vh` values inline.
+Total page height ≈ **1750vh**. All section heights derive from `SCROLL_TIMING` (`main.js:137–161`). Never hardcode `vh` values inline. Wrapper heights in `styles.css` must match these constants.
 
-| Section | Range | Position |
-|---|---|---|
-| Landing | 0–400vh | Fixed overlay |
-| Mission Text | 400–550vh | Sticky |
-| Muse Intro | 550–900vh | Fixed overlay (crossfades out) |
-| Muse Orbiting | 900–1020vh | Sticky |
-| Comet Intro | 1020–1380vh | Sticky |
-| Comet Methods | 1380–1500vh | Sticky |
-| Comet Connected | 1500–1620vh | Sticky |
-| Events | 1620vh+ | Normal flow |
-| Footer | — | Fixed bottom, revealed at events |
+| Section | Range | Position | Constant |
+|---|---|---|---|
+| Landing | 0–400vh | Fixed overlay | `INTRO_TOTAL: 400` |
+| Mission Text | 400–550vh | Sticky | `TEXT_SECTION_HEIGHT: 150` |
+| Muse Intro | 550–950vh (hold) | Fixed overlay → crossfades | `MUSE_INTRO_HOLD: 400` + `MUSE_CROSSFADE: 60` |
+| Muse Orbiting | 950–1010vh | Sticky | within `MUSE_TOTAL: 460` |
+| Comet Intro | 1010–1450vh | Sticky | `COMET_INTRO_PAUSE: 440` |
+| Comet Methods | 1450–1590vh | Sticky | up to `COMET_CROSSFADE_START: 580` (+ `DURATION: 80`) |
+| Comet Connected | 1590–1690vh | Sticky | tail to `COMET_TOTAL: 680` |
+| Events | 1690vh+ | Normal flow (centered, ≥60vh) | — |
+| Footer | end of flow | Static | — |
 
 ### Why these values?
 
-- 400vh intro: three phases (orbit, transition text, constellation explosion) need at least 100vh each at 60fps for a scrub to feel smooth without input lag. 400vh leaves headroom.
-- 350vh muse intro hold: the intro logo + paragraphs need extended dwell so users actually read the seven-muses framing before the orbit reveals.
-- 120vh crossfades: shorter felt abrupt. Longer felt slack.
-- 100vh `COMET_INTRO_PAUSE` before logo descent: gives the user time to notice the floating draggable images before scroll motion begins.
+- **400vh intro:** three phases (orbit, transition text, constellation explosion) need ≥100vh each at 60fps for scrub smoothness. 400vh leaves headroom.
+- **400vh muse intro hold:** the intro logo + paragraphs need extended dwell so users actually read the seven-muses framing before the orbit reveals. Tuned up from earlier 350.
+- **60vh muse crossfade:** Lenis's smoothing makes longer crossfades feel slack. 60vh reads as a clean handoff.
+- **440vh `COMET_INTRO_PAUSE`:** absorbs logo descent + read time for the comet-collab intro paragraph. Earlier 100vh felt rushed once Lenis was in place.
+- **80vh `COMET_CROSSFADE_DURATION`:** tighter than the muse crossfade because users have already adjusted to the visual rhythm by this point.
 
-**Rule of thumb:** any phase under 100vh stutters on trackpads. Any phase over 200vh feels slack.
+**Rule of thumb:** any phase under 100vh stutters on trackpads. Any phase over 200vh feels slack — Lenis's lerp amplifies that. Update wrapper heights in CSS in lockstep with `SCROLL_TIMING` changes.
 
 ---
 
 ## Single `masterRender()` RAF Loop
 
-All WebGL canvases render inside one `requestAnimationFrame` loop (`main.js:827–932`). New canvases are added inside `masterRender()`, never as separate RAF loops.
+All WebGL canvases render inside one `requestAnimationFrame` loop (`main.js:863–971`), driven by `gsap.ticker` (which also drives Lenis). New canvases are added inside `masterRender()`, never as separate RAF loops.
 
 **Why one loop:**
 1. Browsers throttle every additional RAF independently — multiple loops compound jitter.
@@ -49,7 +50,7 @@ The orbit position update (`MuseScroll.updateOrbitPositions`) also lives in this
 
 The codebase has five starfield canvases. They all use **the same shader**, parameterized by a factory.
 
-`createStarfield(canvasId, options)` (`main.js:1322–1431`) returns a self-contained module. Two options:
+`createStarfield(canvasId, options)` (`main.js:1362–1471`) returns a self-contained module. Two options:
 
 - `invert: true` — fragment output becomes `1.0 - color`, turning the canonical white-on-black starfield into black-on-offwhite. Used for the muse and comet sections, which sit on a light surface.
 - `intensity` — multiplies star brightness pre-mix. Default `0.25`. Inverted variants need `0.9` to read against off-white.
@@ -60,8 +61,8 @@ Instances:
 |---|---|---|
 | `UnifiedStarfield` | `#unified-starfield-canvas` | Default white-on-black. Muse + Comet shared backdrop. |
 | `MuseBackground` | `#muse-background-canvas` | Inverted. Behind muse orbiting layout. |
-| `CometCollabBackground.canvas1` | `#comet-collab-background-canvas` | Inverted. Methods toggle section. |
-| `CometCollabBackground.canvas2` | `#comet-collab-background-canvas-2` | Inverted. Connected images section. |
+| `CometBgPrimary` | `#comet-collab-background-canvas` | Inverted. Methods toggle section. |
+| `CometBgSecondary` | `#comet-collab-background-canvas-2` | Inverted. Connected images section. |
 
 **Why a factory and not separate modules:**
 The previous architecture had `MuseBackground` and `CometCollabBackground` as separate gradient shaders (7-color simplex blends). They drifted out of sync, duplicated GLSL, and triggered five `gl.useProgram()` switches per frame. Collapsing to one shader with two parameters cut ~450 LOC, removed the `MuseBackground.colors[]` array, and made adding new canvases trivial.
@@ -92,28 +93,44 @@ Modern phones ship with `devicePixelRatio` of 3. A full-screen WebGL shader at 3
 
 The cap is **non-negotiable on mobile**. Removing it has caused 30→15fps regressions on iPhones in past testing. Desktop is uncapped because GPU headroom is larger.
 
-The factory `createStarfield` also caps at 2× (`main.js:1353`) — every WebGL canvas in the codebase respects the cap.
+The factory `createStarfield` also caps at 2× — every WebGL canvas in the codebase respects the cap, including the 2D `CometConnections` canvas which uses `setTransform(dpr,0,0,dpr,0,0)`.
 
 ---
 
-## iOS-Guarded `ScrollTrigger.normalizeScroll`
+## Lenis-driven Scroll (replaces `normalizeScroll`)
 
 ```javascript
-// main.js:15–19
-if (!isIOS && 'ontouchstart' in window) {
-  ScrollTrigger.normalizeScroll(true);
-}
+// main.js:20–53
+const lenis = new Lenis({
+  wrapper: document.body,
+  content: document.querySelector('.scroll-container'),
+  autoRaf: false,
+  lerp: 0.1,
+  wheelMultiplier: 1.0,
+  touchMultiplier: 1.0,
+});
+lenis.on('scroll', ScrollTrigger.update);
+gsap.ticker.add((time) => { lenis.raf(time * 1000); });
+gsap.ticker.lagSmoothing(0);
+ScrollTrigger.scrollerProxy(document.body, { /* ... */ });
+ScrollTrigger.defaults({ scroller: document.body });
 ```
 
-`normalizeScroll(true)` replaces native scroll with a virtualised version that GSAP controls directly. On Android this fixes momentum-scroll jitter that breaks scrubbed timelines.
+Production iOS Safari was freezing scroll on the body-as-scroller layout — earlier we tried `ScrollTrigger.normalizeScroll(true)` (Android-guarded) but on iOS it deadlocks with non-passive touch listeners, and on the body-scroll layout it didn't address the underlying jitter. Lenis 1.3.4 virtualizes scroll position, sidestepping the iOS quirk entirely while smoothing the experience on every platform.
 
-On iOS Safari it deadlocks with non-passive touch listeners — scroll freezes entirely. iOS handles GSAP scrub well enough natively, so we explicitly skip it. **Never enable normalization unconditionally** — it has caused production scroll freezes in earlier iterations of this codebase.
+**Why this exact wiring:**
+- `wrapper: document.body, content: '.scroll-container'` — Lenis defaults assume `<html>` is the scroller. Our app body-scrolls (`html, body { height: 100% }; body { overflow-y: auto }`), so we tell Lenis explicitly. Removing those CSS rules breaks layout.
+- `autoRaf: false` + `gsap.ticker.add(t => lenis.raf(t * 1000))` — single RAF source. Two RAFs double-tick ScrollTrigger and corrupt scrub progress.
+- `lenis.on('scroll', ScrollTrigger.update)` — every Lenis tick refreshes ST positions; otherwise pinned/scrubbed sections drift.
+- `ScrollTrigger.scrollerProxy(document.body, …)` + `ScrollTrigger.defaults({ scroller: document.body })` — every trigger is implicitly tied to body. New triggers need no per-instance scroller config.
+
+The legacy `normalizeScroll` block at `main.js:56–62` is left commented for context. **Never re-enable it alongside Lenis.**
 
 ---
 
 ## SCROLL_TIMING is the Single Source of Truth
 
-All scroll-driven distances live in `SCROLL_TIMING` (`main.js:96–124`). Inline `vh` values in animations are forbidden.
+All scroll-driven distances live in `SCROLL_TIMING` (`main.js:137–161`). Inline `vh` values in animations are forbidden.
 
 **Why a constant table:**
 1. Phase boundaries are coupled — moving `MUSE_INTRO_HOLD` requires updating `MUSE_TOTAL` and the comet wrapper trigger offsets. Centralising forces these dependencies to stay coherent.
@@ -140,7 +157,7 @@ These are the bugs that have actually been hit in this codebase. Read them befor
 
 **WebGL context limit.** Browsers cap concurrent WebGL contexts (~8–16). Adding more canvases evicts older ones, causing visible blackouts. Five is the current count — stay under eight.
 
-**WebGL context loss.** Mobile browsers can drop contexts at any time. `initWebGL` registers `webglcontextlost`/`webglcontextrestored` handlers (`main.js:491–509`); the master loop checks `webglContextsLost` and pauses until restoration. Replicate this pattern on any new context.
+**WebGL context loss.** Mobile browsers can drop contexts at any time. `initWebGL` registers `webglcontextlost`/`webglcontextrestored` handlers (`main.js:519–545`); the master loop checks `webglContextsLost` and pauses until restoration. Replicate this pattern on any new context.
 
 ---
 

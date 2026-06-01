@@ -1,6 +1,6 @@
 # cocoex.xyz — AI Context & Technical Reference
 
-> **UPDATED AT:** 2026-05-14
+> **UPDATED AT:** 2026-06-01
 > Run `/doc-minder` after any meaningful change to keep this file current.
 
 ---
@@ -15,9 +15,9 @@ Ground-truth context for any Claude session working on this codebase. Read this 
 
 | Priority | File | Read when |
 |---|---|---|
-| Always | `docs/TECHNICAL-SPEC.md` | Architecture decisions, scroll timing, WebGL rationale |
+| Always | `docs/technical-spec.md` | Architecture decisions, scroll timing, WebGL rationale |
 | Layout work | `docs/responsive-design.md` | Fluid typography strategy, orbit ellipse, breakpoint philosophy |
-| Dependencies | `docs/libraries.md` | GSAP version + iOS guard, Typekit, project-specific patterns |
+| Dependencies | `docs/libraries.md` | GSAP + Lenis, Typekit, project-specific patterns |
 
 ---
 
@@ -55,21 +55,25 @@ Muse colors are used for: orbit dot fills, popup aura glow, muse tags in campaig
 
 ## Site Architecture
 
-**Stack:** Vanilla HTML5 / CSS3 / JavaScript ES6+ · GSAP 3.12.5 (CDN) · WebGL (custom GLSL) · No build step.
+**Stack:** Vanilla HTML5 / CSS3 / JavaScript ES6+ · GSAP 3.12.5 + Lenis 1.3.4 (CDN) · WebGL (custom GLSL) · No build step.
 
 **File sizes (current):**
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `index.html` | 467 | Semantic structure |
-| `css/styles.css` | 2,424 | All styling |
-| `js/main.js` | 2,481 | All animation + interaction |
-| `data/events.json` | 107 | Dynamic content (campaigns, partners) |
+| `index.html` | 436 | Semantic structure |
+| `css/styles.css` | 1,953 | All styling |
+| `js/main.js` | 2,387 | All animation + interaction |
+
+`data/events.json` was deleted — the file was never read by `main.js`. `PartnershipSlider` uses a hardcoded array; Stardust/Horizon panels render static markup.
 
 **External dependencies:**
 ```html
-<!-- Adobe Fonts - Canela typeface -->
+<!-- Adobe Fonts - Canela typeface (preconnected) -->
 <link rel="stylesheet" href="https://use.typekit.net/afs8ors.css">
+
+<!-- Lenis 1.3.4 (must load BEFORE GSAP — main.js wires them at top) -->
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.4/dist/lenis.min.js"></script>
 
 <!-- GSAP 3.12.5 -->
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
@@ -77,104 +81,104 @@ Muse colors are used for: orbit dot fills, popup aura glow, muse tags in campaig
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/MotionPathPlugin.min.js"></script>
 ```
 
-**Total scroll height:** ~1900vh
+**Total scroll height:** ~1750vh (intro 400 + text 150 + muse 460 + comet 680 + events ~60vh)
 
 ---
 
 ## Page Sections (Top → Bottom)
 
 ### 1. Landing / Intro (`0–400vh`)
-**HTML:** `index.html:27–53` · **CSS:** `styles.css:165–350` · **JS:** `main.js:401–820`
+**HTML:** `index.html:29–55` · **CSS:** `styles.css:185–349` · **JS:** `main.js:519` (`initWebGL`) → `main.js:863` (`masterRender`)
 
 Fixed overlay with three animation phases:
-- **Phase 1 (0–160vh):** White + black dots orbit center. Logo scales `80px → 250px`, 2 full rotations.
+- **Phase 1 (0–160vh, `INTRO_PHASE1_END: 0.40`):** White + black dots orbit center. Logo scales `80px → 250px`, 2 full rotations.
 - **Phase 2 (160–200vh):** Transition text fades in below logo, then fades out.
-- **Phase 3 (200–400vh):** 7 colored constellation dots explode from center. Z-depth rendering. Big bang pulse.
+- **Phase 3 (200–400vh, `INTRO_PHASE3_START: 0.50`):** 7 colored constellation dots explode from center. Z-depth rendering. Big bang pulse.
 
 Key elements: `#bg-canvas` (WebGL starfield), `#dot-white`, `#dot-black`, `#intro-logo`, `#final-dot`, `#transition-text`, `#constellation-canvas`.
 
 ---
 
 ### 2. Mission Text (`400–550vh`)
-**HTML:** `index.html:55–62` · **CSS:** `styles.css:365–408` · **JS:** `main.js:1076–1090`
+**HTML:** `index.html:58–63` · **CSS:** `styles.css:369–410` · **JS:** `main.js:1067` (reveal trigger)
 
-Sticky section. `#reveal-text` paragraph fades in. `<em>` tags render as hollow outlined text (white stroke, transparent fill).
-
----
-
-### 3. Muse Intro Page (`550–900vh`)
-**HTML:** `index.html:74–80` · **CSS:** `styles.css:1294–1420` · **JS:** `main.js:1093–1158`
-
-Fixed white overlay. Black inverted Muse logo centered. Top + bottom text paragraphs.
-Holds for 350vh, then crossfades to orbiting layout.
+Sticky section, `TEXT_SECTION_HEIGHT: 150`. `#reveal-text` paragraph fades in. `<em>` tags render as hollow outlined text (white stroke, transparent fill).
 
 ---
 
-### 4. Muse Orbiting (`900–1020vh`)
-**HTML:** `index.html:82–176` · **CSS:** `styles.css:1422–1539` · **JS:** `main.js:1659–1784` (`MuseScroll`)
+### 3. Muse Intro Page (`550–950vh`)
+**HTML:** `index.html:76–84` · **CSS:** `styles.css:1135–1247` · **JS:** `main.js:1100` (intro pinning) → `main.js:1140` (crossfade)
 
-7 `muse-orbit-item` elements rotate on an adaptive ellipse (240s cycle):
-- **Desktop (>1024px):** Horizontal ellipse (1.8× wider than tall)
-- **Tablet (768–1024px):** Slightly vertical (1.4×)
-- **Mobile (≤768px):** Vertical ellipse (1.8× taller than wide)
-
-Click any muse → **Muse Popup** opens (`main.js:1453–1654`): 3D tilt card, colored aura, 12 floating particles, GSAP entrance. Close: Escape / click outside / X.
-
-WebGL: `#muse-background-canvas` (inverted starfield — black stars on off-white). Driven by `MuseBackground` factory instance (`main.js:1436`).
+Fixed white overlay (`background: var(--color-offwhite)`). Black inverted Muse logo centered. Top + bottom text paragraphs.
+Holds for `MUSE_INTRO_HOLD: 400`vh, then `MUSE_CROSSFADE: 60`vh transition to orbiting.
+Logo centering uses GSAP `xPercent: -50, yPercent: -50` (CSS centering removed so scale tweens don't drift).
 
 ---
 
-### 5. Comet Collab Intro (`1020–1380vh`)
-**HTML:** `index.html:183–212` · **CSS:** `styles.css:437–511` · **JS:** `main.js:1161–1249`
+### 4. Muse Orbiting (`950–1010vh`, `MUSE_TOTAL: 460`)
+**HTML:** `index.html:96–179` · **CSS:** `styles.css:1303–1363` · **JS:** `main.js:1694` (`MuseScroll`)
 
-Sticky section. White Comet Collabs logo descends from center to bottom over 180vh. 5 **draggable** floating process images (`FloatingProcesses` module, `main.js:1923–2031`). Touch-enabled drag.
+7 `muse-orbit-item` elements rotate on an adaptive ellipse (240s cycle). Ratio interpolates smoothly with `aspect-ratio` (no breakpoint pop):
+- Wide (≥1.5 aspect): horizontal ellipse, 1.8× wider than tall.
+- Square (~1.0): near-circular.
+- Tall (≤0.65 aspect, mobile portrait): vertical ellipse, 1.8× taller than wide.
+
+Each muse has depth scaling derived from `sin(angle)` — front muses scale `~1.05`, back muses `~0.65`, with matching `zIndex`.
+
+Click any muse → **Muse Popup** opens (`main.js:1488` `MusePopup`): 3D tilt card, colored aura, 12 floating particles, GSAP entrance. Close: Escape / click outside / X.
+
+WebGL: `#muse-background-canvas` (inverted starfield — black stars on off-white). Driven by `MuseBackground` factory instance (`main.js:1476`).
 
 ---
 
-### 6. Comet Methods Toggle (`~1380–1500vh`)
-**HTML:** `index.html:215–322` · **CSS:** `styles.css:513–991` · **JS:** `main.js:2036–2181` (`MethodToggle`) + `main.js:2447` (`window.switchTab`)
+### 5. Comet Collab Intro (`1010–1450vh`, first `COMET_INTRO_PAUSE: 440`vh)
+**HTML:** `index.html:185–214` · **CSS:** `styles.css:441–511` · **JS:** `main.js:1240` (logo descent) → `main.js:1968` (`FloatingProcesses`)
+
+Sticky section. White Comet Collabs logo (`comet-collabs-logo-white.png`) descends from center to bottom over the intro pause. 5 **draggable** floating process images. Touch-enabled drag with `passive: true` document `touchmove`; scroll only blocked mid-drag via `touchAction: 'none'`.
+
+---
+
+### 6. Comet Methods Toggle (`~1450–1590vh`, `COMET_CROSSFADE_START: 580`)
+**HTML:** `index.html:217–323` · **CSS:** `styles.css:514–~990` · **JS:** `main.js:2081` (`MethodToggle` — slim wrapper) + `main.js:2351` (`window.switchTab`)
 
 Pill toggle (`.comet-pill`) switches between:
 - **Stardust:** 4-step flow (artist selects cause → creates work → launches campaign → funds split)
 - **Horizon:** 5-step Future Lab flow (Critique → Realisation), with `+Horizon` badge addon
 
-Global function: `window.switchTab('stardust' | 'horizon')` (inline onclick).
+Global function: `window.switchTab('stardust' | 'horizon')` (inline onclick) updates `MethodToggle.currentMethod`.
 
 ---
 
-### 7. Comet Connected Images (`~1500–1620vh`)
-**HTML:** `index.html:326–350` · **CSS:** `styles.css:1039–1078` · **JS:** `main.js:1789–1918` (`CometConnections`)
+### 7. Comet Connected Images (`~1590–1690vh`, ends at `COMET_TOTAL: 680`)
+**HTML:** `index.html:328–365` · **CSS:** `styles.css:938–1078` · **JS:** `main.js:1834` (`CometConnections`)
 
-5 process images in flex layout. Black connection lines drawn between them via `#comet-connection-canvas`. Click any image → **Step Popup** (`StepPopup`, `main.js:2230–2337`) shows step title + description.
-
----
-
-### 8. Events Page (`~1620vh+`)
-**HTML:** `index.html:365–406` · **CSS:** `styles.css:2050–2424` · **JS:** `main.js:2186–2225` (`PartnershipSlider`)
-
-Currently only the partnership carousel is JS-rendered. Stardust campaigns and Horizon labs sections exist in the HTML but are not yet populated from `data/events.json` — see "Known divergences" below.
-
-**Partnership Carousel** (`PartnershipSlider`): Scrolling logo strip. The module currently uses a hardcoded 5-entry array (`partner1.png`…`partner5.png`, no hyphen). `data/events.json` `partnerships[]` exists but is **not read** by the current code — paths there use `partner-1.png` (with hyphen) so they would mismatch the assets the code requests.
-
-**Stardust Campaigns** (`#stardust-campaigns`): Campaign cards with number badge, status (`active` / `open` / `archive`), name, subtitle, NGO description, muse tags (color-coded), CTA link.
-
-**Horizon Future Labs** (`#horizon-labs`): 3-column grid (Event → Outcome → Conclusion) per lab entry.
+5 process images in flex layout (`.comet-image-item.clickable`). Black connection lines drawn between them via `#comet-connection-canvas` (2D, DPR-capped at 2 with `setTransform`). Click any image → **Step Popup** (`StepPopup`, `main.js:2136`) shows step title + description.
 
 ---
 
-### Footer (Fixed, revealed at events section)
-**HTML:** `index.html:410–429` · **CSS:** `styles.css:1247–1292`
+### 8. Events Page (`~1690vh+`)
+**HTML:** `index.html:367–377` · **CSS:** `styles.css:1868–~1953` · **JS:** `main.js:2092` (`PartnershipSlider`)
 
-Fixed bottom. 3 social icons (Telegram, Instagram, LinkedIn) — 52px touch targets. cocoex text logo.
+Trimmed to **partnership carousel only**. Stardust campaign cards and Horizon labs HTML were removed during the events-page polish. The wrapper centers content (`min-height: 60vh; flex; align-items: center`).
+
+**Partnership Carousel** (`PartnershipSlider`): scrolling logo strip. Hardcoded 5-entry array at `main.js:2097` referencing `partner1.png`…`partner5.png` (no hyphen). The actual filenames in `assets/images/partnerships/` use `partner-1.png` (with hyphen) — **mismatch latent until assets are renamed or array updated**.
+
+---
+
+### Footer (Static at end of flow)
+**HTML:** `index.html:378–399` · **CSS:** `styles.css:1080–~1126`
+
+Static footer at the page end (no longer fixed-positioned). 3 social icons (Telegram, Instagram, LinkedIn) — 52px touch targets. cocoex text logo.
 
 ---
 
 ## CSS Design System
 
-### Colors (`:root` — `styles.css:38–96`)
+### Colors (`:root` — `styles.css:50–106`)
 ```css
 --color-black: #000
 --color-white: #fff
+--color-offwhite: #FAFAFA   /* muse + comet section background */
 --lunes: #5783A6
 --ares: #D54D2E
 --rabu: #8CB07F
@@ -228,99 +232,86 @@ All text sizes use `clamp()` — never hardcode px values for typography.
 **Module structure:**
 ```
 main.js module order:
-  13   GSAP setup + ScrollTrigger.normalizeScroll (iOS-guarded)
-  24   GLSL_UTILS            — shared SIMPLEX_NOISE + STAR_FIELD shaders
-  96   SCROLL_TIMING         — all scroll ranges (single source of truth)
- 129   CONFIG + DATA         — layout params, dot colors, constellation coords
- 250   DOM elements cache
- 271   State variables
- 401   WebGL intro shader    — intro starfield + big bang pulse
- 545   resize()              — debounced 150ms, DPR capped at 2x
- 571   initFireworkDots()    — 7 constellation dots
- 608   updateConstellationExplosion()
- 677   updateFireworkDots()  — draw loop for constellation
- 827   masterRender()        — single RAF loop for ALL WebGL canvases
- 937   initEventListeners()
- 991   initGSAPAnimations()  — all ScrollTrigger timelines
-1255   updateOrbitPositions()
-1322   createStarfield()     — factory: starfield shader (canonical or inverted)
-1433   UnifiedStarfield      — factory instance, white-on-black (Muse + Comet)
-1436   MuseBackground        — factory instance, inverted (black-on-offwhite)
-1443   CometCollabBackground — wraps two inverted instances (canvas1, canvas2)
-1453   MusePopup             — modal, 3D tilt, 12 particles
-1659   MuseScroll            — orbit rotation, adaptive ellipse
-1789   CometConnections      — 2D-canvas connection lines
-1923   FloatingProcesses     — drag + touch (passive document touchmove)
-2036   MethodToggle          — Stardust/Horizon pill switch
-2186   PartnershipSlider     — partnership logo strip (currently hardcoded array)
-2230   StepPopup             — step detail modal
-2342   setInitialState()
-2396   init()
-2447   window.switchTab()    — global, called by inline onclick in HTML
+  13   gsap.registerPlugin(ScrollTrigger)
+  20   Lenis init + ScrollTrigger.scrollerProxy + scroller defaults to body
+  56   (legacy normalizeScroll block — commented out, Lenis replaces it)
+  65   GLSL_UTILS            — shared SIMPLEX_NOISE + STAR_FIELD shaders
+ 137   SCROLL_TIMING         — all scroll ranges (single source of truth)
+ 165   CONFIG + DATA         — layout params, dot colors, constellation coords
+ ~270  DOM elements cache + state
+ 519   initWebGL()           — intro starfield + big bang pulse
+ 581   resize()              — debounced 150ms, DPR capped at 2×
+ 607   initFireworkDots()    — 7 constellation dots
+ 644   updateConstellationExplosion()
+ 713   updateFireworkDots()  — draw loop for constellation
+ 863   masterRender()        — single RAF loop for ALL WebGL canvases
+ 973   initEventListeners()
+1028   initGSAPAnimations()  — all ScrollTrigger timelines
+1362   createStarfield()     — factory: starfield shader (canonical or inverted)
+1473   UnifiedStarfield      — factory instance, white-on-black
+1476   MuseBackground        — factory instance, inverted (black-on-offwhite)
+1482   CometBgPrimary        — factory instance, inverted (methods toggle bg)
+1483   CometBgSecondary      — factory instance, inverted (connected images bg)
+1488   MusePopup             — modal, 3D tilt, 12 particles
+1694   MuseScroll            — orbit rotation, adaptive ellipse + depth scaling
+1834   CometConnections      — 2D-canvas connection lines (black, DPR-capped)
+1968   FloatingProcesses     — drag + touch (passive document touchmove)
+2081   MethodToggle          — slim: currentMethod + getCurrentMethod only
+2092   PartnershipSlider     — partnership logo strip (hardcoded 5-entry array)
+2136   StepPopup             — step detail modal
+2248   setInitialState()
+2302   init()
+2351   window.switchTab()    — global, called by inline onclick in HTML
 ```
 
-### SCROLL_TIMING (centralized — `main.js:96–124`)
+### SCROLL_TIMING (centralized — `main.js:137–161`)
 ```javascript
-INTRO_TOTAL: 400           // vh
-INTRO_PHASE1_END: 0.40     // 40% = 160vh
-INTRO_PHASE3_START: 0.50   // 50% = 200vh
+INTRO_TOTAL: 400              // vh
+INTRO_PHASE1_END: 0.40        // 40% = 160vh
+INTRO_PHASE2_TEXT: 0.50       // 50% = 200vh
+INTRO_PHASE3_START: 0.50      // 50% = 200vh
 TEXT_SECTION_HEIGHT: 150
-MUSE_INTRO_HOLD: 350
-MUSE_CROSSFADE: 120
-MUSE_TOTAL: 470
-COMET_INTRO_PAUSE: 100
-COMET_LOGO_MOVEMENT: 180
-COMET_CROSSFADE_START: 360
-COMET_CROSSFADE_DURATION: 120
-COMET_TOTAL: 600
+MUSE_INTRO_HOLD: 400          // vh
+MUSE_CROSSFADE: 60            // vh
+MUSE_TOTAL: 460               // = HOLD 400 + CROSSFADE 60
+COMET_INTRO_PAUSE: 440        // vh - hold intro static (logo descent + read time)
+COMET_CROSSFADE_START: 580    // = pause 440 + methods 100 + dwell 40
+COMET_CROSSFADE_DURATION: 80
+COMET_PHASES_START: 660       // = COMET_CROSSFADE_START + DURATION
+COMET_TOTAL: 680              // = pause 440 + methods 100 + dwell 40 + crossfade 80 + tail 20
 ```
 **Never hardcode vh values in animations** — always reference `SCROLL_TIMING`.
+Wrapper `height` values in CSS must match these constants exactly:
+- `.text-section-wrapper` = 150vh
+- `.muse-section-wrapper` = 460vh
+- `.comet-collab-wrapper` = 680vh
 
 ---
 
-## Data Layer (`data/events.json`)
+## Data Layer
 
-Schema documented below. **Heads-up:** the JSON file is currently *not read* by `main.js` — `PartnershipSlider` uses a hardcoded array, and the Stardust/Horizon sections render their static HTML markup unchanged. Wiring this up is a follow-up. The schema is preserved as intent.
+`data/events.json` was deleted — it was never read by `main.js`. Current dynamic content sources:
 
-```json
-{
-  "stardust": [{
-    "number": "003",
-    "status": "active | open | archive",
-    "name": "...",
-    "subtitle": "...",
-    "ngo": "...",
-    "muses": [{ "symbol": "♀", "name": "Shukra", "cause": "Bio-diversity", "color": "--shukra" }],
-    "link": "...",
-    "linkText": "View →"
-  }],
-  "horizon": [{
-    "eventTitle": "...", "eventLabel": "...", "eventDescription": "...",
-    "outcomeTitle": "...", "outcomeLabel": "...", "outcomeDescription": "...",
-    "conclusionTitle": "...", "conclusionLabel": "...", "conclusionDescription": "..."
-  }],
-  "partnerships": [{ "name": "...", "logo": "assets/images/partnerships/partner-1.png", "url": "..." }]
-}
-```
+- **Partnership carousel:** hardcoded array at `main.js:2097–2101` inside `PartnershipSlider`. Five entries pointing to `assets/images/partnerships/partnerN.png` (no hyphen) — note that the actual asset filenames use a hyphen (`partner-1.png`); reconcile when wiring real partner logos.
+- **Stardust / Horizon panels:** static HTML in `index.html:217–323`. The toggle (`MethodToggle` + `window.switchTab`) only flips the active panel — no data-driven rendering.
+- **Step popups:** static `STEP_DATA` constant in `main.js` (currently lorem ipsum copy — replace before launch).
 
-**To add a Stardust campaign:** append to `stardust[]`. Status badge and muse tags render automatically.
-**To add a partner:** append to `partnerships[]` with logo path and URL.
-**To add a Horizon lab:** append to `horizon[]` — 3 columns (event, outcome, conclusion) render automatically.
+When real data needs to drive these surfaces, prefer a thin `fetch('data/...json')` inside the relevant module rather than re-introducing a global JSON.
 
 ---
 
 ## WebGL System
 
-All canvases render inside `masterRender()` (single RAF loop). Four of the five WebGL canvases share one shader via the `createStarfield()` factory (`main.js:1322`).
+All canvases render inside `masterRender()` (single RAF loop). Four of the five WebGL canvases share one shader via the `createStarfield()` factory (`main.js:1362`).
 
 | Canvas | ID | Source | Purpose |
 |---|---|---|---|
-| Intro starfield | `#bg-canvas` | `initWebGL()` | Twinkling stars + cosmic noise + big bang pulse |
+| Intro starfield | `#bg-canvas` | `initWebGL()` (`main.js:519`) | Twinkling stars + cosmic noise + big bang pulse |
 | Constellation | `#constellation-canvas` | `updateConstellationExplosion()` (2D Canvas, not WebGL) | 7-dot explosion |
-| Unified starfield | `#unified-starfield-canvas` | `UnifiedStarfield` (factory, white-on-black) | Shared Muse + Comet background |
-| Muse backdrop | `#muse-background-canvas` | `MuseBackground` (factory, **inverted**) | Black stars on off-white |
-| Comet backdrop 1 | `#comet-collab-background-canvas` | `CometCollabBackground.canvas1` (factory, inverted) | Methods toggle section |
-| Comet backdrop 2 | `#comet-collab-background-canvas-2` | `CometCollabBackground.canvas2` (factory, inverted) | Connected images section |
+| Unified starfield | `#unified-starfield-canvas` | `UnifiedStarfield` (factory, white-on-black, `main.js:1473`) | Shared Muse + Comet background |
+| Muse backdrop | `#muse-background-canvas` | `MuseBackground` (factory, **inverted**, `main.js:1476`) | Black stars on off-white |
+| Comet backdrop 1 | `#comet-collab-background-canvas` | `CometBgPrimary` (factory, inverted, `main.js:1482`) | Methods toggle section |
+| Comet backdrop 2 | `#comet-collab-background-canvas-2` | `CometBgSecondary` (factory, inverted, `main.js:1483`) | Connected images section |
 
 **Rules:**
 - DPR capped at `Math.min(devicePixelRatio, 2)` on mobile — the factory respects this; never remove the cap.
@@ -364,32 +355,31 @@ assets/images/
 
 | Element | Selector | HTML:line | CSS:line | JS:line |
 |---|---|---|---|---|
-| Intro starfield | `#bg-canvas` | 28 | 165 | 401 |
-| White orbit dot | `#dot-white` | 32 | 227 | 1255 |
-| Black orbit dot | `#dot-black` | 33 | 244 | 1255 |
-| Intro logo | `#intro-logo` | 37 | 218 | 1255 |
-| Merged dot | `#final-dot` | 41 | 274 | 608 |
-| Transition text | `#transition-text` | 44 | 303 | 1029 |
-| Constellation canvas | `#constellation-canvas` | 50 | 339 | 608 |
-| Mission text | `#reveal-text` | 59 | 365 | 1076 |
-| Unified starfield | `#unified-starfield-canvas` | 65 | 352 | 1433 |
-| Muse intro page | `#muse-intro-page` | 74 | 1294 | 1093 |
-| Muse backdrop | `#muse-background-canvas` | 87 | — | 1436 |
-| Muse orbit items | `.muse-orbit-item` (×7) | 98–172 | 1422 | 1659 |
-| Muse popup | `#muse-popup` | 433 | 1541 | 1453 |
-| Comet intro | `#comet-collab-intro` | 183 | 437 | 1162 |
-| Comet backdrop | `#comet-collab-background-canvas` | 217 | 535 | 1444 |
-| Comet pill toggle | `.comet-pill` | 221 | 626 | 2036 |
-| Stardust panel | `#panel-stardust` | 231 | 513 | 2447 |
-| Horizon panel | `#panel-horizon` | 273 | 513 | 2447 |
-| Connected images | `#comet-collab-connected-content` | 326 | 1039 | 1789 |
-| Connection canvas | `#comet-connection-canvas` | 331 | 1083 | 1789 |
-| Step popup | `.step-popup` | 354 | 1147 | 2230 |
-| Events page | `#events-page` | 365 | 2050 | — |
-| Partnership slideshow | `#partnership-slideshow` | 372 | 2074 | 2186 |
-| Stardust campaigns | `#stardust-campaigns` | 383 | 2139 | — |
-| Horizon labs | `#horizon-labs` | 400 | 2284 | — |
-| Footer | `.social-links` | 410 | 1247 | — |
+| Intro starfield | `#bg-canvas` | 30 | 185 | 519 |
+| White orbit dot | `#dot-white` | 34 | — | 644 |
+| Black orbit dot | `#dot-black` | 35 | — | 644 |
+| Intro logo | `#intro-logo` | 39 | 220 | 644 |
+| Merged dot | `#final-dot` | 43 | 278 | 644 |
+| Transition text | `#transition-text` | 46 | 307 | 1067 |
+| Constellation canvas | `#constellation-canvas` | 52 | 343 | 644 |
+| Mission text | `#reveal-text` | 61 | 394 | 1067 |
+| Unified starfield | `#unified-starfield-canvas` | 67 | 356 | 1473 |
+| Muse intro page | `#muse-intro-page` | 76 | 1135 | 1100 |
+| Muse backdrop | `#muse-background-canvas` | 89 | — | 1476 |
+| Muse orbit items | `.muse-orbit-item` (×7) | 100–172 | 1303 | 1694 |
+| Muse popup | `#muse-popup` | 401 | 1366 | 1488 |
+| Comet intro | `#comet-collab-intro` | 185 | 441 | 1240 |
+| Comet backdrop 1 | `#comet-collab-background-canvas` | 219 | 536 | 1482 |
+| Comet pill toggle | `.comet-pill` | 223 | 627 | 2081 |
+| Stardust panel | `#panel-stardust` | 233 | — | 2351 |
+| Horizon panel | `#panel-horizon` | 275 | — | 2351 |
+| Connected images | `#comet-collab-connected-content` | 328 | 938 | 1834 |
+| Comet backdrop 2 | `#comet-collab-background-canvas-2` | 330 | 537 | 1483 |
+| Connection canvas | `#comet-connection-canvas` | 333 | 967 | 1834 |
+| Step popup | `.step-popup` | 356 | 980 | 2136 |
+| Events page | `#events-page` | 367 | 1868 | — |
+| Partnership slideshow | `#partnership-slideshow` | 371 | 1884 | 2092 |
+| Footer | `.social-links` | 378 | 1080 | — |
 
 ---
 
@@ -399,7 +389,7 @@ assets/images/
 
 **Scroll reads 0:** use `window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0`.
 
-**iOS scroll desync:** `ScrollTrigger.normalizeScroll` is iOS-guarded at startup (`main.js:13–19`). It runs on Android only — iOS handles GSAP scroll natively. Do not enable `normalizeScroll(true)` unconditionally; it deadlocks with non-passive touch listeners on iOS.
+**iOS scroll (Lenis):** Lenis 1.3.4 virtualizes scroll position and is wired to GSAP at `main.js:20–53`. Body is the scroll container (`overflow-y: auto; height: 100%`), so Lenis is initialised with `wrapper: document.body, content: '.scroll-container'`. ScrollTrigger gets a `scrollerProxy` over body and `ScrollTrigger.defaults({ scroller: document.body })`. The legacy `ScrollTrigger.normalizeScroll` block is commented out — **do not re-enable it**; Lenis replaces its purpose and the two together deadlock on iOS Safari. Removing `html, body { height: 100% }` or `body { overflow-y: auto }` breaks layout — leave them.
 
 **CSS not applying:** debug with `window.getComputedStyle(element).propertyName`. Use `!important` only to resolve specificity — document why.
 
@@ -438,9 +428,9 @@ Pre-push checklist:
 
 | File | Purpose |
 |---|---|
-| `docs/TECHNICAL-SPEC.md` | Why: scroll budget rationale, single-RAF master loop, factory shader, iOS guard, DPR cap |
+| `docs/technical-spec.md` | Why: scroll budget rationale, single-RAF master loop, factory shader, Lenis integration, DPR cap |
 | `docs/responsive-design.md` | Why: clamp-first strategy, adaptive orbit ellipse, mobile touch + scroll coexistence |
-| `docs/libraries.md` | GSAP version + iOS-guarded normalize, Typekit kit ID, project-specific WebGL patterns |
+| `docs/libraries.md` | GSAP + Lenis, Typekit kit ID, project-specific WebGL patterns |
 
 For *what* the code does, read `index.html`, `css/styles.css`, and `js/main.js` directly. Those files are the reference.
 
