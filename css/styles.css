@@ -6,27 +6,39 @@
    Scrollbar Styling - Minimal & Subtle
    ========================================================================== */
 /* Minimal scrollbar for all browsers */
-* {
+html, body, .muse-popup-content, .step-popup-content {
   scrollbar-width: thin; /* Firefox - thin scrollbar */
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent; /* Firefox - thumb and track */
 }
 
 /* Webkit browsers (Chrome, Safari, Edge) */
-*::-webkit-scrollbar {
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+.muse-popup-content::-webkit-scrollbar,
+.step-popup-content::-webkit-scrollbar {
   width: 6px; /* Thin scrollbar width */
 }
 
-*::-webkit-scrollbar-track {
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+.muse-popup-content::-webkit-scrollbar-track,
+.step-popup-content::-webkit-scrollbar-track {
   background: transparent; /* Invisible track */
 }
 
-*::-webkit-scrollbar-thumb {
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+.muse-popup-content::-webkit-scrollbar-thumb,
+.step-popup-content::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15); /* Very subtle white thumb */
   border-radius: 3px;
   transition: background 0.3s ease;
 }
 
-*::-webkit-scrollbar-thumb:hover {
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+.muse-popup-content::-webkit-scrollbar-thumb:hover,
+.step-popup-content::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3); /* Slightly more visible on hover */
 }
 
@@ -356,7 +368,7 @@ img {
    ========================================================================== */
 .text-section-wrapper {
   position: relative;
-  height: 150vh; /* TEXT_SECTION_HEIGHT */
+  height: 180vh; /* 40vh dwell + 100vh text reveal + 40vh dwell */
 }
 
 .text-section {
@@ -419,7 +431,7 @@ img {
 .comet-collab-wrapper {
   position: relative;
   width: 100%;
-  height: 600vh; /* 100vh intro + 180vh movement + 80vh hold + 120vh fade + 120vh phases */
+  height: 480vh; /* COMET_INTRO_PAUSE (160) + methods fade (100) + methods dwell (80) + COMET_CROSSFADE_DURATION (100) + post-crossfade dwell (40) */
   background: transparent;
 }
 
@@ -1009,8 +1021,8 @@ img {
   position: absolute;
   top: clamp(1rem, 2vw, 1.5rem);
   right: clamp(1rem, 2vw, 1.5rem);
-  width: 40px;
-  height: 40px;
+  width: clamp(44px, 10vw, 52px);
+  height: clamp(44px, 10vw, 52px);
   border: none;
   background: transparent;
   color: var(--color-black);
@@ -1115,7 +1127,7 @@ img {
 .muse-section-wrapper {
   position: relative;
   width: 100%;
-  height: 470vh; /* MUSE_INTRO_HOLD (350) + MUSE_CROSSFADE (120) */
+  height: 340vh; /* MUSE_INTRO_HOLD (240) + MUSE_CROSSFADE (100) */
   background: transparent;
 }
 
@@ -1589,8 +1601,8 @@ img {
   position: absolute;
   top: -50px;
   right: -50px;
-  width: 1px;
-  height: 1px;
+  width: 44px;
+  height: 44px;
   opacity: 0;
   pointer-events: none;
 }

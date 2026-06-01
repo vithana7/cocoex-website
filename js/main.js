@@ -12,11 +12,29 @@
   // ==========================================================================
   gsap.registerPlugin(ScrollTrigger);
 
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  if (!isIOS && 'ontouchstart' in window) {
-    ScrollTrigger.normalizeScroll(true);
-  }
+  // SPIKE: Lenis smooth scrolling, with GSAP/ScrollTrigger integration.
+  // Lenis virtualizes scroll position, which sidesteps the body-as-scroller
+  // iOS Safari quirks documented in MOBILE-PLAN.md.
+  const lenis = new Lenis({
+    autoRaf: false,  // We drive Lenis from GSAP's ticker instead
+  });
+
+  lenis.on('scroll', ScrollTrigger.update);
+
+  gsap.ticker.add((time) => {
+    lenis.raf(time * 1000);
+  });
+  gsap.ticker.lagSmoothing(0);
+
+  // Expose for debugging during the spike
+  window.lenis = lenis;
+
+  // SPIKE: normalizeScroll commented out — Lenis replaces its purpose.
+  // const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  //   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // if (!isIOS && 'ontouchstart' in window) {
+  //   ScrollTrigger.normalizeScroll(true);
+  // }
 
   // ==========================================================================
   // GLSL SHADER UTILITIES (SHARED)
@@ -103,24 +121,19 @@
     // Text section (simplified - no word highlighting)
     TEXT_SECTION_HEIGHT: 150,  // vh - total height for text section
 
-    // Muse section (extended intro hold)
-    MUSE_INTRO_HOLD: 350,      // vh - hold intro before transition (increased from 250vh)
-    MUSE_CROSSFADE: 120,       // vh - smoother crossfade (increased from 100vh)
+    // Muse section (canonical 40/100/40 anchor with extended intro for read time)
+    MUSE_INTRO_HOLD: 240,      // vh - hold intro text/logo before transition
+    MUSE_CROSSFADE: 100,       // vh - canonical crossfade
     MUSE_CONTENT_HOLD: 0,      // vh - no additional hold (content visible during crossfade)
-    MUSE_TOTAL: 470,           // vh - total wrapper height (350 intro + 120 crossfade)
+    MUSE_TOTAL: 340,           // vh - total wrapper height (240 intro + 100 crossfade)
 
-    // Comet section (optimized for faster scroll progression)
-    COMET_INTRO_PAUSE: 100,         // vh - hold intro static
-    COMET_LOGO_MOVEMENT: 180,       // vh - logo descent + text up (reduced from 280vh)
-    COMET_MOVEMENT_START: 100,      // vh - when movement begins (after intro pause)
-    COMET_BOTTOM_HOLD: 80,          // vh - hold after logo reaches bottom (reduced from 150vh)
-    COMET_CROSSFADE_START: 360,     // vh - when connected images fade in (100 + 180 + 80)
-    COMET_CROSSFADE_DURATION: 120,  // vh - crossfade duration
-    COMET_PHASE_DURATION: 40,       // vh - scroll distance per phase (reduced from 60vh)
-    COMET_PHASES_START: 480,        // vh - when phase scrolling begins (after crossfade: 360 + 120)
-    COMET_PHASE_COUNT: 3,           // number of phases (reduced from 5)
+    // Comet section (canonical 40/100/40 anchor with extended intro for read time)
+    COMET_INTRO_PAUSE: 160,         // vh - hold intro static (logo descent + read time)
+    COMET_CROSSFADE_START: 340,     // vh - when connected images fade in (160 pause + 100 methods + 80 read)
+    COMET_CROSSFADE_DURATION: 100,  // vh - canonical crossfade duration
+    COMET_PHASES_START: 440,        // vh - end of crossfade (340 + 100)
     COMET_CONTENT_HOLD: 0,          // vh - no fixed hold (natural page end)
-    COMET_TOTAL: 600                // vh - total wrapper height (100 intro + 180 movement + 80 hold + 120 fade + 120 phases)
+    COMET_TOTAL: 480                // vh - total wrapper height (160 + 100 + 80 + 100 + 40 dwell)
   };
 
   // ==========================================================================
@@ -1039,14 +1052,14 @@
     })
     .fromTo(elements.transitionText,
       { opacity: 0 },
-      { opacity: 1, duration: 0.4, ease: 'power2.out' }
+      { opacity: 1, duration: 0.4, ease: 'none' }
     )
     .to(elements.transitionText,
-      { opacity: 1, duration: 0.3 }, // Hold visible
+      { opacity: 1, duration: 0.3, ease: 'none' }, // Hold visible
       '+=0'
     )
     .to(elements.transitionText,
-      { opacity: 0, duration: 0.3, ease: 'power2.in' }
+      { opacity: 0, duration: 0.3, ease: 'none' }
     );
 
     // Phase 3: Constellation explosion animation
@@ -1073,12 +1086,12 @@
       }
     });
 
-    // Text reveal (simplified - just fade in, no highlighting)
+    // Text reveal: anchored inside .text-section-wrapper (40vh dwell + 100vh fade + 40vh dwell)
     gsap.timeline({
       scrollTrigger: {
         trigger: '.text-section-wrapper',
-        start: 'top 80%',
-        end: 'bottom 60%',
+        start: 'top+=40vh top',
+        end: 'top+=140vh top',
         scrub: true,
         invalidateOnRefresh: true,
         onEnter: () => log('🎯 TEXT-REVEAL START: Mission text fading in'),
@@ -1087,7 +1100,7 @@
     })
     .fromTo(elements.revealText,
       { opacity: 0 },
-      { opacity: 1, ease: 'power2.out' }
+      { opacity: 1, ease: 'none' }
     );
 
     // Muse intro page overlay transition
@@ -1103,15 +1116,16 @@
       const museCrossfadeStart = SCROLL_TIMING.MUSE_INTRO_HOLD;
       const museCrossfadeEnd = SCROLL_TIMING.MUSE_INTRO_HOLD + SCROLL_TIMING.MUSE_CROSSFADE;
 
-      // Fade in intro page as section enters viewport
+      // Fade in intro page anchored inside its own wrapper (canonical 100vh fade-in)
       gsap.fromTo(museIntroPage,
         { opacity: 0 },
         {
           opacity: 1,
+          ease: 'none',
           scrollTrigger: {
             trigger: '.muse-section-wrapper',
-            start: 'top 80%',
-            end: 'top 40%',
+            start: 'top top',
+            end: 'top+=100vh top',
             scrub: true,
             invalidateOnRefresh: true,
             anticipatePin: 1,
@@ -1164,15 +1178,16 @@
     const cometConnectedContent = document.querySelector('.comet-collab-connected-content');
 
     if (cometIntroPage && cometConnectedContent) {
-      // Hide constellation canvas when entering comet section
+      // Hide constellation canvas: anchored inside comet wrapper (40vh fade)
       gsap.fromTo(elements.constCanvas,
         { opacity: 1 },
         {
           opacity: 0,
+          ease: 'none',
           scrollTrigger: {
             trigger: '.comet-collab-wrapper',
-            start: 'top 90%',
-            end: 'top 60%',
+            start: 'top top',
+            end: 'top+=40vh top',
             scrub: true,
             invalidateOnRefresh: true,
             anticipatePin: 1,
@@ -1180,15 +1195,16 @@
         }
       );
 
-      // Fade in comet intro page when entering comet section
+      // Fade in comet intro page: anchored inside wrapper (80vh - exception for floating images)
       gsap.fromTo(cometIntroPage,
         { opacity: 0 },
         {
           opacity: 1,
+          ease: 'none',
           scrollTrigger: {
             trigger: '.comet-collab-wrapper',
-            start: 'top 80%',
-            end: 'top 40%',
+            start: 'top top',
+            end: 'top+=80vh top',
             scrub: true,
             invalidateOnRefresh: true,
             anticipatePin: 1,
@@ -1221,8 +1237,8 @@
       gsap.timeline({
         scrollTrigger: {
           trigger: '.comet-collab-wrapper',
-          start: `top+=${SCROLL_TIMING.COMET_CROSSFADE_START}vh top`, // After intro + movement + hold (610vh)
-          end: `top+=${SCROLL_TIMING.COMET_PHASES_START}vh top`, // End at 730vh (120vh crossfade)
+          start: `top+=${SCROLL_TIMING.COMET_CROSSFADE_START}vh top`, // 260vh: after pause (80) + methods fade (100) + dwell (80)
+          end: `top+=${SCROLL_TIMING.COMET_PHASES_START}vh top`, // 360vh: end of 100vh canonical crossfade
           scrub: true,
           invalidateOnRefresh: true,
           anticipatePin: 1,
@@ -1817,11 +1833,11 @@
     },
 
     resize() {
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const rect = this.canvas.getBoundingClientRect();
       this.canvas.width = rect.width * dpr;
       this.canvas.height = rect.height * dpr;
-      this.ctx.scale(dpr, dpr);
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       this.canvas.style.width = rect.width + 'px';
       this.canvas.style.height = rect.height + 'px';
     },
@@ -2073,7 +2089,7 @@
       // Add logos twice for seamless infinite scroll
       const createLogoHTML = (logo, index) => `
         <a href="${logo.href}" target="_blank" rel="noopener noreferrer" aria-label="${logo.alt}">
-          <img src="${logo.src}" alt="${logo.alt}" class="partnership-logo" loading="lazy">
+          <img src="${logo.src}" alt="${logo.alt}" class="partnership-logo" loading="lazy" decoding="async">
         </a>
       `;
 

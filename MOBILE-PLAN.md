@@ -2,6 +2,118 @@
 
 > Audit date 2026-06-01. Mobile is the primary target. Read-only investigation, no code changes proposed in this document.
 
+---
+
+## CRITICAL: iOS Safari scroll architecture (investigated 2026-06-01, attempt 2)
+
+**Confirmed user report:** iPhone is the affected device. Earlier hypothesis #1 (dual-scroller + Android `normalizeScroll`) does NOT apply — `js/main.js:15-19` guards iOS out of `normalizeScroll`. iOS Safari scroll is broken on production for a different reason.
+
+**Failed quick-fix attempt:** removing `html, body { height: 100% }` and `body { overflow-y: auto }` shifted layout on mobile. Reverted. The `100%` height anchors are load-bearing for the current architecture even though the spec says they should not be.
+
+**Why the architecture is brittle (root cause, not symptom):**
+
+The site is a single-document scroll-driven animation built on GSAP ScrollTrigger. Inventory:
+- 30+ `position: fixed/sticky/absolute` rules (`grep -c "position: fixed\|position: sticky\|position: absolute" css/styles.css` → 30+)
+- 11 ScrollTrigger instances driving timelines, scrubs, and pin behaviour
+- 5 sticky wrappers stacked back-to-back (`.muse-section`, `.muse-intro-page`, `.comet-collab-intro`, `.comet-collab-methods`, `.comet-collab-connected-content`)
+- 5 WebGL canvases rendering every frame regardless of section visibility
+- `body { overflow-y: auto }` is the actual scroll container — NOT the document root
+
+The brittleness comes from `body` being the scroller while the entire animation system measures, computes, and pins against an assumed-tall body. iOS Safari handles `body`-as-scroller awkwardly compared to document-as-scroller. Specifically iOS Safari has documented quirks with:
+- `-webkit-overflow-scrolling: touch` is no longer needed on modern iOS but its absence can subtly affect momentum
+- Body scroll combined with `100vh` viewport units inside `position: sticky` children can stall on URL-bar collapse
+- Pinch-zoom on a body-scroller can lock the gesture pipeline if any sticky descendant has `transform: translate3d` (which GSAP injects automatically)
+
+**The real question: is GSAP ScrollTrigger the right tool for a mobile-first art site?**
+
+Pros (current):
+- Already implemented, animations are tuned
+- Powerful timeline syntax
+- Mature library
+
+Cons surfacing now:
+- Tightly coupled to the body-as-scroller pattern
+- 11 trigger instances each running their own measurements; mobile fps suffers
+- iOS Safari edge cases require library-version-specific workarounds
+- Cannot easily diagnose without runtime device access
+
+**Alternative approaches to evaluate (heavy mobile plan addition):**
+
+1. **Lenis (smooth scrolling library)** — modern, mobile-first, handles iOS Safari quirks natively. Pairs with GSAP via `lenis.on('scroll', ScrollTrigger.update)`. ~12KB. Single-purpose: it owns the scroll, ScrollTrigger reads from it. Eliminates the body-vs-document scroller question entirely.
+2. **Native CSS scroll-driven animations** (`animation-timeline: scroll()`) — supported on Chrome 115+, Safari 17.5+. No JS dependency at all. Would require rewriting all 11 timelines as CSS keyframes. Massive refactor; not practical for this scope.
+3. **IntersectionObserver-based section reveals** — replace scrubbed timelines with discrete onEnter/onExit class toggles + CSS transitions. Loses the smooth scrub feel but gains rock-solid mobile compatibility. Significant UX shift.
+4. **Stay on GSAP, fix targeted iOS issues** — investigate one-by-one: clear `transform-style`, ensure no `will-change` overload, remove sticky stacking, etc. Highest risk-for-effort because we keep guessing.
+
+**Recommendation: evaluate Lenis.** It's the lowest-risk path that addresses the architectural brittleness exposed by today's failed CSS edit. Lenis explicitly solves iOS Safari momentum scrolling by virtualizing the scroll position in JS — the page is technically not scrolling natively, Lenis transforms the content container. ScrollTrigger continues to work via the integration shim. The migration is a few lines of JS plus a CSS adjustment to make `<html>` the natural document scroller. ~1 hour of work.
+
+**Caution:** Lenis takes over scroll. That has implications:
+- Browser-native scroll-to-anchor behavior is replaced
+- Accessibility tools (screen reader scroll, keyboard PgUp/PgDn) need testing
+- Performance: Lenis has its own RAF loop on top of `masterRender` — must be coordinated
+- Some users prefer native scroll feel; Lenis adds a slight smoothing default that can be disabled
+
+**Suggested order before any code change:**
+1. Manually test current iOS scroll on a fresh device with cache cleared (`?v=3.1` may have already fixed it).
+2. If broken, evaluate Lenis on a branch with a 30-minute spike.
+3. Decide whether to migrate or apply a smaller fix.
+
+---
+
+## CRITICAL: Production mobile scroll bug (investigated 2026-06-01)
+
+**Symptom (verbatim):** "Mobile, still after deploy on GitHub Pages, doesn't seem to be scrollable via mobile."
+
+**Local-vs-production gap.** The working tree has 3 modified-but-uncommitted files (`css/styles.css`, `index.html`, `js/main.js`). GitHub Pages serves commit `2c039b1` (HEAD). The user is testing local with the diff applied, prod with HEAD only. The diff itself does not contain a scroll fix — it's scroll-pacing changes (text 150→180vh, muse 470→340vh, comet 600→480vh) and a few `loading="lazy"` additions. So the bug is reproducible on HEAD.
+
+### Hypothesis ranking
+
+**1. (most likely) Dual-scroller deadlock between `<html>` and `<body>` interacts with `ScrollTrigger.normalizeScroll(true)` on Android.**
+- `css/styles.css:34–36` — `html, body { overflow-x: hidden }` makes html non-`visible` on the x-axis. Per CSS spec, when html has any non-visible overflow value, html itself becomes a scroll container (overflow propagation to viewport stops). On the y-axis html is unset → computed `auto`.
+- `css/styles.css:128–139` — `html, body { height: 100% }` plus `body { overflow-y: auto }` (line 137). Body is now also a scroll container.
+- Both elements end up scrollable. The browser picks one for touch routing; GSAP's `normalizeScroll` listens via window/document. On Android Chrome (the branch enabled at `js/main.js:17–19`), `normalizeScroll(true)` intercepts wheel/touch to pace scroll smoothly — but it expects a single document scroller. With two candidate scrollers, the touch handler can swallow gestures without applying them. iOS is guarded out at `js/main.js:15`, so iOS Safari should still scroll natively (verify; user did not specify which OS).
+- This pattern existed since the initial commit, so the page must have shipped broken on Android touch, OR the older builds compensated via something now removed. Most likely the bug has been latent on Android since before `b6e0e94` and only the iOS guard from that commit made iOS feel "fixed."
+- **Confirmation test:** open DevTools on the deployed page from a desktop, set device emulation to a touch device, and run in console: `getComputedStyle(document.scrollingElement).overflowY`. If it returns `"auto"` and `document.scrollingElement === document.body`, body is the scroller. Then run `ScrollTrigger.normalizeScroll(false)` and re-test scroll on a real Android device. If scroll returns, this hypothesis is confirmed.
+
+**2. (plausible) `ScrollTrigger.normalizeScroll(true)` itself is the regression on Android.**
+- `js/main.js:17–19` — runs on any non-iOS touch device. Android Chrome receives this. Normalize-scroll attaches non-passive wheel/touch listeners. If any other listener on the page is also non-passive on the same elements, Chrome can deadlock the gesture pipeline.
+- Since the b6e0e94 fix, no non-passive touch listener has been re-introduced (verified — the only document-level touch listeners are at `js/main.js:1948,1954,1957`, all `{ passive: true }` or default, none call `preventDefault`). So no clear deadlock partner — but `normalizeScroll(true)` on its own has been reported in the wild to break scrolling on Android 12+ Chrome under certain pinch/zoom + body-as-scroller conditions.
+- **Confirmation test:** comment out `js/main.js:17–19` (or change the condition to `if (false)`). Re-deploy. If Android scroll returns, normalizeScroll is the regression. The trade-off: scroll-driven animations may become slightly less smooth on Android, which is acceptable.
+
+**3. (lower likelihood) Service-worker or stale cached asset on Pages.**
+- GitHub Pages does not inject a service worker, but the site has shipped multiple versions of `styles.css?v=3.0` and `main.js?v=3.0` with the same query string. If a mobile browser cached an older `?v=3.0` payload from a prior visit, the deployed update never loaded. Less likely to cause a complete scroll lock — would more likely manifest as broken animations.
+- **Confirmation test:** ask the affected user to hard-refresh (or clear site data). If scroll returns after a clean fetch, bump the cache-buster to `?v=3.1` in `index.html:14,430` before re-deploying.
+
+### Recommended fix path
+
+**Step A — instant, deploy-now diagnostic (low risk):**
+1. Disable `normalizeScroll` entirely. In `js/main.js:15–19`, change to:
+   ```js
+   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+   // normalizeScroll disabled pending mobile-scroll regression diagnosis (2026-06-01).
+   // Re-enable per platform once root cause confirmed.
+   ```
+2. Bump cache-buster from `?v=3.0` to `?v=3.1` on both `index.html:14` and `index.html:430`.
+3. Deploy and re-test on real Android device.
+
+This addresses hypotheses 2 and 3 simultaneously. If scroll returns, we have isolated the regression to `normalizeScroll`. The cost is that scroll-driven animations on Android may judder slightly more — acceptable until root cause is fixed properly.
+
+**Step B — if Step A does not fix it (hypothesis 1 confirmed):**
+Restructure the body/html overflow model so there is exactly one scroller. The least invasive change:
+- In `css/styles.css:128–139`, remove `height: 100%` from `html, body`. Body will then grow to fit its `.scroll-container` child naturally, and the document scrolling element becomes html (the viewport). Keep `body { overflow-x: hidden }` for the horizontal-clip; remove `body { overflow-y: auto }` (line 137) — it becomes redundant once body is no longer height-constrained.
+- After this change, re-enable `normalizeScroll` on Android.
+
+**Why not propose Step B first?** Because removing `height: 100%` may cascade into side effects on `.intro` (which is `position: fixed`), the WebGL canvases (`.unified-starfield-canvas` is `position: fixed; height: 100%` at `css/styles.css:344–352`), and any descendant using `100%` height inheritance. Step A is a one-line revert; Step B is a layout change that needs visual regression checking on every section.
+
+### Risk assessment — items I cannot confirm without device access
+
+- I cannot determine whether the bug is iOS-only, Android-only, or both. The user did not specify. The iOS guard at `js/main.js:15` should keep iOS untouched by GSAP scroll normalization, so iOS scroll bugs would point more strongly to the dual-scroller hypothesis (1). Android scroll bugs point to either (1) or (2).
+- I cannot rule out a viewport-height bug specific to iOS Safari toolbar collapse (`100vh` vs `100dvh`). The CSS uses both (e.g., `css/styles.css:378–379`) but several full-viewport `position: fixed/sticky` elements still default to `100vh`. This causes layout overflow that *can* trap scroll on iOS, but typically it manifests as content cut off, not as scroll being completely disabled.
+- I cannot test whether the deployed bundle actually matches HEAD. GitHub Pages occasionally delays deployments by 5–10 minutes after a push. If the user is testing immediately after deploy, they may be on the previous build. A check of `view-source:` for the cache-buster query and deployed `<title>` can confirm.
+- I cannot verify Adobe Typekit (`use.typekit.net/afs8ors.css`) returns successfully on the user's network. A blocked stylesheet wouldn't affect scrolling, but a long-stalled font request would not block JS either since the script tags are at body end.
+
+---
+
 ## Executive summary
 
 - 5 concurrent WebGL contexts render every frame on mobile regardless of which section is visible. Off-screen gating exists for the muse-popup particle system but not for the four background starfields. This is the single biggest mobile-perf hit (battery, fps, GPU thermals).
