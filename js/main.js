@@ -15,8 +15,17 @@
   // SPIKE: Lenis smooth scrolling, with GSAP/ScrollTrigger integration.
   // Lenis virtualizes scroll position, which sidesteps the body-as-scroller
   // iOS Safari quirks documented in MOBILE-PLAN.md.
+  // Body is the scroll container in this codebase (body has overflow-y: auto;
+  // height: 100%), so Lenis must be told to wrap body explicitly.
   const lenis = new Lenis({
-    autoRaf: false,  // We drive Lenis from GSAP's ticker instead
+    wrapper: document.body,
+    content: document.querySelector('.scroll-container'),
+    autoRaf: false,
+    // Lower lerp = stiffer/sharper response. Higher = mushier/floatier.
+    lerp: 0.1,
+    // Input multipliers: 1.0 = native speed.
+    wheelMultiplier: 1.0,
+    touchMultiplier: 1.0,
   });
 
   lenis.on('scroll', ScrollTrigger.update);
@@ -25,6 +34,20 @@
     lenis.raf(time * 1000);
   });
   gsap.ticker.lagSmoothing(0);
+
+  ScrollTrigger.scrollerProxy(document.body, {
+    scrollTop(value) {
+      if (arguments.length) {
+        lenis.scrollTo(value, { immediate: true });
+      }
+      return lenis.scroll;
+    },
+    getBoundingClientRect() {
+      return { top: 0, left: 0, width: window.innerWidth, height: window.innerHeight };
+    },
+  });
+
+  ScrollTrigger.defaults({ scroller: document.body });
 
   // Expose for debugging during the spike
   window.lenis = lenis;
@@ -121,19 +144,19 @@
     // Text section (simplified - no word highlighting)
     TEXT_SECTION_HEIGHT: 150,  // vh - total height for text section
 
-    // Muse section (canonical 40/100/40 anchor with extended intro for read time)
-    MUSE_INTRO_HOLD: 240,      // vh - hold intro text/logo before transition
-    MUSE_CROSSFADE: 100,       // vh - canonical crossfade
+    // Muse section: longer intro hold for read time, shorter post-crossfade tail
+    MUSE_INTRO_HOLD: 400,      // vh - hold intro text/logo before transition
+    MUSE_CROSSFADE: 60,        // vh - crossfade to orbiting layout
     MUSE_CONTENT_HOLD: 0,      // vh - no additional hold (content visible during crossfade)
-    MUSE_TOTAL: 340,           // vh - total wrapper height (240 intro + 100 crossfade)
+    MUSE_TOTAL: 460,           // vh - total wrapper height (400 intro + 60 crossfade)
 
-    // Comet section (canonical 40/100/40 anchor with extended intro for read time)
-    COMET_INTRO_PAUSE: 160,         // vh - hold intro static (logo descent + read time)
-    COMET_CROSSFADE_START: 340,     // vh - when connected images fade in (160 pause + 100 methods + 80 read)
-    COMET_CROSSFADE_DURATION: 100,  // vh - canonical crossfade duration
-    COMET_PHASES_START: 440,        // vh - end of crossfade (340 + 100)
+    // Comet section: longer intro pause, faster exit through tabs → partnership
+    COMET_INTRO_PAUSE: 440,         // vh - hold intro static (logo descent + read time)
+    COMET_CROSSFADE_START: 580,     // vh - when connected images fade in (440 pause + 100 methods + 40 dwell)
+    COMET_CROSSFADE_DURATION: 80,   // vh - crossfade to connected images
+    COMET_PHASES_START: 660,        // vh - end of crossfade (580 + 80)
     COMET_CONTENT_HOLD: 0,          // vh - no fixed hold (natural page end)
-    COMET_TOTAL: 480                // vh - total wrapper height (160 + 100 + 80 + 100 + 40 dwell)
+    COMET_TOTAL: 680                // vh - total wrapper height (440 + 100 + 40 + 80 + 20 dwell)
   };
 
   // ==========================================================================

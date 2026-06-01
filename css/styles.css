@@ -431,7 +431,7 @@ img {
 .comet-collab-wrapper {
   position: relative;
   width: 100%;
-  height: 480vh; /* COMET_INTRO_PAUSE (160) + methods fade (100) + methods dwell (80) + COMET_CROSSFADE_DURATION (100) + post-crossfade dwell (40) */
+  height: 680vh; /* COMET_INTRO_PAUSE (440) + methods fade (100) + methods dwell (40) + COMET_CROSSFADE_DURATION (80) + post-crossfade dwell (20) */
   background: transparent;
 }
 
@@ -1127,7 +1127,7 @@ img {
 .muse-section-wrapper {
   position: relative;
   width: 100%;
-  height: 340vh; /* MUSE_INTRO_HOLD (240) + MUSE_CROSSFADE (100) */
+  height: 460vh; /* MUSE_INTRO_HOLD (400) + MUSE_CROSSFADE (60) */
   background: transparent;
 }
 
