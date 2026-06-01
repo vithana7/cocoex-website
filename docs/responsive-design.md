@@ -57,7 +57,7 @@ Every `height: 100vh` is followed by a `height: 100dvh` (or `min-height: 100svh`
 
 ## Orientation Change
 
-`main.js:959–964` listens to `orientationchange` and calls `ScrollTrigger.refresh()` after 300ms. iOS does not commit new viewport dimensions immediately on rotation; refreshing earlier reads stale values and breaks every scrub trigger.
+`main.js:1056–1061` listens to `orientationchange` and calls `ScrollTrigger.refresh()` after 300ms. iOS does not commit new viewport dimensions immediately on rotation; refreshing earlier reads stale values and breaks every scrub trigger.
 
 ## Touch Targets
 

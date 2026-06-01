@@ -47,7 +47,7 @@ ScrollTrigger.defaults({ scroller: document.body });
 - `scrub: true` — never use a number (double-easing artefact with timeline easing).
 - `invalidateOnRefresh: true` — required on every trigger whose `start`/`end` reads `window.innerHeight` (so resize recomputes pixel offsets).
 - `anticipatePin: 1` — set on triggers near pinned sections (Muse, Comet wrappers) to prevent a one-frame pop.
-- All `start`/`end` distances reference `SCROLL_TIMING` (`main.js:137–161`). Never inline raw vh values.
+- All `start`/`end` distances reference `SCROLL_TIMING` (`main.js:137–160`). Never inline raw vh values.
 - All ScrollTrigger triggers run against `document.body` via `scrollerProxy` (set globally with `ScrollTrigger.defaults({ scroller: document.body })`).
 
 ### `ScrollTrigger.refresh()` is called

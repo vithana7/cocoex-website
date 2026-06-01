@@ -6,7 +6,7 @@ Why the codebase is structured this way. For exact behaviour at each scroll posi
 
 ## Scroll Budget
 
-Total page height ≈ **1750vh**. All section heights derive from `SCROLL_TIMING` (`main.js:137–161`). Never hardcode `vh` values inline. Wrapper heights in `styles.css` must match these constants.
+Total page height ≈ **1780vh**. All section heights derive from `SCROLL_TIMING` (`main.js:137–160`). Never hardcode `vh` values inline. Wrapper heights in `styles.css` must match these constants.
 
 | Section | Range | Position | Constant |
 |---|---|---|---|
@@ -34,7 +34,9 @@ Total page height ≈ **1750vh**. All section heights derive from `SCROLL_TIMING
 
 ## Single `masterRender()` RAF Loop
 
-All WebGL canvases render inside one `requestAnimationFrame` loop (`main.js:863–971`), driven by `gsap.ticker` (which also drives Lenis). New canvases are added inside `masterRender()`, never as separate RAF loops.
+All WebGL canvases render inside one `requestAnimationFrame` loop (`main.js:866–981`), driven by `gsap.ticker` (which also drives Lenis). New canvases are added inside `masterRender()`, never as separate RAF loops.
+
+Each per-canvas draw block is gated by a `currentSection` check, so off-screen starfields don't spend GPU cycles. A top-level ScrollTrigger inside `initEventListeners` updates `currentSection` from scroll position with a 75vh **lead buffer** (next-section shaders wake up early to avoid pop-in). Past the **unbuffered** intro end (400vh), the entire `.intro` overlay is set to `visibility: hidden` and the constellation 2D buffer is `clearRect`'d, since the intro canvases would otherwise bleed through the transparent muse section.
 
 **Why one loop:**
 1. Browsers throttle every additional RAF independently — multiple loops compound jitter.
@@ -50,7 +52,7 @@ The orbit position update (`MuseScroll.updateOrbitPositions`) also lives in this
 
 The codebase has five starfield canvases. They all use **the same shader**, parameterized by a factory.
 
-`createStarfield(canvasId, options)` (`main.js:1362–1471`) returns a self-contained module. Two options:
+`createStarfield(canvasId, options)` (`main.js:1422–1531`) returns a self-contained module. Two options:
 
 - `invert: true` — fragment output becomes `1.0 - color`, turning the canonical white-on-black starfield into black-on-offwhite. Used for the muse and comet sections, which sit on a light surface.
 - `intensity` — multiplies star brightness pre-mix. Default `0.25`. Inverted variants need `0.9` to read against off-white.
@@ -71,7 +73,7 @@ If you need a non-starfield WebGL effect, prefer extending the factory with anot
 
 ### Intro shader is separate
 
-`#bg-canvas` (`initWebGL()`, `main.js:483–540`) uses its own shader because it has unique requirements:
+`#bg-canvas` (`initWebGL()`, `main.js:522–582`) uses its own shader because it has unique requirements:
 - Cosmic noise background (3 octaves of simplex, not a star grid).
 - `u_pulse` uniform for the dispersive big bang wave at the constellation explosion start.
 
@@ -130,7 +132,7 @@ The legacy `normalizeScroll` block at `main.js:56–62` is left commented for co
 
 ## SCROLL_TIMING is the Single Source of Truth
 
-All scroll-driven distances live in `SCROLL_TIMING` (`main.js:137–161`). Inline `vh` values in animations are forbidden.
+All scroll-driven distances live in `SCROLL_TIMING` (`main.js:137–160`). Inline `vh` values in animations are forbidden.
 
 **Why a constant table:**
 1. Phase boundaries are coupled — moving `MUSE_INTRO_HOLD` requires updating `MUSE_TOTAL` and the comet wrapper trigger offsets. Centralising forces these dependencies to stay coherent.
@@ -157,7 +159,7 @@ These are the bugs that have actually been hit in this codebase. Read them befor
 
 **WebGL context limit.** Browsers cap concurrent WebGL contexts (~8–16). Adding more canvases evicts older ones, causing visible blackouts. Five is the current count — stay under eight.
 
-**WebGL context loss.** Mobile browsers can drop contexts at any time. `initWebGL` registers `webglcontextlost`/`webglcontextrestored` handlers (`main.js:519–545`); the master loop checks `webglContextsLost` and pauses until restoration. Replicate this pattern on any new context.
+**WebGL context loss.** Mobile browsers can drop contexts at any time. `initWebGL` registers `webglcontextlost`/`webglcontextrestored` handlers (`main.js:522–582`); the master loop checks `webglContextsLost` and pauses until restoration. Replicate this pattern on any new context.
 
 ---
 
