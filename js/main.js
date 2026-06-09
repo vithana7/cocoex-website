@@ -52,12 +52,8 @@
   // Expose for debugging during the spike
   window.lenis = lenis;
 
-  // SPIKE: normalizeScroll commented out — Lenis replaces its purpose.
-  // const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-  //   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  // if (!isIOS && 'ontouchstart' in window) {
-  //   ScrollTrigger.normalizeScroll(true);
-  // }
+  // Note: ScrollTrigger.normalizeScroll is intentionally NOT enabled — Lenis
+  // handles virtualized scroll, and the two together deadlock on iOS Safari.
 
   // ==========================================================================
   // GLSL SHADER UTILITIES (SHARED)
@@ -135,28 +131,41 @@
   // SCROLL TIMING CONSTANTS (OPTIMIZED FOR SMOOTH 60FPS)
   // ==========================================================================
   const SCROLL_TIMING = {
-    // Intro section (400vh total)
-    INTRO_TOTAL: 400,
+    // Intro section (480vh total) — lengthened so the mission statement gets a
+    // long fully-bright hold (not a continuous fade) over the settled dots.
+    INTRO_TOTAL: 480,
     INTRO_PHASE1_END: 0.40,    // 40% = 160vh - orbit animation END
     INTRO_PHASE2_TEXT: 0.50,   // 50% = 200vh - transition text "art as infrastructure for change"
     INTRO_PHASE3_START: 0.50,  // 50% = 200vh - constellation explosion starts
 
-    // Text section (simplified - no word highlighting)
-    TEXT_SECTION_HEIGHT: 180,  // vh - matches .text-section-wrapper { height: 180vh } (40vh dwell + 100vh reveal + 40vh dwell)
+    // (No separate text section — the mission statement now overlays the
+    // settled constellation dots inside the intro overlay.)
 
-    // Muse section: longer intro hold for read time, shorter post-crossfade tail
-    MUSE_INTRO_HOLD: 400,      // vh - hold intro text/logo before transition
-    MUSE_CROSSFADE: 60,        // vh - crossfade to orbiting layout
-    MUSE_CONTENT_HOLD: 0,      // vh - no additional hold (content visible during crossfade)
-    MUSE_TOTAL: 460,           // vh - total wrapper height (400 intro + 60 crossfade)
+    // RHYTHM: 1 scroll = 100vh. Each phase is an explicit window with a REAL
+    // HOLD between every fade-in and the next transition, so content never just
+    // "flashes" past. Transitions use power2.out (motion fills the budget).
+    // User-specified pacing: muse intro 1 scroll in + 2 hold; orbit 2 hold;
+    // comet intro 2 (1 in + 1 hold); comet tab 2 (1 in + 1 hold); then closure.
 
-    // Comet section: longer intro pause, faster exit through tabs → partnership
-    COMET_INTRO_PAUSE: 440,         // vh - hold intro static (logo descent + read time)
-    COMET_CROSSFADE_START: 580,     // vh - when connected images fade in (440 pause + 100 methods + 40 dwell)
-    COMET_CROSSFADE_DURATION: 80,   // vh - crossfade to connected images
-    COMET_PHASES_START: 660,        // vh - end of crossfade (580 + 80)
-    COMET_CONTENT_HOLD: 0,          // vh - no fixed hold (natural page end)
-    COMET_TOTAL: 680                // vh - total wrapper height (440 + 100 + 40 + 80 + 20 dwell)
+    // MUSE — fade-in 0-100, HOLD 100-300 (2 scrolls), switch 300-400. No orbit
+    // dwell: you scroll straight from the orbit into the comet intro. The orbit is
+    // also visible THROUGH the switch, so its on-screen time already feels generous.
+    MUSE_FADEIN: 100,          // vh - intro logo + copy fade in (1 scroll)
+    MUSE_HOLD: 200,            // vh - intro HOLDS fully readable (2 scrolls) — the read
+    MUSE_INTRO_HOLD: 300,      // vh - switch START = MUSE_FADEIN + MUSE_HOLD (no flash: 200vh real hold first)
+    MUSE_CROSSFADE: 100,       // vh - black→white switch + logo crossfade (1 scroll)
+    MUSE_CONTENT_HOLD: 0,      // vh - no orbit dwell; scroll straight into comet
+    MUSE_TOTAL: 400,           // vh - wrapper (100 fade + 200 hold + 100 switch)
+
+    // COMET — intro panel (200vh): fade 0-100, HOLD 100-200. tabs panel (200vh):
+    //         methods fade 0-100, tab HOLD + closure 100-200. Then site closure.
+    COMET_CONST_HIDE: 40,           // vh - constellation canvas hides (overlaps intro fade-in)
+    COMET_INTRO_FADEIN: 100,        // vh - comet intro fades in (1 scroll)
+    COMET_INTRO_HOLD: 100,          // vh - comet intro HOLDS (1 scroll) — total 2 scrolls into comet orbiting
+    COMET_INTRO_PAUSE: 200,         // vh - intro panel total = fade-in + hold (no flash)
+    COMET_METHODS_FADE: 100,        // vh - methods panel fades in (1 scroll)
+    COMET_METHODS_DWELL: 100,       // vh - methods/tab HOLDS through closure (1 scroll)
+    COMET_TOTAL: 400                // vh - wrapper (intro panel 200 + tabs panel 200)
   };
 
   // ==========================================================================
@@ -232,54 +241,6 @@
     { points: [6, 3] },
   ];
 
-  // Step descriptions for Stardust and Horizon
-  const STEP_DATA = {
-    stardust: {
-      1: {
-        title: 'Stardust Step 1',
-        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.'
-      },
-      2: {
-        title: 'Stardust Step 2',
-        description: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
-      },
-      3: {
-        title: 'Stardust Step 3',
-        description: 'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.'
-      },
-      4: {
-        title: 'Stardust Step 4',
-        description: 'Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet.'
-      },
-      5: {
-        title: 'Stardust Step 5',
-        description: 'At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa.'
-      }
-    },
-    horizon: {
-      1: {
-        title: 'Horizon Step 1',
-        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam. Sed nisi. Nulla quis sem at nibh elementum imperdiet.'
-      },
-      2: {
-        title: 'Horizon Step 2',
-        description: 'Duis sagittis ipsum. Praesent mauris. Fusce nec tellus sed augue semper porta. Mauris massa. Vestibulum lacinia arcu eget nulla. Class aptent taciti sociosqu ad litora torquent per conubia nostra.'
-      },
-      3: {
-        title: 'Horizon Step 3',
-        description: 'Curabitur sodales ligula in libero. Sed dignissim lacinia nunc. Curabitur tortor. Pellentesque nibh. Aenean quam. In scelerisque sem at dolor. Maecenas mattis. Sed convallis tristique sem.'
-      },
-      4: {
-        title: 'Horizon Step 4',
-        description: 'Proin ut ligula vel nunc egestas porttitor. Morbi lectus risus, iaculis vel, suscipit quis, luctus non, massa. Fusce ac turpis quis ligula lacinia aliquet. Mauris ipsum. Nulla metus metus, ullamcorper vel.'
-      },
-      5: {
-        title: 'Horizon Step 5',
-        description: 'Vivamus euismod mauris. In ut quam vitae odio lacinia tincidunt. Praesent ut ligula non mi varius sagittis. Cras sagittis. Praesent ac sem eget est egestas volutpat. Vivamus consectetuer hendrerit lacus.'
-      }
-    }
-  };
-
   // ==========================================================================
   // DOM ELEMENTS
   // ==========================================================================
@@ -293,8 +254,9 @@
     transitionText: document.getElementById('transition-text'),
     constCanvas: document.getElementById('constellation-canvas'),
     revealText: document.getElementById('reveal-text'),
+    missionOverlay: document.getElementById('mission-overlay'),
     introSection: document.querySelector('.intro'),
-    textSectionWrapper: document.querySelector('.text-section-wrapper'),
+    introContent: document.querySelector('.intro-content'),
   };
 
   // Canvas contexts
@@ -310,7 +272,6 @@
   let program, posAttr, resUniform, timeUniform, pulseUniform, buffer;
   let pulseValue = 0; // Big bang pulse effect (0 = no pulse, 0-1 = animating)
   let pulseTriggered = false; // Track if pulse has been triggered
-  let constellationRotation = 0; // Z-axis rotation angle in radians
   let masterRenderLoop = null; // Consolidated render loop reference
   let isPageVisible = true; // Track page visibility for RAF optimization
   let webglContextsLost = false; // Track if any WebGL context was lost
@@ -415,10 +376,6 @@
     const c1 = 1.70158;
     const c3 = c1 + 1;
     return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-  }
-
-  function easeInOutQuad(t) {
-    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
   }
 
   // Debounce function for performance optimization
@@ -698,7 +655,7 @@
 
     // Reset pulse trigger when scrolling back
     const currentScroll = window.scrollY;
-    const introScrollHeight = window.innerHeight * 4;
+    const introScrollHeight = window.innerHeight * (SCROLL_TIMING.INTRO_TOTAL / 100);
     const overallProgress = Math.min(1, currentScroll / introScrollHeight);
 
     if (overallProgress < CONFIG.phase3Start && pulseTriggered) {
@@ -914,9 +871,9 @@
     }
 
     // Render Unified Starfield (batch uniforms, minimize state changes)
-    // Off-screen gate: shared backdrop spans text, muse, and comet sections.
+    // Off-screen gate: shared backdrop spans the muse and comet sections.
     if (UnifiedStarfield.gl && UnifiedStarfield.program &&
-        (currentSection === 'text' || currentSection === 'muse' || currentSection === 'comet')) {
+        (currentSection === 'muse' || currentSection === 'comet')) {
       const starGL = UnifiedStarfield.gl;
       if (lastActiveProgram !== UnifiedStarfield.program) {
         starGL.useProgram(UnifiedStarfield.program);
@@ -949,30 +906,16 @@
       cometGL.drawArrays(cometGL.TRIANGLES, 0, 6);
     }
 
-    // Render Comet background canvas 2 (connected images section)
-    // Off-screen gate: comet section only.
-    const cometSF2 = CometBgSecondary;
-    if (cometSF2.gl && cometSF2.program && currentSection === 'comet') {
-      const cometGL2 = cometSF2.gl;
-      if (lastActiveProgram !== cometSF2.program) {
-        cometGL2.useProgram(cometSF2.program);
-        lastActiveProgram = cometSF2.program;
-      }
-      cometGL2.uniform2f(cometSF2.resUniform, cometSF2.canvas.width, cometSF2.canvas.height);
-      cometGL2.uniform1f(cometSF2.timeUniform, time);
-      cometGL2.uniform3f(cometSF2.bgColorUniform, cometSF2.bgColor[0], cometSF2.bgColor[1], cometSF2.bgColor[2]);
-      cometGL2.uniform3f(cometSF2.starColorUniform, cometSF2.starColor[0], cometSF2.starColor[1], cometSF2.starColor[2]);
-      cometGL2.uniform1f(cometSF2.invertUniform, cometSF2.invert);
-      cometGL2.uniform1f(cometSF2.intensityUniform, cometSF2.intensity);
-      cometGL2.drawArrays(cometGL2.TRIANGLES, 0, 6);
-    }
-
     // Update Muse orbit positions — only when muse section is visible.
     // Saves 7 element style writes per frame outside the muse section.
     if (MuseScroll.isInitialized && currentSection === 'muse') {
       MuseScroll.updateOrbitPositions();
     }
 
+    // Redraw the process starline — only in the comet section (intro panel).
+    if (currentSection === 'comet') {
+      ProcessLinks.draw();
+    }
 
     masterRenderLoop = requestAnimationFrame(masterRender);
   }
@@ -989,9 +932,9 @@
       onUpdate: (self) => {
         updatePositions(self);
         // Off-screen WebGL gating — derive currentSection from scroll position.
-        // Section vh boundaries (cumulative): intro 0-400, text 400-580, muse 580-1040, comet 1040-1720, events 1720+.
-        // Sources: SCROLL_TIMING.INTRO_TOTAL (400), .text-section-wrapper (180vh CSS),
-        // .muse-section-wrapper (460vh CSS = MUSE_TOTAL), .comet-collab-wrapper (680vh CSS = COMET_TOTAL).
+        // Section vh boundaries (cumulative): intro 0-480, muse 480-1080, comet 1080-1480, events 1480+.
+        // Sources: SCROLL_TIMING.INTRO_TOTAL (480, mission overlays its back half),
+        // .muse-section-wrapper (400vh CSS = MUSE_TOTAL), .comet-collab-wrapper (400vh CSS = COMET_TOTAL).
         // BUFFER: shift each upcoming threshold ~75vh earlier so the next section's
         // starfield is already drawing before it scrolls into view (no pop-in).
         const vhPx = window.innerHeight / 100;
@@ -1000,10 +943,11 @@
         // Lead-buffered thresholds: shift earlier so the next section's
         // starfield is already drawing before it scrolls into view (no pop-in
         // for the white-on-black/inverted shaders waking up).
+        // The mission statement now lives inside the intro overlay (no separate
+        // text section), so muse follows the intro directly.
         const introEndPx = SCROLL_TIMING.INTRO_TOTAL * vhPx - bufferPx;
-        const textEndPx  = (SCROLL_TIMING.INTRO_TOTAL + SCROLL_TIMING.TEXT_SECTION_HEIGHT) * vhPx - bufferPx;
-        const museEndPx  = (SCROLL_TIMING.INTRO_TOTAL + SCROLL_TIMING.TEXT_SECTION_HEIGHT + SCROLL_TIMING.MUSE_TOTAL) * vhPx - bufferPx;
-        const cometEndPx = (SCROLL_TIMING.INTRO_TOTAL + SCROLL_TIMING.TEXT_SECTION_HEIGHT + SCROLL_TIMING.MUSE_TOTAL + SCROLL_TIMING.COMET_TOTAL) * vhPx - bufferPx;
+        const museEndPx  = (SCROLL_TIMING.INTRO_TOTAL + SCROLL_TIMING.MUSE_TOTAL) * vhPx - bufferPx;
+        const cometEndPx = (SCROLL_TIMING.INTRO_TOTAL + SCROLL_TIMING.MUSE_TOTAL + SCROLL_TIMING.COMET_TOTAL) * vhPx - bufferPx;
         // Unbuffered intro end: we don't want to hide .intro until phase 3 is
         // visually done. The lead buffer is for waking other shaders, not for
         // tearing down the current one.
@@ -1011,7 +955,6 @@
         const y = self.scroll();
         let next;
         if      (y < introEndPx) next = 'intro';
-        else if (y < textEndPx)  next = 'text';
         else if (y < museEndPx)  next = 'muse';
         else if (y < cometEndPx) next = 'comet';
         else                     next = 'events';
@@ -1019,8 +962,8 @@
 
         // .intro is a fixed full-screen overlay (z=10) holding both
         // #bg-canvas (cosmic-noise WebGL) and #constellation-canvas (2D).
-        // .white-section (z=30) sits above but is transparent; .muse-intro-page
-        // has no background. The last drawn frames of both intro canvases
+        // .white-section (z=30) sits above but is transparent; the muse stage's
+        // white bg starts at opacity 0. The last drawn frames of both intro canvases
         // bleed through during/after the muse crossfade. Hide the whole .intro
         // overlay past the unbuffered intro end; restore on scroll-back so
         // re-entering phase 3 redraws cleanly.
@@ -1047,7 +990,6 @@
       MuseBackground.resize();
       UnifiedStarfield.resize();
       CometBgPrimary.resize();
-      CometBgSecondary.resize();
       ScrollTrigger.refresh();
     }, 150);
 
@@ -1087,7 +1029,7 @@
   // ==========================================================================
   function initGSAPAnimations() {
     const h = window.innerHeight;
-    const introScrollHeight = h * 4;
+    const introScrollHeight = h * (SCROLL_TIMING.INTRO_TOTAL / 100);
     const textSectionTop = introScrollHeight;
 
     // Phase 1: Orbit animations using GSAP
@@ -1145,7 +1087,14 @@
       { opacity: 0, duration: 0.3, ease: 'none' }
     );
 
-    // Phase 3: Constellation explosion animation
+    // Phase 3: Constellation explosion animation.
+    // The explosion runs across the full phase-3 scroll range (phase3Start→1.0),
+    // but its visual motion is FRONT-LOADED: progress reaches 1.0 by
+    // EXPLOSION_SETTLE (0.58 of the 480vh intro = ~278vh) and holds there, leaving
+    // the back ~200vh of the intro for the mission statement. We drive
+    // updateConstellationExplosion with a remapped progress so the dots freeze in
+    // place while the raw scroll keeps advancing.
+    const EXPLOSION_SETTLE = 0.68; // intro fraction where dots finish settling (0.50→0.68 ≈ 1.8 scrolls of visible explosion)
     const phase3State = { progress: 0 };
     let lastExplosionLog = -1;
     gsap.to(phase3State, {
@@ -1159,193 +1108,231 @@
         invalidateOnRefresh: true,
         onEnter: () => log('🎯 INTRO-PHASE3 START: Constellation explosion + big bang pulse'),
         onUpdate: () => {
-          updateConstellationExplosion(phase3State.progress);
-          if (Math.abs(phase3State.progress - lastExplosionLog) > 0.25) {
-            log(`EXPLOSION progress ${(phase3State.progress * 100).toFixed(0)}%`);
-            lastExplosionLog = phase3State.progress;
+          // Map raw phase-3 progress (0→1 over phase3Start→1.0) onto the
+          // settle window: 0→1 over phase3Start→EXPLOSION_SETTLE, then clamp.
+          const settleSpan = EXPLOSION_SETTLE - CONFIG.phase3Start;
+          const rawIntro = CONFIG.phase3Start + phase3State.progress * (CONFIG.phase3End - CONFIG.phase3Start);
+          const explosionProgress = Math.min(1, Math.max(0, (rawIntro - CONFIG.phase3Start) / settleSpan));
+          updateConstellationExplosion(explosionProgress);
+          if (Math.abs(explosionProgress - lastExplosionLog) > 0.25) {
+            log(`EXPLOSION progress ${(explosionProgress * 100).toFixed(0)}%`);
+            lastExplosionLog = explosionProgress;
           }
         },
         onLeave: () => log('EXPLOSION complete')
       }
     });
 
-    // Text reveal: anchored inside .text-section-wrapper (40vh dwell + 100vh fade + 40vh dwell)
-    gsap.timeline({
-      scrollTrigger: {
-        trigger: '.text-section-wrapper',
-        start: 'top+=40vh top',
-        end: 'top+=140vh top',
-        scrub: true,
-        invalidateOnRefresh: true,
-        onEnter: () => log('🎯 TEXT-REVEAL START: Mission text fading in'),
-        onLeave: () => log('TEXT fully visible')
-      }
-    })
-    .fromTo(elements.revealText,
-      { opacity: 0 },
-      { opacity: 1, ease: 'none' }
-    );
-
-    // Muse intro page overlay transition
-    const museIntroPage = document.getElementById('muse-intro-page');
-    const museIntroLogo = document.querySelector('.muse-intro-logo');
-    const museIntroText = document.querySelectorAll('.muse-intro-text-top, .muse-intro-text-bottom');
-    const whiteContent = document.querySelector('.white-section-content');
-    const museCenterLogo = document.querySelector('.muse-center-logo');
-
-    if (museIntroPage && whiteContent) {
-      // Single timeline for entire muse intro sequence
-      const museFadeInEnd = 40; // vh from top of viewport to fade in
-      const museCrossfadeStart = SCROLL_TIMING.MUSE_INTRO_HOLD;
-      const museCrossfadeEnd = SCROLL_TIMING.MUSE_INTRO_HOLD + SCROLL_TIMING.MUSE_CROSSFADE;
-
-      // Fade in intro page anchored inside its own wrapper (canonical 100vh fade-in)
-      gsap.fromTo(museIntroPage,
-        { opacity: 0 },
-        {
-          opacity: 1,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: '.muse-section-wrapper',
-            start: 'top top',
-            end: 'top+=100vh top',
-            scrub: true,
-            invalidateOnRefresh: true,
-            anticipatePin: 1,
-            onEnter: () => log('🎯 MUSE-INTRO: Fading in')
-          }
-        }
-      );
-
-      // Crossfade: fade out intro, fade in orbiting content
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: '.muse-section-wrapper',
-          start: `top+=${museCrossfadeStart}vh top`,
-          end: `top+=${museCrossfadeEnd}vh top`,
-          scrub: true,
-          invalidateOnRefresh: true,
-          anticipatePin: 1,
-          onEnter: () => log('🌀 MUSE-CROSSFADE: intro → orbiting'),
-          onLeave: () => log('🎯 MUSE-ORBITING: Active (240s rotation)')
-        }
-      })
-      // Fade out intro logo and text
-      .fromTo([museIntroLogo, ...museIntroText],
-        { opacity: 1 },
-        { opacity: 0, ease: 'none' },
-        0
-      )
-      // Also fade out the intro page itself
-      .fromTo(museIntroPage,
-        { opacity: 1 },
-        { opacity: 0, ease: 'none' },
-        0
-      )
-      // Fade in white content (orbiting section)
-      .fromTo(whiteContent,
-        { opacity: 0 },
-        { opacity: 1, ease: 'none' },
-        0
-      )
-      // Fade in black center logo (xPercent/yPercent keeps it centered through scale)
-      .fromTo(museCenterLogo,
-        { opacity: 0, scale: 0.95, xPercent: -50, yPercent: -50 },
-        { opacity: 1, scale: 1, xPercent: -50, yPercent: -50, ease: 'none' },
-        0
-      );
-    }
-
-    // Comet Collab intro page and connected images overlay
-    const cometIntroPage = document.getElementById('comet-collab-intro');
-    const cometConnectedContent = document.querySelector('.comet-collab-connected-content');
-
-    if (cometIntroPage && cometConnectedContent) {
-      // Hide constellation canvas: anchored inside comet wrapper (40vh fade)
-      gsap.fromTo(elements.constCanvas,
+    // Smoke/dots clear: after the explosion settles, the constellation dots +
+    // smoke fade OUT first, leaving a clean backdrop. Only THEN does the mission
+    // appear (sequence requested by design): explosion → smoke clears → mission.
+    const smokeFadeStart = 0.70; // ~336vh — just after EXPLOSION_SETTLE (0.68)
+    const smokeFadeEnd   = 0.76; // ~365vh — smoke gone; mission comes in right after (no dead gap)
+    // "Smoke" = BOTH the 2D constellation dots (#constellation-canvas) AND the
+    // cosmic-noise WebGL backdrop (#bg-canvas, a sibling of .intro-content). Both
+    // must fade so the mission lands on a clean black field, not a glowing nebula.
+    const smokeLayers = [elements.constCanvas, elements.bgCanvas].filter(Boolean);
+    if (smokeLayers.length) {
+      gsap.fromTo(smokeLayers,
         { opacity: 1 },
         {
           opacity: 0,
           ease: 'none',
           scrollTrigger: {
-            trigger: '.comet-collab-wrapper',
-            start: 'top top',
-            end: 'top+=40vh top',
+            trigger: '.scroll-container',
+            start: () => `top+=${introScrollHeight * smokeFadeStart}px top`,
+            end: () => `top+=${introScrollHeight * smokeFadeEnd}px top`,
             scrub: true,
             invalidateOnRefresh: true,
-            anticipatePin: 1,
+            onEnter: () => log('💨 SMOKE: dots + cosmic noise clearing before mission'),
+            onLeave: () => log('SMOKE cleared')
           }
         }
       );
+    }
 
-      // Fade in comet intro page: anchored inside wrapper (80vh - exception for floating images)
-      gsap.fromTo(cometIntroPage,
+    // Mission statement: fades in right as the smoke finishes clearing (0.76) —
+    // slightly after the explosion, no dead gap. Quick fade-in to full brightness,
+    // then holds at opacity 1 through the bright hold until the joint fade-out
+    // (0.92→1.0) carries it away as the muse intro comes in underneath.
+    const missionFadeStart = 0.76; // ~365vh — comes in as smoke ends (slightly after explosion)
+    const missionFadeEnd = 0.80;   // ~384vh
+    if (elements.missionOverlay) {
+      gsap.fromTo(elements.missionOverlay,
         { opacity: 0 },
         {
           opacity: 1,
           ease: 'none',
           scrollTrigger: {
-            trigger: '.comet-collab-wrapper',
-            start: 'top top',
-            end: 'top+=80vh top',
+            trigger: '.scroll-container',
+            start: () => `top+=${introScrollHeight * missionFadeStart}px top`,
+            end: () => `top+=${introScrollHeight * missionFadeEnd}px top`,
             scrub: true,
             invalidateOnRefresh: true,
-            anticipatePin: 1,
+            onEnter: () => log('🎯 MISSION: Fading in over settled dots'),
+            onLeave: () => log('MISSION fully visible')
+          }
+        }
+      );
+    }
+
+    // Intro fade-out: dots + mission fade out together as one unit over the last
+    // stretch of the intro (~432→480vh), handing off to the Muse intro fading in
+    // underneath. The gating logic still sets visibility:hidden at exactly 480vh
+    // to finalize the (already invisible) state and stop canvas bleed-through.
+    const introFadeStart = 0.92; // ~442vh — mission holds 0.80→0.92, then fades out as muse intro comes in
+    if (elements.introContent) {
+      gsap.fromTo(elements.introContent,
+        { opacity: 1 },
+        {
+          opacity: 0,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '.scroll-container',
+            start: () => `top+=${introScrollHeight * introFadeStart}px top`,
+            end: () => `top+=${introScrollHeight * CONFIG.phase3End}px top`,
+            scrub: true,
+            invalidateOnRefresh: true,
+            onEnter: () => log('🌌 INTRO FADE-OUT: dots + mission → muse intro')
+          }
+        }
+      );
+    }
+
+    // Muse: ONE overlapping panel. Intro and orbit share .muse-stage so the
+    // shared center logo stays put while the background flips black→white at the
+    // switch. The intro layers are transparent (black starfield behind shows
+    // through), and only the white .muse-section is opaque — so crossfading the
+    // white bg IN over the transparent intro is race-free (unlike the comet case).
+    const musePanel = document.querySelector('.muse-panel');
+    const museSharedLogo = document.querySelector('.muse-shared-logo');
+    const museLogoWhite = document.getElementById('muse-logo-white');
+    const museLogoBlack = document.getElementById('muse-logo-black');
+    const museIntroCopy = document.querySelector('.muse-intro-copy');
+    const museSection = document.querySelector('.muse-section');
+
+    if (musePanel && museSharedLogo && museSection) {
+      const FADE = SCROLL_TIMING.MUSE_FADEIN;        // 100vh — intro fade-in
+      const SWITCH_AT = SCROLL_TIMING.MUSE_INTRO_HOLD; // 300vh — switch starts (fade + hold)
+      const SWITCH = SCROLL_TIMING.MUSE_CROSSFADE;   // 100vh — the black→white switch window
+
+      // Center the shared logo via GSAP so the filter flip composes without drift.
+      gsap.set(museSharedLogo, { xPercent: -50, yPercent: -50, opacity: 0 });
+
+      // --- Intro in (0 → FADE): logo + intro copy fade up over the black bg. ---
+      gsap.timeline({
+        defaults: { ease: 'power2.out' },
+        scrollTrigger: {
+          trigger: '.muse-panel',
+          start: 'top top',
+          end: `top+=${FADE}vh top`,
+          scrub: true, invalidateOnRefresh: true,
+          onEnter: () => log('🎯 MUSE-INTRO: fading in')
+        }
+      })
+      .fromTo(museSharedLogo, { opacity: 0 }, { opacity: 1 }, 0)
+      .fromTo(museIntroCopy, { opacity: 0 }, { opacity: 1 }, 0);
+
+      // --- Switch (SWITCH_AT → SWITCH_AT+SWITCH): bg crossfades black→white,
+      //     logo opacity-crossfades white→black, intro copy fades out, orbit appears. ---
+      gsap.timeline({
+        scrollTrigger: {
+          trigger: '.muse-panel',
+          start: `top+=${SWITCH_AT}vh top`,
+          end: `top+=${SWITCH_AT + SWITCH}vh top`,
+          scrub: true, invalidateOnRefresh: true,
+          onEnter: () => log('🌗 MUSE-SWITCH: black→white, logo crossfades'),
+          onLeaveBack: () => log('🌗 MUSE-SWITCH: reversed to intro')
+        }
+      })
+      // white background fades in (quick crossfade)
+      .fromTo(museSection, { opacity: 0 }, { opacity: 1, ease: 'power1.inOut' }, 0)
+      // logo crossfades: white image out, black image in (no filter() tween)
+      .fromTo(museLogoWhite, { opacity: 1 }, { opacity: 0, ease: 'power1.inOut' }, 0)
+      .fromTo(museLogoBlack, { opacity: 0 }, { opacity: 1, ease: 'power1.inOut' }, 0)
+      // intro copy fades out as orbit takes over
+      .fromTo(museIntroCopy, { opacity: 1 }, { opacity: 0, ease: 'power2.in' }, 0);
+    }
+
+    // Comet Collab intro page + methods tabs (sequential sticky panels)
+    const cometIntroPage = document.getElementById('comet-collab-intro');
+
+    if (cometIntroPage) {
+      const cometMethods = document.querySelector('.comet-collab-methods');
+      const CFADE = SCROLL_TIMING.COMET_INTRO_FADEIN; // 100vh fade duration
+
+      // Hide constellation canvas as we enter the comet wrapper (overlaps panel 1).
+      gsap.fromTo(elements.constCanvas,
+        { opacity: 1 },
+        {
+          opacity: 0, ease: 'none',
+          scrollTrigger: {
+            trigger: '.comet-panel-intro',
+            start: 'top top',
+            end: `top+=${SCROLL_TIMING.COMET_CONST_HIDE}vh top`,
+            scrub: true, invalidateOnRefresh: true,
+          }
+        }
+      );
+
+      // SEQUENTIAL PANELS: intro / tabs each own a 200vh wrapper and never
+      // co-exist on screen. Each fades IN over its first CFADE and OUT over its
+      // last CFADE (anchored to its OWN panel) — so the opaque methods panel
+      // can no longer paint over the intro (the old z-index race is gone).
+
+      // --- Panel 1: comet intro --- fade in, hold, fade out as panel leaves.
+      gsap.fromTo(cometIntroPage,
+        { opacity: 0 },
+        {
+          opacity: 1, ease: 'power2.out',
+          scrollTrigger: {
+            trigger: '.comet-panel-intro', start: 'top top',
+            end: `top+=${CFADE}vh top`,
+            scrub: true, invalidateOnRefresh: true,
             onEnter: () => log('🎯 COMET-INTRO: Fading in')
           }
         }
       );
+      gsap.fromTo(cometIntroPage,
+        { opacity: 1 },
+        {
+          opacity: 0, ease: 'power2.in',
+          scrollTrigger: {
+            trigger: '.comet-panel-intro',
+            start: `bottom-=${CFADE}vh top`, end: 'bottom top',
+            scrub: true, invalidateOnRefresh: true,
+            onLeave: () => log('COMET-INTRO: out')
+          }
+        }
+      );
 
-      // Fade in comet methods section (toggle panels)
-      const cometMethods = document.querySelector('.comet-collab-methods');
+      // --- Panel 2: tabs/methods --- fade in, hold, fade out as panel leaves.
       if (cometMethods) {
         gsap.fromTo(cometMethods,
           { opacity: 0 },
           {
-            opacity: 1,
+            opacity: 1, ease: 'power2.out',
             scrollTrigger: {
-              trigger: '.comet-collab-wrapper',
-              start: `top+=${SCROLL_TIMING.COMET_INTRO_PAUSE}vh top`,
-              end: `top+=${SCROLL_TIMING.COMET_INTRO_PAUSE + 100}vh top`,
-              scrub: true,
-              invalidateOnRefresh: true,
-              anticipatePin: 1,
-              onEnter: () => log('🎯 COMET-METHODS: Fading in toggle section')
+              trigger: '.comet-panel-tabs', start: 'top top',
+              end: `top+=${CFADE}vh top`,
+              scrub: true, invalidateOnRefresh: true,
+              onEnter: () => log('🎯 COMET-METHODS: Fading in')
+            }
+          }
+        );
+        gsap.fromTo(cometMethods,
+          { opacity: 1 },
+          {
+            opacity: 0, ease: 'power2.in',
+            scrollTrigger: {
+              trigger: '.comet-panel-tabs',
+              start: `bottom-=${CFADE}vh top`, end: 'bottom top',
+              scrub: true, invalidateOnRefresh: true,
+              onLeave: () => log('COMET-METHODS: out')
             }
           }
         );
       }
-
-      // Crossfade: intro fades out while connected images fade in
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: '.comet-collab-wrapper',
-          start: `top+=${SCROLL_TIMING.COMET_CROSSFADE_START}vh top`, // 260vh: after pause (80) + methods fade (100) + dwell (80)
-          end: `top+=${SCROLL_TIMING.COMET_PHASES_START}vh top`, // 360vh: end of 100vh canonical crossfade
-          scrub: true,
-          invalidateOnRefresh: true,
-          anticipatePin: 1,
-          onEnter: () => {
-            log('🌀 COMET-OVERLAY: Intro → Connected Images');
-            // Redraw connection lines when section becomes visible
-            if (CometConnections && CometConnections.draw) {
-              CometConnections.draw();
-            }
-          }
-        }
-      })
-      // Fade out intro page
-      .fromTo(cometIntroPage,
-        { opacity: 1 },
-        { opacity: 0, ease: 'none' },
-        0
-      )
-      // Fade in connected images
-      .fromTo(cometConnectedContent,
-        { opacity: 0 },
-        { opacity: 1, ease: 'none' },
-        0
-      );
     }
   }
 
@@ -1537,13 +1524,12 @@
 
   // ==========================================================================
   // COMET COLLAB PHASES BACKGROUND - INVERTED STARFIELD (BLACK ON OFFWHITE)
-  // Two starfield instances rendered in masterRender().
+  // Rendered in masterRender().
   // ==========================================================================
   const CometBgPrimary   = createStarfield('comet-collab-background-canvas',   { invert: true, intensity: 0.9 });
-  const CometBgSecondary = createStarfield('comet-collab-background-canvas-2', { invert: true, intensity: 0.9 });
 
   // ==========================================================================
-  // FOCUS TRAP (shared by MusePopup + StepPopup)
+  // FOCUS TRAP (shared by MusePopup)
   // ==========================================================================
   const FOCUSABLE_SELECTOR = [
     'a[href]', 'button:not([disabled])', 'input:not([disabled])',
@@ -1576,6 +1562,33 @@
       activate() { document.addEventListener('keydown', handler); },
       deactivate() { document.removeEventListener('keydown', handler); }
     };
+  }
+
+  // Wire the three standard modal dismiss triggers (overlay click, close button,
+  // Escape key) to a single close callback. `isOpenFn` guards the Escape handler
+  // so it only fires while the modal is actually open. Shared by both popups.
+  function wireModalDismiss({ overlay, closeBtn, onClose, isOpenFn }) {
+    if (overlay) overlay.addEventListener('click', onClose);
+    if (closeBtn) closeBtn.addEventListener('click', onClose);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpenFn()) onClose();
+    });
+  }
+
+  // Save the currently-focused element and move focus into the modal.
+  function captureFocus(focusTrap, focusTarget) {
+    const previouslyFocused = document.activeElement;
+    if (focusTrap) focusTrap.activate();
+    if (focusTarget && typeof focusTarget.focus === 'function') focusTarget.focus();
+    return previouslyFocused;
+  }
+
+  // Release the focus trap and restore focus to where it was before opening.
+  function releaseFocus(focusTrap, previouslyFocused) {
+    if (focusTrap) focusTrap.deactivate();
+    if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+      try { previouslyFocused.focus(); } catch (_) { /* element may be gone */ }
+    }
   }
 
   // ==========================================================================
@@ -1620,17 +1633,11 @@
       gsap.set(this.title, { display: 'none' }); // Hide title above card
       gsap.set([this.cause, this.text], { opacity: 0, y: 30 });
 
-      // Close on overlay click
-      this.overlay.addEventListener('click', () => this.close());
-
-      // Close on button click (accessibility)
-      this.closeBtn.addEventListener('click', () => this.close());
-
-      // Close on Escape key
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && this.isOpen) {
-          this.close();
-        }
+      wireModalDismiss({
+        overlay: this.overlay,
+        closeBtn: this.closeBtn,
+        onClose: () => this.close(),
+        isOpenFn: () => this.isOpen,
       });
 
       // Focus trap is created lazily on open (content not yet measured here).
@@ -1641,7 +1648,6 @@
       if (!this.popup || this.isOpen) return;
       this.isOpen = true;
       this.currentColor = color;
-      this.previouslyFocused = document.activeElement;
 
       // Update content - cause and description below image
       this.cause.textContent = causeTitle; // e.g., "Lunes · Water"
@@ -1701,10 +1707,7 @@
         }, '-=0.3');
 
       // A11y: trap focus inside popup; move focus to close button.
-      if (this.focusTrap) this.focusTrap.activate();
-      if (this.closeBtn && typeof this.closeBtn.focus === 'function') {
-        this.closeBtn.focus();
-      }
+      this.previouslyFocused = captureFocus(this.focusTrap, this.closeBtn);
     },
 
     close() {
@@ -1712,10 +1715,7 @@
       this.isOpen = false;
 
       // A11y: release focus trap and restore focus to the originally-focused element.
-      if (this.focusTrap) this.focusTrap.deactivate();
-      if (this.previouslyFocused && typeof this.previouslyFocused.focus === 'function') {
-        try { this.previouslyFocused.focus(); } catch (_) { /* element may be gone */ }
-      }
+      releaseFocus(this.focusTrap, this.previouslyFocused);
       this.previouslyFocused = null;
 
       // Kill any running animations
@@ -1958,140 +1958,6 @@
   };
 
   // ==========================================================================
-  // COMET CONNECTION LINES
-  // ==========================================================================
-  const CometConnections = {
-    canvas: null,
-    ctx: null,
-    imageItems: [],
-
-    init() {
-      this.canvas = document.getElementById('comet-connection-canvas');
-      if (!this.canvas) return;
-
-      this.ctx = this.canvas.getContext('2d');
-      this.imageItems = Array.from(document.querySelectorAll('.comet-image-item'));
-
-      if (this.imageItems.length === 0) return;
-
-      this.resize();
-      this.draw();
-
-      // Redraw on window resize
-      window.addEventListener('resize', debounce(() => {
-        this.resize();
-        this.draw();
-      }, 150), { passive: true });
-    },
-
-    resize() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const rect = this.canvas.getBoundingClientRect();
-      this.canvas.width = rect.width * dpr;
-      this.canvas.height = rect.height * dpr;
-      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      this.canvas.style.width = rect.width + 'px';
-      this.canvas.style.height = rect.height + 'px';
-    },
-
-    draw() {
-      if (!this.ctx || this.imageItems.length === 0) return;
-
-      // Clear canvas
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-      const containerRect = this.canvas.getBoundingClientRect();
-
-      // Helper function to get center position
-      const getCenter = (item) => {
-        const rect = item.getBoundingClientRect();
-        return {
-          x: rect.left + rect.width / 2 - containerRect.left,
-          y: rect.top + rect.height / 2 - containerRect.top
-        };
-      };
-
-      // Get center logo position
-      const centralLogo = document.querySelector('.comet-central-logo');
-      const centerPos = centralLogo ? getCenter(centralLogo) : { x: containerRect.width / 2, y: containerRect.height / 2 };
-
-      // Draw connections: each image to center + sequential path
-      const sequentialConnections = [
-        [0, 1], // img1 → img2
-        [1, 2], // img2 → img3
-        [2, 3], // img3 → img4
-        [3, 4], // img4 → img5
-      ];
-
-      // Enhanced astral line style with glow
-      this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-      this.ctx.lineWidth = 2;
-      this.ctx.lineCap = 'round';
-
-      // Draw radial connections (each image to center)
-      this.imageItems.forEach((item) => {
-        if (!item) return;
-        const from = getCenter(item);
-
-        // Outer glow (larger, softer)
-        this.ctx.shadowBlur = 15;
-        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-        this.ctx.beginPath();
-        this.ctx.moveTo(from.x, from.y);
-        this.ctx.lineTo(centerPos.x, centerPos.y);
-        this.ctx.stroke();
-
-        // Inner glow (brighter core)
-        this.ctx.shadowBlur = 8;
-        this.ctx.shadowColor = 'rgba(0, 0, 0, 1)';
-        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
-        this.ctx.lineWidth = 1.5;
-        this.ctx.beginPath();
-        this.ctx.moveTo(from.x, from.y);
-        this.ctx.lineTo(centerPos.x, centerPos.y);
-        this.ctx.stroke();
-
-        // Reset for next line
-        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-        this.ctx.lineWidth = 2;
-      });
-
-      // Draw sequential connections (1→2→3→4→5)
-      sequentialConnections.forEach(([fromIdx, toIdx]) => {
-        if (!this.imageItems[fromIdx] || !this.imageItems[toIdx]) return;
-
-        const from = getCenter(this.imageItems[fromIdx]);
-        const to = getCenter(this.imageItems[toIdx]);
-
-        // Outer glow (larger, softer)
-        this.ctx.shadowBlur = 15;
-        this.ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-        this.ctx.beginPath();
-        this.ctx.moveTo(from.x, from.y);
-        this.ctx.lineTo(to.x, to.y);
-        this.ctx.stroke();
-
-        // Inner glow (brighter core)
-        this.ctx.shadowBlur = 8;
-        this.ctx.shadowColor = 'rgba(0, 0, 0, 1)';
-        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
-        this.ctx.lineWidth = 1.5;
-        this.ctx.beginPath();
-        this.ctx.moveTo(from.x, from.y);
-        this.ctx.lineTo(to.x, to.y);
-        this.ctx.stroke();
-
-        // Reset for next line
-        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-        this.ctx.lineWidth = 2;
-      });
-
-      // Reset shadow for performance
-      this.ctx.shadowBlur = 0;
-    }
-  };
-
-  // ==========================================================================
   // FLOATING DRAGGABLE PROCESS IMAGES
   // ==========================================================================
   const FloatingProcesses = {
@@ -2132,7 +1998,7 @@
       const positions = [
         { top: '15%', left: '10%' },
         { top: '25%', left: '75%' },
-        { top: '50%', left: '15%' },
+        { top: '80%', left: '8%' },
         { top: '60%', left: '80%' },
         { top: '75%', left: '45%' }
       ];
@@ -2205,6 +2071,71 @@
   };
 
   // ==========================================================================
+  // PROCESS LINKS — faint starline connecting the 5 draggable processes 1→…→5.
+  // Reads live screen positions (getBoundingClientRect includes the CSS float
+  // transform + any drag), so the line follows bobbing and dragging alike.
+  // Drawn from masterRender() (gated to 'comet') — no separate RAF loop.
+  // ==========================================================================
+  const ProcessLinks = {
+    canvas: null,
+    ctx: null,
+    nodes: [],
+
+    init() {
+      this.canvas = document.getElementById('process-link-canvas');
+      if (!this.canvas) return;
+      this.ctx = this.canvas.getContext('2d');
+      // Order by data-process so the path is always 1→2→3→4→5 regardless of DOM.
+      this.nodes = Array.from(document.querySelectorAll('.floating-process'))
+        .sort((a, b) => (+a.dataset.process) - (+b.dataset.process));
+      this.resize();
+      window.addEventListener('resize', debounce(() => this.resize(), 150), { passive: true });
+    },
+
+    resize() {
+      if (!this.canvas) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = this.canvas.getBoundingClientRect();
+      this.canvas.width = rect.width * dpr;
+      this.canvas.height = rect.height * dpr;
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    },
+
+    draw() {
+      if (!this.ctx || this.nodes.length < 2) return;
+      const base = this.canvas.getBoundingClientRect();
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+      const pts = this.nodes.map(el => {
+        const r = el.getBoundingClientRect();
+        return { x: r.left + r.width / 2 - base.left, y: r.top + r.height / 2 - base.top };
+      });
+
+      this.ctx.lineCap = 'round';
+      this.ctx.lineJoin = 'round';
+
+      // Soft outer glow pass — gives the "star vibe" without hurting readability.
+      this.ctx.shadowBlur = 12;
+      this.ctx.shadowColor = 'rgba(255, 255, 255, 0.35)';
+      this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      this.ctx.lineWidth = 2;
+      this.ctx.beginPath();
+      this.ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) this.ctx.lineTo(pts[i].x, pts[i].y);
+      this.ctx.stroke();
+
+      // Crisp thin core pass.
+      this.ctx.shadowBlur = 0;
+      this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+      this.ctx.lineWidth = 1;
+      this.ctx.beginPath();
+      this.ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) this.ctx.lineTo(pts[i].x, pts[i].y);
+      this.ctx.stroke();
+    }
+  };
+
+  // ==========================================================================
   // METHOD TOGGLE (STARDUST/HORIZON)
   // ==========================================================================
   const MethodToggle = {
@@ -2223,11 +2154,11 @@
 
     // Placeholder partnership logos (replace with actual paths when available)
     logos: [
-      { src: 'assets/images/partnerships/partner1.png', alt: 'Partner 1', href: '#' },
-      { src: 'assets/images/partnerships/partner2.png', alt: 'Partner 2', href: '#' },
-      { src: 'assets/images/partnerships/partner3.png', alt: 'Partner 3', href: '#' },
-      { src: 'assets/images/partnerships/partner4.png', alt: 'Partner 4', href: '#' },
-      { src: 'assets/images/partnerships/partner5.png', alt: 'Partner 5', href: '#' },
+      { src: 'assets/images/partnerships/partner-1.png', alt: 'Partner 1', href: '#' },
+      { src: 'assets/images/partnerships/partner-2.png', alt: 'Partner 2', href: '#' },
+      { src: 'assets/images/partnerships/partner-3.png', alt: 'Partner 3', href: '#' },
+      { src: 'assets/images/partnerships/partner-4.png', alt: 'Partner 4', href: '#' },
+      { src: 'assets/images/partnerships/partner-5.png', alt: 'Partner 5', href: '#' },
     ],
 
     init() {
@@ -2239,149 +2170,17 @@
       track.className = 'partnership-track';
 
       // Add logos twice for seamless infinite scroll
-      const createLogoHTML = (logo, index) => `
+      const createLogoHTML = (logo) => `
         <a href="${logo.href}" target="_blank" rel="noopener noreferrer" aria-label="${logo.alt}">
           <img src="${logo.src}" alt="${logo.alt}" class="partnership-logo" loading="lazy" decoding="async">
         </a>
       `;
 
-      // First set
-      this.logos.forEach((logo, i) => {
-        track.innerHTML += createLogoHTML(logo, i);
-      });
-
-      // Duplicate set for seamless loop
-      this.logos.forEach((logo, i) => {
-        track.innerHTML += createLogoHTML(logo, i + this.logos.length);
-      });
+      // Build both sets in one string, assign once (single reflow)
+      const setHTML = this.logos.map(createLogoHTML).join('');
+      track.innerHTML = setHTML + setHTML;
 
       this.container.appendChild(track);
-    }
-  };
-
-  // ==========================================================================
-  // STEP POPUP MODULE
-  // ==========================================================================
-  const StepPopup = {
-    popup: null,
-    overlay: null,
-    content: null,
-    closeBtn: null,
-    title: null,
-    description: null,
-    isOpen: false,
-    focusTrap: null,
-    previouslyFocused: null,
-
-    init() {
-      // Get popup elements
-      this.popup = document.querySelector('.step-popup');
-      this.overlay = document.querySelector('.step-popup-overlay');
-      this.content = document.querySelector('.step-popup-content');
-      this.closeBtn = document.querySelector('.step-popup-close');
-      this.title = document.querySelector('.step-popup-title');
-      this.description = document.querySelector('.step-popup-description');
-
-      if (!this.popup) return;
-
-      this.focusTrap = createFocusTrap(this.content);
-
-      // Get all clickable image items
-      const imageItems = document.querySelectorAll('.comet-image-item.clickable');
-
-      // Add click listeners to each image
-      imageItems.forEach(item => {
-        // Click listener
-        item.addEventListener('click', () => {
-          const step = item.dataset.step;
-          this.open(step);
-        });
-
-        // Keyboard support (Enter key)
-        item.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            const step = item.dataset.step;
-            this.open(step);
-          }
-        });
-      });
-
-      // Close button
-      this.closeBtn.addEventListener('click', () => this.close());
-
-      // Close on overlay click
-      this.overlay.addEventListener('click', () => this.close());
-
-      // Close on Escape key
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && this.isOpen) {
-          this.close();
-        }
-      });
-
-      // Prevent closing when clicking inside content
-      this.content.addEventListener('click', (e) => {
-        e.stopPropagation();
-      });
-    },
-
-    open(step) {
-      const method = MethodToggle.getCurrentMethod();
-      const stepData = STEP_DATA[method][step];
-
-      if (!stepData) return;
-
-      this.previouslyFocused = document.activeElement;
-
-      // Update content
-      this.title.textContent = stepData.title;
-      this.description.textContent = stepData.description;
-
-      // Show popup
-      this.popup.classList.add('active');
-      this.isOpen = true;
-
-      // GSAP animation
-      gsap.fromTo(this.content,
-        {
-          opacity: 0,
-          scale: 0.8
-        },
-        {
-          opacity: 1,
-          scale: 1,
-          duration: 0.3,
-          ease: 'back.out(1.7)'
-        }
-      );
-
-      // A11y: trap focus inside popup; move focus to close button.
-      if (this.focusTrap) this.focusTrap.activate();
-      this.closeBtn.focus();
-    },
-
-    close() {
-      if (!this.isOpen) return;
-
-      // A11y: release focus trap and restore focus to the originally-focused element.
-      if (this.focusTrap) this.focusTrap.deactivate();
-      if (this.previouslyFocused && typeof this.previouslyFocused.focus === 'function') {
-        try { this.previouslyFocused.focus(); } catch (_) { /* element may be gone */ }
-      }
-      this.previouslyFocused = null;
-
-      // GSAP animation
-      gsap.to(this.content, {
-        opacity: 0,
-        scale: 0.8,
-        duration: 0.2,
-        ease: 'power2.in',
-        onComplete: () => {
-          this.popup.classList.remove('active');
-          this.isOpen = false;
-        }
-      });
     }
   };
 
@@ -2465,21 +2264,16 @@
 
     // Initialize comet collab phases background
     CometBgPrimary.init();
-    CometBgSecondary.init();
-
-    // Initialize comet connection lines
-    CometConnections.init();
 
     // Initialize floating draggable process images
     FloatingProcesses.init();
 
+    // Initialize the starline connecting the process images
+    ProcessLinks.init();
+
     // Initialize partnership slider
     PartnershipSlider.init();
 
-    // Initialize step popup
-    StepPopup.init();
-
-    // Note: CometCollabSlider module removed - replaced with static connected images layout
     // Start master render loop (consolidates all animations)
     masterRender();
   }

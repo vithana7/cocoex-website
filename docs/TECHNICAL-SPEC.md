@@ -6,27 +6,24 @@ Why the codebase is structured this way. For exact behaviour at each scroll posi
 
 ## Scroll Budget
 
-Total page height ≈ **1780vh**. All section heights derive from `SCROLL_TIMING` (`main.js:137–160`). Never hardcode `vh` values inline. Wrapper heights in `styles.css` must match these constants.
+Total page height ≈ **1340vh**. All section heights derive from `SCROLL_TIMING` (`main.js:133–169`). Never hardcode `vh` values inline. Wrapper heights in `styles.css` must match these constants.
 
 | Section | Range | Position | Constant |
 |---|---|---|---|
-| Landing | 0–400vh | Fixed overlay | `INTRO_TOTAL: 400` |
-| Mission Text | 400–550vh | Sticky | `TEXT_SECTION_HEIGHT: 150` |
-| Muse Intro | 550–950vh (hold) | Fixed overlay → crossfades | `MUSE_INTRO_HOLD: 400` + `MUSE_CROSSFADE: 60` |
-| Muse Orbiting | 950–1010vh | Sticky | within `MUSE_TOTAL: 460` |
-| Comet Intro | 1010–1450vh | Sticky | `COMET_INTRO_PAUSE: 440` |
-| Comet Methods | 1450–1590vh | Sticky | up to `COMET_CROSSFADE_START: 580` (+ `DURATION: 80`) |
-| Comet Connected | 1590–1690vh | Sticky | tail to `COMET_TOTAL: 680` |
-| Events | 1690vh+ | Normal flow (centered, ≥60vh) | — |
+| Landing + Mission | 0–480vh | Fixed overlay | `INTRO_TOTAL: 480` (mission overlays the settled dots) |
+| Muse (intro → orbit) | 480–880vh | Sticky `.muse-stage`, one overlapping panel | `MUSE_TOTAL: 400` (fade 100 + hold 200 + switch 100) |
+| Comet Intro | 880–1080vh | Sticky `.comet-panel-intro` | `COMET_INTRO_PAUSE: 200` (fade 100 + hold 100) |
+| Comet Methods | 1080–1280vh | Sticky `.comet-panel-tabs` | `COMET_METHODS_FADE: 100` + `DWELL: 100` (`COMET_TOTAL: 400`) |
+| Events | 1280vh+ | Normal flow (centered) | — |
 | Footer | end of flow | Static | — |
+
+The comet **connected-images panel was removed** — comet now ends at the methods/tabs panel. Muse intro and orbit were **merged into one overlapping sticky panel** (the center logo stays put while the background flips black→white), so there is no separate muse-intro section.
 
 ### Why these values?
 
-- **400vh intro:** three phases (orbit, transition text, constellation explosion) need ≥100vh each at 60fps for scrub smoothness. 400vh leaves headroom.
-- **400vh muse intro hold:** the intro logo + paragraphs need extended dwell so users actually read the seven-muses framing before the orbit reveals. Tuned up from earlier 350.
-- **60vh muse crossfade:** Lenis's smoothing makes longer crossfades feel slack. 60vh reads as a clean handoff.
-- **440vh `COMET_INTRO_PAUSE`:** absorbs logo descent + read time for the comet-collab intro paragraph. Earlier 100vh felt rushed once Lenis was in place.
-- **80vh `COMET_CROSSFADE_DURATION`:** tighter than the muse crossfade because users have already adjusted to the visual rhythm by this point.
+- **480vh intro:** three phases (orbit, transition text, constellation explosion) plus the smoke-clear + mission hold all need room. The explosion settles at fraction `0.68`, smoke clears `0.70→0.76`, mission holds `0.80→0.92`, then fades out `0.92→1.0`.
+- **400vh muse:** fade-in 100 + readable hold 200 + black→white switch 100. No orbit dwell (`MUSE_CONTENT_HOLD: 0`) — the orbit is visible through the switch, so you scroll straight into comet.
+- **200vh per comet panel:** intro = fade-in 100 + hold 100; tabs = methods fade 100 + dwell 100. Two sequential sticky panels that never co-exist on screen (the old z-index race is gone).
 
 **Rule of thumb:** any phase under 100vh stutters on trackpads. Any phase over 200vh feels slack — Lenis's lerp amplifies that. Update wrapper heights in CSS in lockstep with `SCROLL_TIMING` changes.
 
@@ -34,9 +31,9 @@ Total page height ≈ **1780vh**. All section heights derive from `SCROLL_TIMING
 
 ## Single `masterRender()` RAF Loop
 
-All WebGL canvases render inside one `requestAnimationFrame` loop (`main.js:866–981`), driven by `gsap.ticker` (which also drives Lenis). New canvases are added inside `masterRender()`, never as separate RAF loops.
+All WebGL canvases render inside one `requestAnimationFrame` loop (`masterRender()`, `main.js:823`), driven by `gsap.ticker` (which also drives Lenis). New canvases are added inside `masterRender()`, never as separate RAF loops.
 
-Each per-canvas draw block is gated by a `currentSection` check, so off-screen starfields don't spend GPU cycles. A top-level ScrollTrigger inside `initEventListeners` updates `currentSection` from scroll position with a 75vh **lead buffer** (next-section shaders wake up early to avoid pop-in). Past the **unbuffered** intro end (400vh), the entire `.intro` overlay is set to `visibility: hidden` and the constellation 2D buffer is `clearRect`'d, since the intro canvases would otherwise bleed through the transparent muse section.
+Each per-canvas draw block is gated by a `currentSection` check, so off-screen starfields don't spend GPU cycles. A top-level ScrollTrigger inside `initEventListeners` updates `currentSection` from scroll position with a 75vh **lead buffer** (next-section shaders wake up early to avoid pop-in). Past the **unbuffered** intro end (480vh), the entire `.intro` overlay is set to `visibility: hidden` and the constellation 2D buffer is `clearRect`'d, since the intro canvases would otherwise bleed through the transparent muse section.
 
 **Why one loop:**
 1. Browsers throttle every additional RAF independently — multiple loops compound jitter.
@@ -50,30 +47,31 @@ The orbit position update (`MuseScroll.updateOrbitPositions`) also lives in this
 
 ## WebGL Architecture: One Shader Factory
 
-The codebase has five starfield canvases. They all use **the same shader**, parameterized by a factory.
+The codebase has **three** starfield canvases driven by the factory (plus the intro's own shader). They all use **the same shader**, parameterized by a factory.
 
-`createStarfield(canvasId, options)` (`main.js:1422–1531`) returns a self-contained module. Two options:
+`createStarfield(canvasId, options)` (`main.js:1409`) returns a self-contained module. Two options:
 
 - `invert: true` — fragment output becomes `1.0 - color`, turning the canonical white-on-black starfield into black-on-offwhite. Used for the muse and comet sections, which sit on a light surface.
-- `intensity` — multiplies star brightness pre-mix. Default `0.25`. Inverted variants need `0.9` to read against off-white.
+- `intensity` — multiplies star brightness pre-mix. Default low; inverted variants use `0.9` to read against off-white.
 
 Instances:
 
 | Instance | Canvas | Role |
 |---|---|---|
-| `UnifiedStarfield` | `#unified-starfield-canvas` | Default white-on-black. Muse + Comet shared backdrop. |
+| `UnifiedStarfield` | `#unified-starfield-canvas` | Default white-on-black. Shared backdrop across muse + comet. |
 | `MuseBackground` | `#muse-background-canvas` | Inverted. Behind muse orbiting layout. |
-| `CometBgPrimary` | `#comet-collab-background-canvas` | Inverted. Methods toggle section. |
-| `CometBgSecondary` | `#comet-collab-background-canvas-2` | Inverted. Connected images section. |
+| `CometBgPrimary` | `#comet-collab-background-canvas` | Inverted. Comet section. |
+
+(`CometBgSecondary` was removed with the comet connected-images panel.)
 
 **Why a factory and not separate modules:**
-The previous architecture had `MuseBackground` and `CometCollabBackground` as separate gradient shaders (7-color simplex blends). They drifted out of sync, duplicated GLSL, and triggered five `gl.useProgram()` switches per frame. Collapsing to one shader with two parameters cut ~450 LOC, removed the `MuseBackground.colors[]` array, and made adding new canvases trivial.
+The previous architecture had `MuseBackground` and `CometCollabBackground` as separate gradient shaders (7-color simplex blends). They drifted out of sync, duplicated GLSL, and triggered extra `gl.useProgram()` switches per frame. Collapsing to one shader with two parameters cut ~450 LOC, removed the `MuseBackground.colors[]` array, and made adding new canvases trivial.
 
 If you need a non-starfield WebGL effect, prefer extending the factory with another option flag rather than introducing a new module.
 
 ### Intro shader is separate
 
-`#bg-canvas` (`initWebGL()`, `main.js:522–582`) uses its own shader because it has unique requirements:
+`#bg-canvas` (`initWebGL()`, `main.js:479`) uses its own shader because it has unique requirements:
 - Cosmic noise background (3 octaves of simplex, not a star grid).
 - `u_pulse` uniform for the dispersive big bang wave at the constellation explosion start.
 
@@ -95,7 +93,7 @@ Modern phones ship with `devicePixelRatio` of 3. A full-screen WebGL shader at 3
 
 The cap is **non-negotiable on mobile**. Removing it has caused 30→15fps regressions on iPhones in past testing. Desktop is uncapped because GPU headroom is larger.
 
-The factory `createStarfield` also caps at 2× — every WebGL canvas in the codebase respects the cap, including the 2D `CometConnections` canvas which uses `setTransform(dpr,0,0,dpr,0,0)`.
+The factory `createStarfield` also caps at 2× — every WebGL canvas in the codebase respects the cap, as does the 2D `ProcessLinks` starline canvas which uses `setTransform(dpr,0,0,dpr,0,0)`.
 
 ---
 
@@ -126,13 +124,13 @@ Production iOS Safari was freezing scroll on the body-as-scroller layout — ear
 - `lenis.on('scroll', ScrollTrigger.update)` — every Lenis tick refreshes ST positions; otherwise pinned/scrubbed sections drift.
 - `ScrollTrigger.scrollerProxy(document.body, …)` + `ScrollTrigger.defaults({ scroller: document.body })` — every trigger is implicitly tied to body. New triggers need no per-instance scroller config.
 
-The legacy `normalizeScroll` block at `main.js:56–62` is left commented for context. **Never re-enable it alongside Lenis.**
+The legacy `normalizeScroll` block (around `main.js:55`) is left commented for context. **Never re-enable it alongside Lenis.**
 
 ---
 
 ## SCROLL_TIMING is the Single Source of Truth
 
-All scroll-driven distances live in `SCROLL_TIMING` (`main.js:137–160`). Inline `vh` values in animations are forbidden.
+All scroll-driven distances live in `SCROLL_TIMING` (`main.js:133–169`). Inline `vh` values in animations are forbidden.
 
 **Why a constant table:**
 1. Phase boundaries are coupled — moving `MUSE_INTRO_HOLD` requires updating `MUSE_TOTAL` and the comet wrapper trigger offsets. Centralising forces these dependencies to stay coherent.
@@ -157,9 +155,9 @@ These are the bugs that have actually been hit in this codebase. Read them befor
 
 **Drag interferes with scroll.** Document-level `touchmove` must be `{ passive: true }`. Block scroll only on the dragged element via `style.touchAction = 'none'`. See `FloatingProcesses.startDrag/endDrag`.
 
-**WebGL context limit.** Browsers cap concurrent WebGL contexts (~8–16). Adding more canvases evicts older ones, causing visible blackouts. Five is the current count — stay under eight.
+**WebGL context limit.** Browsers cap concurrent WebGL contexts (~8–16). Adding more canvases evicts older ones, causing visible blackouts. Four WebGL contexts are active — stay under eight.
 
-**WebGL context loss.** Mobile browsers can drop contexts at any time. `initWebGL` registers `webglcontextlost`/`webglcontextrestored` handlers (`main.js:522–582`); the master loop checks `webglContextsLost` and pauses until restoration. Replicate this pattern on any new context.
+**WebGL context loss.** Mobile browsers can drop contexts at any time. `initWebGL` registers `webglcontextlost`/`webglcontextrestored` handlers (`main.js:479`+); the master loop checks `webglContextsLost` and pauses until restoration. Replicate this pattern on any new context.
 
 ---
 
@@ -183,7 +181,7 @@ Before a release, scroll through the entire page on:
 
 - Chrome / Firefox / Safari / Edge desktop (latest).
 - iOS Safari (current iPhone): touch drag on floating images, popup interactions, no scroll freeze.
-- Android Chrome: `normalizeScroll` active, DPR cap visible (no overheating).
+- Android Chrome: Lenis-driven scroll smooth, DPR cap visible (no overheating).
 - 320px / 375px / 768px / 1024px / 1440px / 1920px viewports.
 - `prefers-reduced-motion`: CSS animations and popup particles disabled.
 - Keyboard navigation: Tab through muses, Enter opens popup, Escape closes.

@@ -39,9 +39,11 @@ The orbit aspect ratio is computed continuously from `window.innerWidth / window
 
 | Viewport aspect | Shape | Why |
 |---|---|---|
-| ≤ 0.65 (portrait phones) | Vertical 1.8× tall | Orbit reads as a column, fills available height |
+| ≤ 0.6 (portrait phones) | Vertical 1.8× tall | Orbit reads as a column, fills available height |
 | ~1.0 (square) | Near-circular | Balanced reveal |
-| ≥ 1.5 (desktop landscape) | Horizontal 1.8× wide | Wide sweeping motion |
+| ≥ 1.4 (desktop landscape) | Horizontal 1.8× wide | Wide sweeping motion |
+
+The interpolation anchors are `aspect 0.6` (fully vertical) and `aspect 1.4` (fully horizontal), mapped via `t = clamp((aspect - 0.6) / 0.8, 0, 1)` in `MuseScroll.calculateOrbitRadius`.
 
 The interpolation between these anchors is smooth, so resizing or device rotation never "pops" the ellipse. Each muse also gets depth scaling derived from `sin(angle)` (front muses ~1.05×, back muses ~0.65×) with matching `zIndex`, so the orbit reads as a 3D ring on every aspect.
 
@@ -55,9 +57,13 @@ The interpolation between these anchors is smooth, so resizing or device rotatio
 
 Every `height: 100vh` is followed by a `height: 100dvh` (or `min-height: 100svh`). `100vh` on iOS Safari includes the dynamic toolbar area, hiding content behind it. `100dvh` shrinks with the visible viewport; `100svh` always uses the smallest viewport. Browsers without these units fall back to the `100vh` declaration above.
 
+## Muse Popup on Short Viewports
+
+`.muse-popup-content` keeps `overflow: visible` so the card's aura glow (box-shadow) and the close button (positioned above the card) are never clipped. On short/landscape phones (`@media (max-height: 500px)`) the card stack would otherwise exceed the 80vh popup, so a media query shrinks `.muse-card-wrapper` (height-relative `30vh` sizing) and tightens gaps instead of switching to scroll — scrolling would clip the glow.
+
 ## Orientation Change
 
-`main.js:1056–1061` listens to `orientationchange` and calls `ScrollTrigger.refresh()` after 300ms. iOS does not commit new viewport dimensions immediately on rotation; refreshing earlier reads stale values and breaks every scrub trigger.
+`main.js:998` listens to `orientationchange` and calls `ScrollTrigger.refresh()` after 300ms. iOS does not commit new viewport dimensions immediately on rotation; refreshing earlier reads stale values and breaks every scrub trigger.
 
 ## Touch Targets
 

@@ -51,15 +51,12 @@
         <!-- Constellation canvas for fireworks and galaxy -->
         <canvas class="constellation-canvas" id="constellation-canvas"></canvas>
 
-      </div>
-    </section>
-
-    <!-- Text section wrapper (creates scroll area for locking) -->
-    <section class="text-section-wrapper" aria-label="Mission statement">
-      <div class="text-section" id="text-section">
-        <div class="text-content">
-          <p class="reveal-text" id="reveal-text"><em>cocoex</em> is a transdisciplinary social impact lab that uses art, participation, and technology to generate real environmental and social change. We bring artists, creators and collectors together — cultivating a community built on shared purpose, where art and impact are inseparable.<br><br>We are a non-profit. We build the infrastructure, hold the space, and set the conditions for something larger than ourselves.<br><br>The creation belongs to the artists. The impact belongs to the world.</p>
+        <!-- Mission statement: fades in over the settled constellation dots -->
+        <div class="mission-overlay" id="mission-overlay" aria-label="Mission statement">
+          <p class="reveal-text reveal-text-top" id="reveal-text"><em>cocoex</em> is a non-profit lab where artists, creators and collectors turn art into real environmental and social change.</p>
+          <p class="reveal-text reveal-text-bottom">The creation belongs to the artists. The impact belongs to the world.</p>
         </div>
+
       </div>
     </section>
 
@@ -72,30 +69,19 @@
       <!-- Muse Section Wrapper -->
       <div class="muse-section-wrapper">
 
-        <!-- Muse Intro Page -->
-        <section class="muse-intro-page" id="muse-intro-page" aria-labelledby="muse-intro-page-heading">
-          <h2 id="muse-intro-page-heading" class="visually-hidden">Muse — the seven causes</h2>
-          <p class="muse-intro-text-top">Muse explores the complexity of nature and life identifying 7 global challenges where collective efforts can reach positive systemic change. The seven Muses are cocoex's guiding framework — each one aligned with a global cause, from reforestation and clean water to human rights and biodiversity.</p>
-          <div class="muse-intro-logo">
-            <img src="assets/images/muse/muse_logo_black.png" alt="Muse" class="muse-intro-logo-image" loading="lazy" decoding="async">
-          </div>
-          <p class="muse-intro-text-bottom">Together they form a single constellation of orientations that runs through every campaign, every Future Lab, every act of collective creativity within the cocoex ecosystem. Each Muse has its own community and its own body of art growing around it.</p>
-        </section>
+        <!-- Single overlapping panel: intro and orbit share ONE sticky stage so the
+             center logo stays put while the bg flips black→white at the switch. -->
+        <div class="section-panel muse-panel">
+        <div class="muse-stage" id="muse-stage">
 
-        <div class="white-section-content">
-        <!-- Muse Portfolio Section - Orbiting Layout -->
-        <article class="muse-section" id="muse-section" aria-label="Muse collection">
+          <!-- Muse Portfolio Section - Orbiting Layout (white bg fades in at switch) -->
+          <article class="muse-section" id="muse-section" aria-label="Muse collection">
 
-          <!-- Animated Background Canvas -->
-          <canvas class="muse-background-canvas" id="muse-background-canvas" aria-hidden="true"></canvas>
+            <!-- Animated Background Canvas -->
+            <canvas class="muse-background-canvas" id="muse-background-canvas" aria-hidden="true"></canvas>
 
-          <!-- Central Logo -->
-          <div class="muse-center-logo">
-            <img src="assets/images/muse/muse_logo_black.png" alt="Muse" class="muse-logo-image" loading="lazy" decoding="async">
-          </div>
-
-          <!-- Orbiting Muses -->
-          <div class="muse-orbit-container">
+            <!-- Orbiting Muses -->
+            <div class="muse-orbit-container">
 
             <!-- Lunes -->
             <div class="muse-orbit-item" data-angle="0" data-color="#5783A6" data-popup-title="Lunes · Water">
@@ -175,13 +161,32 @@
             </div>
 
           </div>
-        </article>
-      </div>
+          </article>
+
+          <!-- Shared center logo — stays put across the switch. Two stacked
+               images opacity-crossfade white→black as the bg flips black→white. -->
+          <div class="muse-shared-logo" id="muse-shared-logo">
+            <img src="assets/images/muse/muse_logo_black.png" alt="Muse" class="muse-logo-image muse-logo-white" id="muse-logo-white" loading="lazy" decoding="async">
+            <img src="assets/images/muse/muse_logo_black.png" alt="" aria-hidden="true" class="muse-logo-image muse-logo-black" id="muse-logo-black" loading="lazy" decoding="async">
+          </div>
+
+          <!-- Intro copy (fades out at the switch) -->
+          <div class="muse-intro-copy" id="muse-intro-copy" aria-labelledby="muse-intro-page-heading">
+            <h2 id="muse-intro-page-heading" class="visually-hidden">Muse — the seven causes</h2>
+            <p class="muse-intro-text-top">Seven causes.<br>One constellation.</p>
+            <p class="muse-intro-text-bottom">Each Muse its own community, its own body of art — the framework behind every cocoex campaign.</p>
+          </div>
+
+        </div> <!-- End muse-stage -->
+        </div> <!-- End muse-panel -->
 
       </div> <!-- End muse-section-wrapper -->
 
       <!-- Comet Collab Wrapper -->
       <div class="comet-collab-wrapper">
+
+        <!-- Sub-panel 1: Comet Intro (own scroll range; no overlap with tabs) -->
+        <div class="section-panel comet-panel-intro">
         <!-- Comet Collab Intro Section -->
         <section class="comet-collab-intro" id="comet-collab-intro" aria-label="Comet collab introduction">
           <!-- White Logo (moves down) -->
@@ -191,11 +196,12 @@
 
           <!-- Intro Content -->
           <div class="comet-collab-intro-content">
-            <p class="comet-methods-text">Comet Collab is an ecosystem where artists, collectors, activists, and communities converge through Stardust and Horizon, guided by Muse, in a continuous loop of creation and impact.</p>
+            <p class="comet-methods-text">Comet Collab is an ecosystem where artists, collectors, activists, and communities converge through Stardust and Horizon.<br><span class="comet-methods-guided">Guided by Muse, in a continuous loop of creation and impact.</span></p>
           </div>
 
           <!-- Floating Draggable Process Images -->
           <div class="floating-processes" id="floating-processes">
+            <canvas class="process-link-canvas" id="process-link-canvas" aria-hidden="true"></canvas>
             <div class="floating-process" data-process="1" draggable="true">
               <img src="assets/images/comet-collabs/process-one.png" alt="Process 1" loading="lazy" decoding="async">
             </div>
@@ -213,7 +219,10 @@
             </div>
           </div>
         </section>
+        </div> <!-- End comet-panel-intro -->
 
+        <!-- Sub-panel 2: Tabs / Methods (own scroll range) -->
+        <div class="section-panel comet-panel-tabs">
         <!-- Comet Collab Methods Toggle -->
         <div class="comet-collab-methods">
           <!-- Extended WebGL Background -->
@@ -324,44 +333,7 @@
           </div>
 
         </div> <!-- End comet-collab-methods -->
-
-        <!-- Comet Collab Connected Images (Static Display) -->
-        <section class="comet-collab-connected-content" id="comet-collab-connected-content">
-          <!-- Extended WebGL Background (same as methods) -->
-          <canvas class="comet-collab-background-canvas-2" id="comet-collab-background-canvas-2" aria-hidden="true"></canvas>
-
-          <!-- Connection Lines Canvas -->
-          <canvas class="comet-connection-canvas" id="comet-connection-canvas" aria-hidden="true"></canvas>
-
-          <!-- Static Connected Images -->
-          <div class="comet-connected-images">
-            <div class="comet-image-item clickable" data-step="1">
-              <img src="assets/images/comet-collabs/process-one.png" alt="Process 1" loading="lazy" decoding="async">
-            </div>
-            <div class="comet-image-item clickable" data-step="2">
-              <img src="assets/images/comet-collabs/process-two.png" alt="Process 2" loading="lazy" decoding="async">
-            </div>
-            <div class="comet-image-item clickable" data-step="3">
-              <img src="assets/images/comet-collabs/process-three.png" alt="Process 3" loading="lazy" decoding="async">
-            </div>
-            <div class="comet-image-item clickable" data-step="4">
-              <img src="assets/images/comet-collabs/process-four.png" alt="Process 4" loading="lazy" decoding="async">
-            </div>
-            <div class="comet-image-item clickable" data-step="5">
-              <img src="assets/images/comet-collabs/process-five.png" alt="Process 5" loading="lazy" decoding="async">
-            </div>
-          </div>
-        </section>
-
-        <!-- Step Popup Modal -->
-        <div class="step-popup" role="dialog" aria-modal="true" aria-labelledby="step-popup-title">
-          <div class="step-popup-overlay"></div>
-          <div class="step-popup-content">
-            <button class="step-popup-close" aria-label="Close popup">×</button>
-            <h2 id="step-popup-title" class="step-popup-title"></h2>
-            <p class="step-popup-description"></p>
-          </div>
-        </div>
+        </div> <!-- End comet-panel-tabs -->
       </div> <!-- End comet-collab-wrapper -->
 
       <!-- Events Page Section -->

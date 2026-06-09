@@ -6,7 +6,7 @@
    Scrollbar Styling - Minimal & Subtle
    ========================================================================== */
 /* Minimal scrollbar for all browsers */
-html, body, .muse-popup-content, .step-popup-content {
+html, body, .muse-popup-content {
   scrollbar-width: thin; /* Firefox - thin scrollbar */
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent; /* Firefox - thumb and track */
 }
@@ -14,22 +14,19 @@ html, body, .muse-popup-content, .step-popup-content {
 /* Webkit browsers (Chrome, Safari, Edge) */
 html::-webkit-scrollbar,
 body::-webkit-scrollbar,
-.muse-popup-content::-webkit-scrollbar,
-.step-popup-content::-webkit-scrollbar {
+.muse-popup-content::-webkit-scrollbar {
   width: 6px; /* Thin scrollbar width */
 }
 
 html::-webkit-scrollbar-track,
 body::-webkit-scrollbar-track,
-.muse-popup-content::-webkit-scrollbar-track,
-.step-popup-content::-webkit-scrollbar-track {
+.muse-popup-content::-webkit-scrollbar-track {
   background: transparent; /* Invisible track */
 }
 
 html::-webkit-scrollbar-thumb,
 body::-webkit-scrollbar-thumb,
-.muse-popup-content::-webkit-scrollbar-thumb,
-.step-popup-content::-webkit-scrollbar-thumb {
+.muse-popup-content::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15); /* Very subtle white thumb */
   border-radius: 3px;
   transition: background 0.3s ease;
@@ -37,8 +34,7 @@ body::-webkit-scrollbar-thumb,
 
 html::-webkit-scrollbar-thumb:hover,
 body::-webkit-scrollbar-thumb:hover,
-.muse-popup-content::-webkit-scrollbar-thumb:hover,
-.step-popup-content::-webkit-scrollbar-thumb:hover {
+.muse-popup-content::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3); /* Slightly more visible on hover */
 }
 
@@ -167,7 +163,7 @@ img {
    Intro Section
    ========================================================================== */
 .intro-spacer {
-  height: 400vh;
+  height: 480vh; /* MUST equal SCROLL_TIMING.INTRO_TOTAL */
   position: relative;
 }
 
@@ -363,41 +359,43 @@ img {
 }
 
 /* ==========================================================================
-   Text Section
+   Mission Overlay (inside intro — fades in over settled constellation dots)
    ========================================================================== */
-.text-section-wrapper {
-  position: relative;
-  height: 180vh; /* 40vh dwell + 100vh text reveal + 40vh dwell */
+.mission-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  z-index: 4; /* above constellation canvas (z=1) and dots */
+  pointer-events: none;
+  will-change: opacity;
 }
 
-.text-section {
-  position: sticky;
-  top: 0;
-  z-index: var(--z-text-section);
-  height: 100vh;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  padding: clamp(1rem, 5vw, 4rem);
-}
-
-.text-content {
-  max-width: min(90%, 800px);
-  width: 100%;
-  padding: 0 clamp(1rem, 3vw, 2rem);
-}
-
+/* Two beats frame the dot cluster: top beat above, closer below. */
 .reveal-text {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: min(90%, 800px);
+  padding: 0 clamp(1rem, 3vw, 2rem);
   font-family: var(--font-canela);
   font-weight: var(--font-h2-weight);
-  font-size: var(--font-h2-size);
-  line-height: var(--font-h2-height);
+  font-size: var(--font-body-size);
+  line-height: var(--font-body-height);
   color: var(--color-white);
-  text-align: justify;
+  text-align: center;
+  text-wrap: balance;
   text-transform: none;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85);
+  margin: 0;
+}
+
+.reveal-text-top {
+  top: 16%;
+}
+
+.reveal-text-bottom {
+  bottom: 16%;
 }
 
 .reveal-text em {
@@ -430,7 +428,8 @@ img {
 .comet-collab-wrapper {
   position: relative;
   width: 100%;
-  height: 680vh; /* COMET_INTRO_PAUSE (440) + methods fade (100) + methods dwell (40) + COMET_CROSSFADE_DURATION (80) + post-crossfade dwell (20) */
+  /* Height auto-sizes from its .section-panel children (intro/tabs/connected),
+     each owning its own scroll range. No fixed height; no overlap race. */
   background: transparent;
 }
 
@@ -488,8 +487,7 @@ img {
   font-size: var(--font-h2-size);
   line-height: var(--font-h2-height);
   color: var(--color-white);
-  text-align: justify;
-  text-align-last: left;
+  text-align: center;
   text-transform: none;
   opacity: 1 !important;
   width: 100%;
@@ -500,6 +498,12 @@ img {
   color: rgba(0, 0, 0, 0); /* Transparent fill */
   -webkit-text-stroke: 1px var(--color-white);
   text-stroke: 1px var(--color-white);
+}
+
+/* "Guided by Muse..." beat — its own line, same size as the rest. */
+.comet-methods-guided {
+  display: inline-block;
+  margin-top: 0.4em;
 }
 
 /* Method names match text style */
@@ -532,8 +536,7 @@ img {
 }
 
 /* Gradient background canvas for Comet section */
-.comet-collab-background-canvas,
-.comet-collab-background-canvas-2 {
+.comet-collab-background-canvas {
   position: absolute;
   top: 0;
   left: 0;
@@ -552,6 +555,17 @@ img {
   width: 100%;
   height: 100%;
   z-index: 3;
+  pointer-events: none;
+}
+
+/* Faint starline connecting the 5 draggable processes (1→…→5) */
+.process-link-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2; /* behind the images (z-3), above the bg starfield (z-1) */
   pointer-events: none;
 }
 
@@ -846,233 +860,6 @@ img {
   margin-bottom: var(--spacing-xs);
 }
 
-/* Individual image items - absolute positioning around center */
-.comet-image-item {
-  position: absolute;
-  max-width: clamp(80px, 12vw, 140px); /* Smaller than logo (120-200px) */
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform, left, top;
-  animation: levitate 4s ease-in-out infinite;
-}
-
-/* Levitating animation - subtle floating motion */
-@keyframes levitate {
-  0%, 100% {
-    transform: translate(-50%, -50%) translateY(0px);
-  }
-  50% {
-    transform: translate(-50%, -50%) translateY(-10px);
-  }
-}
-
-/* Different animation delays for each image */
-.comet-image-item[data-step="1"] {
-  animation-delay: 0s;
-}
-
-.comet-image-item[data-step="2"] {
-  animation-delay: 0.8s;
-}
-
-.comet-image-item[data-step="3"] {
-  animation-delay: 1.6s;
-}
-
-.comet-image-item[data-step="4"] {
-  animation-delay: 2.4s;
-}
-
-.comet-image-item[data-step="5"] {
-  animation-delay: 3.2s;
-}
-
-/* Default orbit positions (randomized on load by JS) */
-.comet-image-item[data-step="1"],
-.comet-image-item[data-step="2"],
-.comet-image-item[data-step="3"],
-.comet-image-item[data-step="4"],
-.comet-image-item[data-step="5"] {
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-
-/* Merged state - all images converge to center */
-.comet-image-item.merging {
-  left: 50% !important;
-  top: 50% !important;
-  right: auto !important;
-  bottom: auto !important;
-  transform: translate(-50%, -50%) scale(0.3) !important;
-  opacity: 0.5;
-}
-
-.comet-image-item img {
-  width: 100%;
-  height: auto;
-  display: block;
-  border-radius: 0; /* No border radius */
-  box-shadow: none; /* No shadow */
-  transition: opacity 0.3s ease;
-  opacity: 1;
-}
-
-/* Blinking hover effect - like twinkling stars */
-.comet-image-item img:hover {
-  animation: starBlink 0.6s ease-in-out infinite;
-}
-
-@keyframes starBlink {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
-}
-
-/* ==========================================================================
-   Comet Collab Connected Images (Static Display)
-   ========================================================================== */
-.comet-collab-connected-content {
-  position: sticky;
-  top: 0;
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 5;
-  opacity: 0;
-  will-change: opacity;
-  background: var(--color-offwhite);
-}
-
-.comet-connected-images {
-  position: relative;
-  width: 100%;
-  max-width: 1200px;
-  height: 60vh;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(3rem, 6vw, 6rem);
-  padding: clamp(2rem, 4vw, 4rem);
-  z-index: 10;
-}
-
-.comet-connection-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 9;
-}
-
-/* ==========================================================================
-   Step Popup Modal
-   ========================================================================== */
-.step-popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1000;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.step-popup.active {
-  display: flex;
-  pointer-events: auto;
-}
-
-.step-popup-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(10px);
-  z-index: 1;
-}
-
-.step-popup-content {
-  position: relative;
-  background: var(--color-white);
-  border-radius: 16px;
-  padding: clamp(2rem, 5vw, 3rem);
-  max-width: 600px;
-  width: 90%;
-  z-index: 2;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.step-popup-close {
-  position: absolute;
-  top: clamp(1rem, 2vw, 1.5rem);
-  right: clamp(1rem, 2vw, 1.5rem);
-  width: clamp(44px, 10vw, 52px);
-  height: clamp(44px, 10vw, 52px);
-  border: none;
-  background: transparent;
-  color: var(--color-black);
-  font-size: 32px;
-  line-height: 1;
-  cursor: pointer;
-  transition: transform 0.2s ease, color 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.step-popup-close:hover {
-  transform: scale(1.1);
-  color: #555;
-}
-
-.step-popup-close:focus {
-  outline: 2px solid var(--color-black);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-.step-popup-title {
-  font-family: var(--font-canela);
-  font-size: clamp(24px, 4vw, 36px);
-  font-weight: var(--font-h1-weight);
-  color: var(--color-black);
-  margin-bottom: var(--spacing-md);
-  text-transform: uppercase;
-}
-
-.step-popup-description {
-  font-family: var(--font-canela);
-  font-size: clamp(16px, 2vw, 20px);
-  line-height: 1.6;
-  color: var(--color-black);
-  text-align: justify;
-}
-
-/* Clickable image cursor */
-.comet-image-item.clickable {
-  cursor: pointer;
-}
-
-.comet-image-item.clickable:focus {
-  outline: 2px solid var(--color-white);
-  outline-offset: 4px;
-  border-radius: 8px;
-}
-
 /* ==========================================================================
    Social Links
    ========================================================================== */
@@ -1126,44 +913,81 @@ img {
 .muse-section-wrapper {
   position: relative;
   width: 100%;
-  height: 460vh; /* MUSE_INTRO_HOLD (400) + MUSE_CROSSFADE (60) */
+  /* Height auto-sizes from the sum of its .section-panel children (no fixed
+     height). Each panel owns its own scroll range so panels NEVER co-exist on
+     screen — this is what eliminates the z-index/opacity crossfade race. */
   background: transparent;
 }
 
-/* Muse Intro Page - Fixed position for overlay */
-.muse-intro-page {
-  position: fixed;
+/* ==========================================================================
+   Sequential Sticky Sub-Panels (muse + comet)
+   Each panel is a tall relative box; its first child sticks for 100vh then
+   scrolls out before the next panel begins. Same proven pattern as .intro +
+   .intro-spacer. No GSAP pinning (Lenis-safe).
+   ========================================================================== */
+.section-panel {
+  position: relative;
+  width: 100%;
+}
+/* Single overlapping muse panel: intro + orbit share ONE sticky stage so the
+   center logo stays put while the bg flips black→white at the switch.
+   400vh = intro-in 100 + intro-hold 200 + switch 100 (no orbit dwell). */
+.muse-panel             { height: 400vh; }
+.comet-panel-intro     { height: 200vh; } /* fade-in 100 + hold 100 */
+.comet-panel-tabs      { height: 200vh; } /* fade-in 100 + hold + closure 100 */
+
+/* The muse stage sticks for one viewport across the whole 600vh panel; all of
+   its children (white bg, orbit, shared logo, intro copy) occupy the same space
+   and are crossfaded by GSAP. */
+.muse-stage {
+  position: sticky;
   top: 0;
   left: 0;
   width: 100%;
   height: 100vh;
   height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-xl) var(--spacing-md);
-  z-index: 5;
-  opacity: 0;
-  will-change: opacity;
-  pointer-events: none; /* Allow scrolling through */
+  overflow: hidden;
 }
 
-.muse-intro-logo {
+/* Shared center logo — one element for the whole switch. Centered via GSAP
+   xPercent/yPercent so scale/filter tweens compose without drift. */
+.muse-shared-logo {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 10;
+  z-index: 30;
   pointer-events: none;
+  will-change: transform;
 }
 
-.muse-intro-logo-image {
-  width: var(--muse-logo-size);
-  height: auto;
+/* Two stacked logo images crossfade white→black at the switch (no filter() tween). */
+.muse-shared-logo .muse-logo-image {
   display: block;
-  object-fit: contain;
+}
+.muse-shared-logo .muse-logo-black {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.muse-logo-white {
+  /* white-on-black for the intro */
   filter: brightness(0) invert(1) drop-shadow(0 8px 16px rgba(255, 255, 255, 0.3));
+  will-change: opacity;
+}
+.muse-logo-black {
+  /* plain black art for the white orbit bg */
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+  opacity: 0;
+  will-change: opacity;
+}
+
+/* Intro copy overlay — fades out at the switch. */
+.muse-intro-copy {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  will-change: opacity;
 }
 
 .muse-intro-text-top {
@@ -1172,14 +996,14 @@ img {
   left: 50%;
   transform: translateX(-50%);
   font-family: var(--font-canela);
-  font-size: var(--font-h2-size);
-  line-height: var(--font-h2-height);
+  font-size: var(--font-h1-size);
+  line-height: var(--font-h1-height);
   font-weight: var(--font-h2-weight);
   color: var(--color-white);
   opacity: 0.9;
   max-width: 800px;
   width: 90%;
-  text-align: justify;
+  text-align: center;
   text-transform: none;
   padding: 0 var(--spacing-md);
   margin: 0;
@@ -1194,14 +1018,14 @@ img {
   left: 50%;
   transform: translateX(-50%);
   font-family: var(--font-canela);
-  font-size: var(--font-h2-size);
-  line-height: var(--font-h2-height);
+  font-size: var(--font-body-size);
+  line-height: var(--font-body-height);
   font-weight: var(--font-h2-weight);
   color: var(--color-white);
   opacity: 0.9;
   max-width: 800px;
   width: 90%;
-  text-align: justify;
+  text-align: center;
   text-transform: none;
   padding: 0 var(--spacing-md);
   margin: 0;
@@ -1224,31 +1048,14 @@ img {
   opacity: 0.7;
 }
 
-/* White Section Content - Sticky positioning */
-.white-section-content {
-  position: sticky;
-  top: 0;
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  opacity: 0; /* Start invisible, GSAP will fade in */
-  will-change: opacity;
-}
-
-
 /* ==========================================================================
-   Muse Section - Orbiting Layout
+   Muse Section - Orbiting Layout (white bg layer, fades in at the switch)
    ========================================================================== */
 .muse-section {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  position: relative;
+  height: 100%;
   background: var(--color-offwhite);
   display: flex;
   align-items: center;
@@ -1256,6 +1063,8 @@ img {
   overflow: hidden;
   pointer-events: auto;
   z-index: 10;
+  opacity: 0; /* Start invisible (black intro shows through); GSAP fades in */
+  will-change: opacity;
 }
 
 /* Animated Background Canvas - Inverted starfield */
@@ -1268,16 +1077,6 @@ img {
   z-index: 1;
   opacity: 1;
   pointer-events: none;
-}
-
-/* Central Logo - centered via GSAP xPercent/yPercent so scale composes correctly */
-.muse-center-logo {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  z-index: 20;
-  opacity: 0; /* Start invisible, GSAP will fade in */
-  will-change: opacity, transform;
 }
 
 .muse-logo-image {
@@ -1553,6 +1352,18 @@ img {
   will-change: opacity, transform;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   margin: 0;
+}
+
+/* Short / landscape-phone viewports: shrink the card stack so image + cause +
+   text fit within the 80vh popup without clipping the overflowing aura glow
+   (keeps .muse-popup-content overflow:visible). */
+@media (max-height: 500px) {
+  .muse-popup-content { gap: clamp(0.75rem, 2vh, 1.25rem); }
+  .muse-card-wrapper {
+    width: clamp(140px, 30vh, 200px);
+    height: clamp(140px, 30vh, 200px);
+  }
+  .muse-popup-cause { margin-top: clamp(0.5rem, 1.5vh, 1rem); }
 }
 
 /* Floating sparkle particles container */
@@ -1834,16 +1645,12 @@ img {
 @media screen and (max-width: 480px) {
   /* Most responsive sizing handled by clamp() in base styles */
 
-  .text-section {
-    padding: clamp(0.5rem, 3vw, 1rem);
+  .mission-overlay {
+    padding: 0 clamp(0.5rem, 3vw, 1rem);
   }
 
   .muse-popup-hint {
     font-size: clamp(10px, 2vw, 12px);
-  }
-
-  .comet-image-item {
-    max-width: clamp(90px, 28vw, 140px);
   }
 
   .comet-panels {
@@ -1877,20 +1684,36 @@ img {
    Print Styles
    ========================================================================== */
 @media print {
-  .intro,
+  .intro-canvas,
   .intro-spacer,
-  .constellation-canvas {
+  .constellation-canvas,
+  .orbit-dot,
+  .logo-container,
+  .final-dot,
+  .transition-text {
     display: none !important;
   }
 
-  .text-section {
-    position: static;
-    height: auto;
+  /* Keep the mission readable in print (it lives inside .intro). */
+  .intro,
+  .intro-content {
+    position: static !important;
+    height: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .mission-overlay {
+    position: static !important;
+    transform: none !important;
+    opacity: 1 !important;
     padding: 2cm;
+    max-width: 100%;
   }
 
   .reveal-text {
     color: var(--color-black);
+    text-shadow: none !important;
     filter: none !important;
     opacity: 1 !important;
   }
