@@ -210,6 +210,11 @@
   border-radius: 50%;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  /* Safari only culls a backface when the element has its OWN transform placing
+     it in the 3D plane. Without this rotateY(0) the front face's backface stays
+     visible after the flip and the symbol shows THROUGH the name (Safari only;
+     Chrome culls it regardless). Keep the explicit identity transform. */
+  transform: rotateY(0deg);
 }
 
 .muse-orbit-face--back {
