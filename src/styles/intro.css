@@ -46,6 +46,56 @@
   transition: opacity var(--transition-slow);
 }
 
+/* Landing idle: before any scroll, show ONLY the centered logo, gently pulsing.
+   The orbit dots are hidden until the orbit phase begins (JS removes .intro-idle
+   on first scroll). The logo sits at the orbit START size (80px) so there is no
+   size jump when scrolling hands off to updateOrbit. */
+.intro-idle .logo-container {
+  width: 80px;
+  height: 80px;
+  animation: introIdlePulse 2.6s ease-in-out infinite;
+}
+.intro-idle .intro-logo { opacity: 1; }
+.intro-idle .orbit-dot { opacity: 0; }
+
+@keyframes introIdlePulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1);     }
+  50%      { transform: translate(-50%, -50%) scale(1.06);  }
+}
+
+/* Scroll-down hint: bottom-centered, only shown at landing (idle). Fades out the
+   moment the orbit begins so it never overlaps the animation. */
+.scroll-hint {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1.5rem, 5vh, 3rem);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgba(255, 255, 255, 0.7);
+  opacity: 0;
+  transition: opacity var(--transition-slow);
+  pointer-events: none;
+}
+.intro-idle .scroll-hint { opacity: 1; }
+.scroll-hint-label {
+  font-family: var(--font-canela);
+  font-size: clamp(11px, 1.4vw, 14px);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.scroll-hint-arrow {
+  width: clamp(20px, 2.4vw, 28px);
+  height: clamp(20px, 2.4vw, 28px);
+  animation: scrollHintBob 1.8s ease-in-out infinite;
+}
+@keyframes scrollHintBob {
+  0%, 100% { transform: translateY(0);    opacity: 0.7; }
+  50%      { transform: translateY(6px);  opacity: 1;   }
+}
+
 .orbit-dot {
   position: absolute;
   width: clamp(10px, 2vw, 16px);

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta name="description" content="cocoex e.V. - A vibrant DAO blending art, blockchain, community and social impact. Cultivating a space where creators, artists, and collectors unite to inspire meaningful change.">
   <meta name="theme-color" content="#000000">
   <title>cocoex e.V.</title>
@@ -23,12 +24,17 @@
     <section class="intro" aria-label="Introduction animation">
       <canvas class="intro-canvas bg-layer" id="bg-canvas" aria-hidden="true"></canvas>
 
-      <div class="intro-content" aria-hidden="true">
+      <div class="intro-content intro-idle" aria-hidden="true">
         <div class="orbit-dot orbit-dot-white" id="dot-white"></div>
         <div class="orbit-dot orbit-dot-black" id="dot-black"></div>
 
         <div class="logo-container" id="logo-container">
           <img src="assets/images/logowhite.png" alt="cocoex logo" class="intro-logo" id="intro-logo" decoding="async">
+        </div>
+
+        <div class="scroll-hint" id="scroll-hint" aria-hidden="true">
+          <span class="scroll-hint-label">Scroll</span>
+          <svg class="scroll-hint-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </div>
 
         <div class="final-dot" id="final-dot"></div>
@@ -119,11 +125,11 @@
 
           <div class="floating-processes" id="floating-processes">
             <canvas class="process-link-canvas" id="process-link-canvas" aria-hidden="true"></canvas>
-            <div class="floating-process" data-process="1" draggable="true"><img src="assets/images/comet-collabs/process-one.png" alt="Process 1" loading="lazy" decoding="async"></div>
-            <div class="floating-process" data-process="2" draggable="true"><img src="assets/images/comet-collabs/process-two.png" alt="Process 2" loading="lazy" decoding="async"></div>
-            <div class="floating-process" data-process="3" draggable="true"><img src="assets/images/comet-collabs/process-three.png" alt="Process 3" loading="lazy" decoding="async"></div>
-            <div class="floating-process" data-process="4" draggable="true"><img src="assets/images/comet-collabs/process-four.png" alt="Process 4" loading="lazy" decoding="async"></div>
-            <div class="floating-process" data-process="5" draggable="true"><img src="assets/images/comet-collabs/process-five.png" alt="Process 5" loading="lazy" decoding="async"></div>
+            <div class="floating-process" data-process="1"><img src="assets/images/comet-collabs/process-one.png" alt="Process 1" loading="lazy" decoding="async"></div>
+            <div class="floating-process" data-process="2"><img src="assets/images/comet-collabs/process-two.png" alt="Process 2" loading="lazy" decoding="async"></div>
+            <div class="floating-process" data-process="3"><img src="assets/images/comet-collabs/process-three.png" alt="Process 3" loading="lazy" decoding="async"></div>
+            <div class="floating-process" data-process="4"><img src="assets/images/comet-collabs/process-four.png" alt="Process 4" loading="lazy" decoding="async"></div>
+            <div class="floating-process" data-process="5"><img src="assets/images/comet-collabs/process-five.png" alt="Process 5" loading="lazy" decoding="async"></div>
           </div>
         </section>
         </div>

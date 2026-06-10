@@ -65,7 +65,7 @@
 
 .muse-intro-text-top {
   position: absolute;
-  top: 18%;
+  top: 16%;
   left: 50%;
   transform: translateX(-50%);
   font-family: var(--font-canela);
@@ -87,7 +87,7 @@
 
 .muse-intro-text-bottom {
   position: absolute;
-  bottom: 18%;
+  bottom: 16%;
   left: 50%;
   transform: translateX(-50%);
   font-family: var(--font-canela);

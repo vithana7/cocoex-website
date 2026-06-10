@@ -19,7 +19,7 @@ export const PHASES = [
 
   // ---- MUSE (section: muse) ----
   { id: 'muse.fadein', section: 'muse', vh: 100 }, // intro logo + copy fade up
-  { id: 'muse.hold',   section: 'muse', vh: 200 }, // intro holds fully readable
+  { id: 'muse.hold',   section: 'muse', vh: 250 }, // intro holds fully readable
   { id: 'muse.switch', section: 'muse', vh: 100 }, // black→white + logo crossfade → orbit
 
   // ---- COMET (section: comet) ----

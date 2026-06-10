@@ -106,18 +106,30 @@ export function initIntro(introStarfield) {
   function initFireworkDots() {
     const w = window.innerWidth, h = window.innerHeight;
     const cx = w / 2, cy = h / 2;
-    const scale = Math.min(w / CONFIG.refWidth, h / CONFIG.refHeight) * 0.85;
-    const offsetX = (w - CONFIG.refWidth * scale) / 2;
-    const offsetY = (h - CONFIG.refHeight * scale) / 2;
 
-    fireworkDots = CONSTELLATION_REF.map((p, i) => ({
-      targetX: p.x * scale + offsetX,
-      targetY: p.y * scale + offsetY,
-      z: p.z || 0,
-      x: cx, y: cy,
-      trail: [],
-      maxTrail: 15 + Math.floor(Math.random() * 10),
-    }));
+    // The reference layout is landscape (1400×800). On a portrait screen,
+    // rotate it 90° so the constellation runs tall instead of cramming into a
+    // tiny horizontal cluster — the ref's long axis maps to screen height.
+    const portrait = h > w;
+    const refW = portrait ? CONFIG.refHeight : CONFIG.refWidth;
+    const refH = portrait ? CONFIG.refWidth : CONFIG.refHeight;
+    const scale = Math.min(w / refW, h / refH) * 0.85;
+    const offsetX = (w - refW * scale) / 2;
+    const offsetY = (h - refH * scale) / 2;
+
+    fireworkDots = CONSTELLATION_REF.map((p) => {
+      // In portrait, transpose: ref-x drives vertical, ref-y drives horizontal.
+      const rx = portrait ? p.y : p.x;
+      const ry = portrait ? (CONFIG.refWidth - p.x) : p.y;
+      return {
+        targetX: rx * scale + offsetX,
+        targetY: ry * scale + offsetY,
+        z: p.z || 0,
+        x: cx, y: cy,
+        trail: [],
+        maxTrail: 15 + Math.floor(Math.random() * 10),
+      };
+    });
   }
 
   function drawExplosion(progress) {
@@ -283,7 +295,10 @@ export function initIntro(introStarfield) {
   });
 
   return {
-    resize() { sizeConstellation(); },
+    resize() {
+      sizeConstellation();
+      if (explosionStarted) initFireworkDots();
+    },
     setIntroVisible,
   };
 }
@@ -304,14 +319,32 @@ function buildIntroTimelines({ el, updateOrbit, updateExplosion }) {
     ...extra,
   });
 
-  // Phase 1: orbit
+  // Phase 1: orbit. While the user hasn't scrolled (progress ~0) we stay in the
+  // landing idle state — just the centered, gently pulsing logo (CSS .intro-idle,
+  // dots hidden). The moment the orbit starts we hand off to updateOrbit, which
+  // takes over the logo size/rotation and reveals the dots.
   const orbitState = { progress: 0, logoSize: ORBIT.logoMinSize, rotation: CONFIG.totalRotations * 360 };
   gsap.to(orbitState, {
     progress: 1,
     logoSize: () => responsive(ORBIT.logoMaxSize, ORBIT.logoMaxSizeMobile),
     rotation: 0,
     ease: 'none',
-    scrollTrigger: { ...trig(orbit), onUpdate: () => updateOrbit(orbitState) },
+    scrollTrigger: {
+      ...trig(orbit),
+      onUpdate: () => {
+        const idle = orbitState.progress < 0.001;
+        el.introContent.classList.toggle('intro-idle', idle);
+        if (idle) {
+          // Clear inline styles updateOrbit may have set so the CSS idle state
+          // (centered resting size + pulse) wins on scroll-back to the top.
+          el.logoContainer.style.removeProperty('width');
+          el.logoContainer.style.removeProperty('height');
+          el.logoContainer.style.removeProperty('transform');
+        } else {
+          updateOrbit(orbitState);
+        }
+      },
+    },
   });
 
   // Transition text: in / hold / out across the text phase.

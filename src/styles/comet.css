@@ -134,17 +134,9 @@
   position: absolute;
   width: clamp(80px, 12vw, 140px);
   height: clamp(80px, 12vw, 140px);
-  cursor: grab;
-  pointer-events: auto;
-  transition: transform 0.2s ease;
+  pointer-events: none;
   will-change: transform;
   animation: float 6s ease-in-out infinite;
-  touch-action: auto;
-}
-
-.floating-process:active {
-  cursor: grabbing;
-  transform: scale(1.05);
 }
 
 .floating-process img {

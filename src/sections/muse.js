@@ -1,6 +1,6 @@
 import { gsap } from 'gsap';
 import { Renderer } from '../webgl/renderer.js';
-import { sectionSpan } from '../scroll/timeline.js';
+import { sectionSpan, phase } from '../scroll/timeline.js';
 import { MusePopup } from '../ui/muse-popup.js';
 
 // Muse: ONE overlapping sticky panel. Intro copy + shared logo fade in over the
@@ -131,12 +131,15 @@ function buildMuseTimeline() {
   const section = document.querySelector('.muse-section');
   if (!panel || !sharedLogo || !section) return;
 
-  // Phase durations within the muse section, derived from the timeline.
-  // fadein 100 / hold 200 / switch 100 → switch starts at 300vh into the panel.
-  const span = sectionSpan('muse'); // 400vh
-  const FADE_VH = 100;
-  const SWITCH_AT_VH = 300;
-  const SWITCH_VH = 100;
+  // Phase windows derived from the declarative timeline (section-relative vh), so
+  // changing the PHASES in timeline.js automatically retimes the muse intro/switch
+  // with no hand-syncing. fadein → hold → switch.
+  const museStartVh = sectionSpan('muse').startVh;
+  const fadein = phase('muse.fadein');
+  const sw = phase('muse.switch');
+  const FADE_VH = fadein.endVh - museStartVh;        // end of fade-in, into the panel
+  const SWITCH_AT_VH = sw.startVh - museStartVh;      // switch start, into the panel
+  const SWITCH_VH = sw.endVh - sw.startVh;            // switch duration
 
   gsap.set(sharedLogo, { xPercent: -50, yPercent: -50, opacity: 0 });
 

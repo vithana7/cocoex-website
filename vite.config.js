@@ -11,5 +11,7 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
+    // Never let the browser cache the dev shell — always serve the latest.
+    headers: { 'Cache-Control': 'no-store' },
   },
 });
