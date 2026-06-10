@@ -1,0 +1,170 @@
+/* Responsive layout overrides — tablet, mobile, small mobile, popup landscape */
+
+@media screen and (max-width: 1024px) {
+  .muse-orbit-item {
+    touch-action: manipulation;
+  }
+
+  .comet-collab-intro-content {
+    padding: 0 clamp(1rem, 4vw, 3rem);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .muse-orbit-item {
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+
+  .muse-orbit-item::before {
+    content: "";
+    position: absolute;
+    inset: -16px;
+    z-index: -1;
+  }
+
+  .white-section {
+    padding: 0;
+  }
+
+  .comet-collab-methods {
+    padding: clamp(1.5rem, 5vw, 2rem);
+    padding-top: clamp(3rem, 6vh, 5rem);
+    padding-bottom: clamp(3rem, 6vh, 5rem);
+    gap: clamp(2.5rem, 6vh, 4rem);
+    justify-content: center;
+  }
+
+  .floating-process {
+    width: clamp(60px, 15vw, 100px);
+    height: clamp(60px, 15vw, 100px);
+  }
+
+  .comet-panel.active {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.5rem, 3vh, 2rem);
+    position: relative;
+  }
+
+  .comet-panel-desc {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.5rem, 1.5vh, 1rem);
+  }
+
+  .comet-panel-desc > div {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .comet-panel-subtitle {
+    order: 1;
+    font-size: clamp(12px, 2.8vw, 14px);
+    margin-bottom: clamp(0.2rem, 0.5vh, 0.3rem);
+  }
+
+  .comet-panel-title {
+    order: 2;
+    font-size: clamp(20px, 5.5vw, 36px);
+    line-height: 1;
+    margin-bottom: clamp(0.5rem, 1vh, 0.8rem);
+  }
+
+  .comet-panel-body {
+    order: 3;
+    font-size: clamp(13px, 3.2vw, 16px);
+    line-height: 1.5;
+    margin-bottom: clamp(0.5rem, 1vh, 0.8rem);
+  }
+
+  .comet-steps {
+    order: 4;
+    gap: clamp(0.6rem, 1.2vh, 0.9rem);
+  }
+
+  .comet-cta {
+    order: 5;
+    margin-top: clamp(0.3rem, 0.8vh, 0.5rem);
+    margin-bottom: clamp(0.5rem, 1.2vh, 0.8rem);
+    align-self: flex-start;
+    font-size: clamp(11px, 2.6vw, 13px);
+    padding: clamp(6px, 1.6vw, 8px) clamp(14px, 3.2vw, 18px);
+  }
+
+  .step-row {
+    gap: clamp(0.6rem, 1.5vw, 1rem);
+  }
+
+  .step-num {
+    font-size: clamp(12px, 3vw, 16px);
+    min-width: clamp(20px, 6vw, 32px);
+  }
+
+  .step-title {
+    font-size: clamp(13px, 3.4vw, 16px);
+    margin-bottom: clamp(0.2rem, 0.5vh, 0.3rem);
+  }
+
+  .step-body {
+    font-size: clamp(12px, 3vw, 14px);
+    line-height: 1.3;
+  }
+
+  .step-addon-badge {
+    font-size: clamp(12px, 2.8vw, 14px);
+    padding: clamp(3px, 0.8vw, 5px) clamp(8px, 2vw, 10px);
+    margin-bottom: clamp(0.2rem, 0.5vh, 0.3rem);
+  }
+
+  .pill-opt {
+    font-size: clamp(13px, 3vw, 16px);
+    padding: clamp(8px, 2vw, 10px) clamp(16px, 4vw, 22px);
+  }
+
+  .comet-toggle-wrap {
+    max-width: 100%;
+    margin-bottom: clamp(0.5rem, 1vh, 1rem);
+  }
+
+  .comet-panels {
+    min-height: 320px;
+  }
+
+  .muse-popup-body {
+    max-width: 320px;
+  }
+
+  .muse-popup-hint {
+    font-size: 12px;
+    bottom: var(--spacing-md);
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .mission-overlay {
+    padding: 0 clamp(0.5rem, 3vw, 1rem);
+  }
+
+  .muse-popup-hint {
+    font-size: clamp(10px, 2vw, 12px);
+  }
+
+  .comet-panels {
+    min-height: 280px;
+  }
+
+  .comet-collab-methods {
+    gap: clamp(1.5rem, 4vh, 2.5rem);
+    padding-top: clamp(2rem, 5vh, 3rem);
+  }
+}
+
+@media (max-height: 500px) {
+  .muse-popup-content { gap: clamp(0.75rem, 2vh, 1.25rem); }
+  .muse-card-wrapper {
+    width: clamp(140px, 30vh, 200px);
+    height: clamp(140px, 30vh, 200px);
+  }
+  .muse-popup-cause { margin-top: clamp(0.5rem, 1.5vh, 1rem); }
+}

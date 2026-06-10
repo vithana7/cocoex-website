@@ -1,0 +1,184 @@
+/* Intro: fixed full-viewport overlay; the spacer is the scroll runway.
+   Height comes from the timeline (--intro-h) — never hardcode vh here. */
+
+.intro-spacer {
+  height: var(--intro-h);
+  position: relative;
+}
+
+.intro {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-intro);
+  pointer-events: none;
+}
+
+.intro-canvas,
+.intro-content {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.intro-content { z-index: 2; }
+
+.logo-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform, width, height;
+}
+
+.intro-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity var(--transition-slow);
+}
+
+.orbit-dot {
+  position: absolute;
+  width: clamp(10px, 2vw, 16px);
+  height: clamp(10px, 2vw, 16px);
+  border-radius: 50%;
+  opacity: 1;
+  transition: opacity var(--transition-slow);
+  will-change: transform, opacity;
+}
+.orbit-dot-white {
+  background: var(--color-white);
+  animation: pulseDot 2s ease-in-out infinite;
+}
+.orbit-dot-black {
+  background: var(--color-black);
+  animation: pulseDot 2s ease-in-out infinite;
+  animation-delay: 1s;
+}
+@keyframes pulseDot {
+  0%, 100% { transform: translate(-50%, -50%) scale(1);   opacity: 1;   }
+  50%      { transform: translate(-50%, -50%) scale(1.3); opacity: 0.8; }
+}
+
+.final-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--color-white);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+}
+.final-dot.visible {
+  opacity: 1;
+  animation: pulseFinal 1.5s ease-in-out infinite;
+}
+@keyframes pulseFinal {
+  0%, 100% { transform: translate(-50%, -50%) scale(1);   }
+  50%      { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.transition-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, calc(-50% + clamp(180px, 25vw, 280px)));
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+  text-align: center;
+  width: 90%;
+  max-width: 600px;
+  will-change: opacity, transform;
+}
+.transition-text p {
+  font-family: var(--font-canela);
+  font-size: clamp(14px, 2vw, 22px);
+  line-height: var(--font-h2-height);
+  font-weight: var(--font-h2-weight);
+  color: var(--color-white);
+  letter-spacing: 0.02em;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+  padding: 0 var(--spacing-md);
+  max-width: 600px;
+}
+.transition-text .tagline {
+  font-size: clamp(11px, 1.5vw, 16px);
+  font-style: italic;
+}
+
+.constellation-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.mission-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  z-index: 4;
+  pointer-events: none;
+  will-change: opacity;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1rem, 3vh, 2.5rem);
+  padding: 0 clamp(1rem, 3vw, 2rem);
+}
+
+.reveal-text {
+  width: 90%;
+  max-width: min(90%, 800px);
+  font-family: var(--font-canela);
+  font-weight: var(--font-h2-weight);
+  font-size: var(--font-body-size);
+  line-height: var(--font-body-height);
+  color: var(--color-white);
+  text-align: center;
+  text-wrap: balance;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85);
+}
+.reveal-text em {
+  font-style: italic;
+  color: rgba(0, 0, 0, 0);
+  -webkit-text-stroke: 1px var(--color-white);
+  text-stroke: 1px var(--color-white);
+}
+
+/* Shared starfield behind muse + comet. */
+.unified-starfield-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-bg);
+  pointer-events: none;
+}
+
+.white-section {
+  position: relative;
+  z-index: var(--z-white-section);
+  min-height: 100vh;
+  min-height: 100svh;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}

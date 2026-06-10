@@ -1,0 +1,505 @@
+/* Muse section — sticky stage, orbit, and popup modal */
+
+.muse-section-wrapper {
+  position: relative;
+  width: 100%;
+  background: transparent;
+}
+
+.section-panel {
+  position: relative;
+  width: 100%;
+}
+
+.muse-panel {
+  height: var(--muse-h);
+}
+
+.muse-stage {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.muse-shared-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 30;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.muse-shared-logo .muse-logo-image {
+  display: block;
+}
+
+.muse-shared-logo .muse-logo-black {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.muse-logo-white {
+  filter: brightness(0) invert(1) drop-shadow(0 8px 16px rgba(255, 255, 255, 0.3));
+  will-change: opacity;
+}
+
+.muse-logo-black {
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+  opacity: 0;
+  will-change: opacity;
+}
+
+.muse-intro-copy {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.muse-intro-text-top {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-canela);
+  font-size: var(--font-h1-size);
+  line-height: var(--font-h1-height);
+  font-weight: var(--font-h2-weight);
+  color: var(--color-white);
+  opacity: 0.9;
+  max-width: 800px;
+  width: 90%;
+  text-align: center;
+  text-transform: none;
+  padding: 0 var(--spacing-md);
+  margin: 0;
+  padding-bottom: var(--spacing-lg);
+  max-height: 28vh;
+  overflow: visible;
+}
+
+.muse-intro-text-bottom {
+  position: absolute;
+  bottom: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-canela);
+  font-size: var(--font-body-size);
+  line-height: var(--font-body-height);
+  font-weight: var(--font-h2-weight);
+  color: var(--color-white);
+  opacity: 0.9;
+  max-width: 800px;
+  width: 90%;
+  text-align: center;
+  text-transform: none;
+  padding: 0 var(--spacing-md);
+  margin: 0;
+  padding-top: var(--spacing-lg);
+  max-height: 28vh;
+  overflow: visible;
+}
+
+.muse-intro-text-top a,
+.muse-intro-text-bottom a {
+  color: var(--color-white);
+  text-decoration: underline;
+  transition: opacity var(--transition-fast);
+}
+
+.muse-intro-text-top a:hover,
+.muse-intro-text-top a:focus,
+.muse-intro-text-bottom a:hover,
+.muse-intro-text-bottom a:focus {
+  opacity: 0.7;
+}
+
+.muse-section {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--color-offwhite);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: auto;
+  z-index: 10;
+  opacity: 0;
+  will-change: opacity;
+}
+
+.muse-background-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.muse-logo-image {
+  width: var(--muse-logo-size);
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.muse-orbit-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+}
+
+.muse-orbit-item {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.15rem, 0.5vw, 0.25rem);
+  will-change: transform;
+  z-index: 25;
+}
+
+.muse-orbit-item .muse-image {
+  width: var(--muse-orbit-image-size);
+  height: var(--muse-orbit-image-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.muse-orbit-item .muse-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(1px 4px 1px rgba(0, 0, 0, 0.2)) saturate(1.4) brightness(1.1);
+}
+
+.muse-orbit-item .muse-text {
+  text-align: center;
+  max-width: 200px;
+  padding: var(--spacing-xs);
+}
+
+.muse-orbit-item .muse-text h3 {
+  font-family: var(--font-canela);
+  font-size: var(--font-h2-size);
+  line-height: var(--font-h2-height);
+  font-weight: var(--font-h1-weight);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  margin-bottom: 0;
+  cursor: pointer;
+  color: var(--color-black);
+  transition: transform var(--transition-medium);
+  filter: drop-shadow(0 4px 1px rgba(255, 255, 255, 0.5));
+}
+
+.muse-orbit-item .muse-text h3:hover {
+  transform: scale(1.1);
+}
+
+.muse-orbit-item .muse-text p {
+  display: none;
+}
+
+/* Muse Popup Modal — 3D tilt card */
+.muse-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  background: #000;
+}
+
+.muse-popup-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 2;
+  cursor: pointer;
+}
+
+.muse-popup-content {
+  position: relative;
+  background: transparent;
+  max-width: min(90%, 500px);
+  width: 90%;
+  max-height: 80vh;
+  overflow: visible;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  will-change: transform, opacity;
+}
+
+.muse-popup-title {
+  display: none;
+}
+
+.muse-card-wrapper {
+  position: relative;
+  width: clamp(220px, 28vw, 320px);
+  height: clamp(220px, 28vw, 320px);
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.muse-card-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 180ms ease-out;
+}
+
+.muse-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  transform:
+    rotateX(var(--rotate-y, 0deg))
+    rotateY(var(--rotate-x, 0deg));
+  transform-style: preserve-3d;
+  will-change: transform;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.6),
+    0 0 50px var(--muse-glow, rgba(255, 255, 255, 0.4));
+}
+
+.muse-card-inside {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at var(--background-x, 50%) var(--background-y, 50%),
+    var(--muse-color, #5783A6) 0%,
+    color-mix(in srgb, var(--muse-color, #5783A6) 70%, #000 30%) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.muse-card-shine {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.2) 20%,
+    transparent 60%
+  );
+  opacity: calc(var(--pointer-from-center, 0) * 0.8);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.muse-card-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 40%,
+    transparent 60%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  opacity: calc(var(--pointer-from-center, 0) * 0.6);
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  transform:
+    translateX(calc(var(--pointer-from-left, 0.5) * 20px - 10px))
+    translateY(calc(var(--pointer-from-top, 0.5) * 20px - 10px));
+  will-change: opacity, transform;
+}
+
+.muse-popup-image {
+  position: relative;
+  width: 70%;
+  height: 70%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  will-change: transform, opacity;
+}
+
+.muse-popup-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter:
+    drop-shadow(0 10px 30px rgba(0, 0, 0, 0.6))
+    drop-shadow(0 0 30px var(--muse-glow, rgba(255, 255, 255, 0.5)))
+    drop-shadow(0 0 60px var(--muse-color, rgba(255, 255, 255, 0.4)))
+    brightness(1.1)
+    contrast(1.05);
+}
+
+.muse-popup-cause {
+  font-family: var(--font-canela);
+  font-size: clamp(16px, 1.8vw, 20px);
+  font-weight: var(--font-h1-weight);
+  text-transform: uppercase;
+  color: var(--color-white);
+  letter-spacing: 0.05em;
+  margin: clamp(1rem, 2vh, 1.5rem) 0 0 0;
+  padding: 0;
+  text-align: center;
+  will-change: opacity, transform;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.muse-popup-body {
+  text-align: center;
+  max-width: 400px;
+  padding: 0;
+  margin-top: clamp(0.5rem, 1vh, 1rem);
+}
+
+.muse-popup-text {
+  font-family: var(--font-canela);
+  font-size: var(--font-h2-size);
+  line-height: var(--font-h2-height);
+  font-weight: var(--font-h2-weight);
+  color: rgba(255, 255, 255, 0.9);
+  will-change: opacity, transform;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  margin: 0;
+}
+
+.muse-popup-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+  overflow: visible;
+}
+
+.muse-popup-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--muse-color, #fff);
+  box-shadow: 0 0 8px var(--muse-color, #fff);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: float-particle 4s ease-in-out infinite;
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(var(--particle-x), var(--particle-y)) scale(0.5);
+    opacity: 0;
+  }
+}
+
+.muse-popup-close {
+  position: absolute;
+  top: clamp(-3rem, -4vw, -2rem);
+  right: 0;
+  width: clamp(44px, 10vw, 52px);
+  height: clamp(44px, 10vw, 52px);
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.muse-popup-close::before {
+  content: "×";
+  font-family: var(--font-canela);
+  font-weight: 400;
+  display: block;
+  line-height: 1;
+}
+
+.muse-popup-close:hover {
+  transform: scale(1.1);
+  color: #fff;
+}
+
+.muse-popup-close:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.muse-popup-hint {
+  position: absolute;
+  bottom: var(--spacing-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-canela);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  pointer-events: none;
+  z-index: 5;
+  animation: fade-hint 2s ease-in-out infinite;
+}
+
+@keyframes fade-hint {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+}

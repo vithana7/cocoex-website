@@ -1,0 +1,90 @@
+/* Reset + scroll-bearing rules. The html/body height + body overflow are
+   load-bearing for Lenis (body is the scroll container). Do not change them. */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  background: var(--color-black);
+}
+
+body {
+  overflow-y: auto;
+  font-family: var(--font-canela);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Minimal scrollbar */
+html,
+body,
+.muse-popup-content {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+.muse-popup-content::-webkit-scrollbar { width: 6px; }
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+.muse-popup-content::-webkit-scrollbar-track { background: transparent; }
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+.muse-popup-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.scroll-container {
+  position: relative;
+}
+
+/* Shared fullscreen WebGL/2D canvases never intercept pointer events.
+   Explicit on the canvas itself — iOS ignores inherited pointer-events:none. */
+canvas.bg-layer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: var(--z-bg);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
