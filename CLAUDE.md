@@ -1,6 +1,6 @@
 # cocoex.xyz — AI Context & Technical Reference
 
-> **UPDATED AT:** 2026-06-10 (landing idle logo + scroll hint; muse intro pure fade, hold 250vh; portrait-transposed constellation; process drag removed)
+> **UPDATED AT:** 2026-06-10 (muse popup overhaul: white symbol on colored disc, prev/next nav [arrows/←→/swipe, wrap], 3D pointer tilt, Y-flip on switch, reactive popup starfield + 2D spiral-galaxy particles absorbed at the rim, engraved symbol + disc noise, sentence-split copy; close is the top-right arrow-twin. Now 5 WebGL + 3 2D-canvas surfaces. Partnership strip: 10 real logos, seamless `max-content` marquee, capped logo widths, transparent events section over the starfield with a 50% veil + edge fades.)
 > Run `/doc-minder` after any meaningful change to keep this file current.
 
 ---
@@ -68,7 +68,7 @@ Muse colors are used for: orbit dot fills, popup aura glow, muse tags in campaig
 
 | Path | Responsibility |
 |------|----------------|
-| `src/main.js` | `boot()`: import CSS, `applyHeightsToCss()`, `initSmoothScroll()`, create 4 WebGL surfaces + register them as gated `Renderer` layers, init the four sections, `initSectionGate()`, `Renderer.start()`, debounced resize. |
+| `src/main.js` | `boot()`: import CSS, `applyHeightsToCss()`, `initSmoothScroll()`, create 5 WebGL surfaces (+ the 2D popup galaxy) + register them as gated `Renderer` layers, init the four sections, `initSectionGate()`, `Renderer.start()`, debounced resize. |
 | `src/data.js` | `CONFIG`, `isMobile`, `DOT_COLORS`, `CONSTELLATION_REF`, `CONNECTIONS`, `MUSES`, `PARTNERS`, easing fns. |
 | `src/scroll/timeline.js` | **Single source of truth** for scroll pacing — `PHASES`, builder, `phase()`, `sectionSpan()`, `vhToPx()`, `applyHeightsToCss()`, `COMET_CONST_HIDE_VH`. |
 | `src/scroll/smooth-scroll.js` | Lenis init, body-as-scroller, rides `gsap.ticker`, `scrollerProxy`; `normalizeScroll` deliberately OFF. |
@@ -84,7 +84,8 @@ Muse colors are used for: orbit dot fills, popup aura glow, muse tags in campaig
 | `src/sections/comet.js` | `initComet`: pill `Toggle` (attached listeners, no inline onclick); registers `ProcessLinks.draw` as gated layer; two sequential 200vh sticky panels. |
 | `src/sections/events.js` | `initEvents`: partnership logo marquee (duplicated track). |
 | `src/ui/focus-trap.js` | `getFocusable`, `createFocusTrap`, `wireModalDismiss`. |
-| `src/ui/muse-popup.js` | `MusePopup` — 3D tilt card, 12 particles, GSAP entrance, focus-trap. |
+| `src/ui/muse-popup.js` | `MusePopup` — modal over the orbit. Holds the ordered muse array; `open(index)` / `next()` / `prev()` / `goTo(index, dir)` with wrap. White symbol on a colored disc; 3D pointer tilt; **Y-flip** on muse switch (swap at edge-on); reactive popup starfield (tints to muse hue + intensity pulse) + galaxy color; keyboard ←/→, swipe, focus-trap. Renders the description as one block per sentence. |
+| `src/ui/muse-galaxy.js` | `createMuseGalaxy(canvasId)` — 2D spiral-galaxy particle field for the popup (~120 dots, polar `(r,θ)`, differential rotation + inward drift, outer-biased density). Drawn by the gated `Renderer` only while the popup is open; centers on the live card rect; portrait `sy` stretch; particles draw as velocity-aligned **streaks** that brighten and dissolve onto the disc rim (absorbed, never over the face). |
 | `src/ui/floating-processes.js` | `FloatingProcesses` — places 5 process imgs once (`setInitialPositions`); they bob via CSS `float` animation. Drag was removed; `pointer-events: none`. |
 | `src/ui/process-links.js` | `ProcessLinks` — 2D-canvas starline connecting the 5 processes (jank fix: no per-frame `shadowBlur`, cheap translucent strokes + epsilon redraw-skip). |
 | `src/styles/tokens.css` | `:root` design tokens — colors, 7 muse hexes, font clamps, logo sizes, spacing, z-index, transitions. |
@@ -133,7 +134,10 @@ The switch is race-free: intro layers are transparent (black starfield shows thr
 
 7 `.muse-orbit-item` elements rotate on an adaptive ellipse (`MuseScroll.calcRadius`/`update`). Ratio interpolates smoothly with viewport aspect (no breakpoint pop): wide → horizontal, square → near-circular, tall → vertical. Each muse has depth scaling from `sin(angle)` (front ~1.05, back ~0.65) with matching `zIndex` — `zIndex` is only written when its rounded value changes (a per-frame stacking-context churn fix). `data-angle` is parsed once on init.
 
-Click any muse → **Muse Popup** (`src/ui/muse-popup.js` `MusePopup`): 3D tilt card, colored aura, 12 floating particles, GSAP entrance. Close: Escape / click outside / X.
+Click any muse → **Muse Popup** (`src/ui/muse-popup.js` `MusePopup`). Layout: **name** header (`#muse-popup-title`, the `aria-labelledby` target) above the disc; **cause** subtitle (`#muse-popup-cause`, bold italic) + **description** below. The disc (`.muse-card-inside`) is a muse-color radial gradient with a faint SVG-noise grain; the **white** symbol (`<muse>-white.png`) sits on it with an engrave filter (dark-below + light-above drop-shadows). 3D pointer **tilt** drives the shine/glare via CSS vars. Behind it: a reactive WebGL **starfield** (`#muse-popup-starfield`) + a 2D **spiral-galaxy** particle field (`#muse-popup-galaxy`) whose dots are absorbed onto the disc rim.
+- **Navigation:** prev/next arrow buttons (`#muse-popup-prev`/`#muse-popup-next`) + keyboard ←/→ + horizontal swipe, **wrapping** 0↔6. Switching does a **3D Y-flip** of `.muse-card-shell` (direction follows the arrow), swapping symbol + disc color + galaxy color at the edge-on moment; title/cause/description fade in sync. Reduced-motion → instant crossfade.
+- **Close:** top-right **`.muse-popup-close`** styled as the arrow-twin (`.muse-popup-nav`), pinned to the popup (not the content) so copy length never moves it. Escape / click-outside also close.
+- **Card stays level across muses:** `.muse-card-wrapper` is `flex-shrink:0` (never squished into an oval) and `.muse-popup-body` reserves a constant `min-height` with copy top-aligned, so variable-length descriptions don't shift the disc.
 
 WebGL: `#muse-background-canvas` (inverted starfield — black stars on off-white), a `createStarfield(..., { invert: true })` instance created in `main.js`.
 
@@ -166,7 +170,7 @@ The toggle is wired by `Toggle.init()` attaching `click` listeners to `#tab-star
 
 `.events-page-wrapper` → `.partnership-section` only.
 
-**Partnership marquee:** `initEvents` builds a `.partnership-track`, fills it with the `PARTNERS` array from `data.js` (5 entries → `assets/images/partnerships/partner-N.png`), and **duplicates the set once** for a seamless CSS marquee loop.
+**Partnership marquee:** `initEvents` builds a `.partnership-track`, fills it with the `PARTNERS` array from `data.js` (10 `{ name, src }` logos → each an `<a><img>` with `name` as alt/aria), and **duplicates the set once** for a seamless CSS marquee loop. Seamless loop requires BOTH: `.partnership-track { width: max-content }` (so `translateX(-50%)` is 50% of the *content*, not the parent width — the bug that made it jump) AND per-item `margin-right` rather than container `gap` (so each item's trailing margin makes the seam align; `gap` is off by half a gap). Logos are capped via `max-width` + `object-fit: contain` so wide marks (Lukso/Peng) don't dominate. The `.events-page-wrapper` is **transparent** so the fixed unified starfield (now gated to `events` too) shows behind the strip; `.partnership-slideshow` lays a `rgba(0,0,0,0.5)` veil (stars still read) and fades its left/right edges with a horizontal `mask-image` linear-gradient so the strip eases in/out instead of a flat cut.
 
 ---
 
@@ -238,7 +242,7 @@ All text sizes use `clamp()` — never hardcode px values for typography.
 **Boot order (`src/main.js` `boot()`):**
 1. `applyHeightsToCss()` — inject section heights from the declarative timeline.
 2. `initSmoothScroll()` — Lenis ↔ GSAP wiring.
-3. Create 4 WebGL surfaces (`createIntroStarfield` for `#bg-canvas`; three `createStarfield` instances — unified white-on-black, muse inverted, comet inverted), `init()` each, then register every starfield as a gated `Renderer` layer with the section(s) it belongs to.
+3. Create 5 WebGL surfaces (`createIntroStarfield` for `#bg-canvas`; four `createStarfield` instances — unified white-on-black, muse inverted, comet inverted, and the muse-popup starfield) + the 2D `createMuseGalaxy('muse-popup-galaxy')`, `init()` each, then register every surface as a gated `Renderer` layer (the two popup surfaces gate on `active: () => MusePopup.isOpen`, the rest on section).
 4. `initIntro` / `initMuse` / `initComet` / `initEvents` — each registers its own per-frame `Renderer` layers and GSAP timelines.
 5. `initSectionGate()` — drives `Renderer.setSection` (NOT the intro overlay teardown; see gotcha).
 6. `Renderer.start()` — the single RAF loop.
@@ -288,7 +292,7 @@ The mission/smoke/fade transitions are derived inside `buildIntroTimelines` as f
 
 Static content lives in `src/data.js` (imported, not fetched):
 
-- **`PARTNERS`** — five `assets/images/partnerships/partner-N.png` paths, consumed by `initEvents`.
+- **`PARTNERS`** — 10 partner logos as `{ name, src }` objects (`src` URL-encoded; see Asset Map), consumed by `initEvents` for the marquee.
 - **`MUSES`** — canonical muse name / cause / CSS-var color.
 - **`CONFIG`, `DOT_COLORS`, `CONSTELLATION_REF`, `CONNECTIONS`** — intro layout params + constellation geometry.
 - **Stardust / Horizon panels:** static HTML in `index.html`. `Toggle` only flips the active panel — no data-driven rendering.
@@ -299,22 +303,24 @@ When real data needs to drive these surfaces, prefer a thin `fetch('data/...json
 
 ## WebGL System
 
-All surfaces render inside the single `Renderer` RAF loop (`src/webgl/renderer.js`), gated by the active section. There are **4 WebGL canvases** (3 share one shader via the `createStarfield()` factory, `src/webgl/starfield.js`; the intro has its own shader) plus **2 2D-canvas** surfaces.
+All surfaces render inside the single `Renderer` RAF loop (`src/webgl/renderer.js`), gated by section (or, for the popup surfaces, by `MusePopup.isOpen`). There are **5 WebGL canvases** (4 share one shader via the `createStarfield()` factory, `src/webgl/starfield.js`; the intro has its own shader) plus **3 2D-canvas** surfaces.
 
-| Canvas | ID | Source | Type | Active section(s) |
+| Canvas | ID | Source | Type | Active when |
 |---|---|---|---|---|
 | Intro starfield | `#bg-canvas` | `createIntroStarfield` (`src/webgl/intro-starfield.js`) | WebGL (own shader + pulse) | `intro` |
 | Constellation | `#constellation-canvas` | `src/sections/intro.js` (`drawExplosion`) | 2D | `intro` (cleared on exit) |
-| Unified starfield | `#unified-starfield-canvas` | `createStarfield` (white-on-black) | WebGL | `muse`, `comet` |
+| Unified starfield | `#unified-starfield-canvas` | `createStarfield` (white-on-black, fixed full-screen) | WebGL | `muse`, `comet`, `events` |
 | Muse backdrop | `#muse-background-canvas` | `createStarfield(..., { invert: true })` | WebGL | `muse` |
 | Comet backdrop | `#comet-collab-background-canvas` | `createStarfield(..., { invert: true })` | WebGL | `comet` |
 | Process starline | `#process-link-canvas` | `ProcessLinks` (`src/ui/process-links.js`) | 2D | `comet` (intro panel) |
+| Muse popup starfield | `#muse-popup-starfield` | `createStarfield` (reactive — tints to muse hue) | WebGL | `MusePopup.isOpen` |
+| Muse popup galaxy | `#muse-popup-galaxy` | `createMuseGalaxy` (`src/ui/muse-galaxy.js`) | 2D | `MusePopup.isOpen` |
 
 **Rules:**
 - DPR capped at `Math.min(devicePixelRatio, 2)` — `gl-context.js` `DPR()` and the 2D canvases all respect it; never remove the cap.
 - The starfield factory shader (`STARFIELD_FRAG`) takes `invert` + `intensity` uniforms — add new starfield surfaces by passing options, **not** by writing a new shader.
 - `render(now)` receives the **shared RAF timestamp** from `Renderer` — never start a private `requestAnimationFrame`.
-- Stay under 8 concurrent WebGL contexts (Safari cap). Currently 4 WebGL active.
+- Stay under 8 concurrent WebGL contexts (Safari cap). Currently 5 WebGL active (the 5th, `#muse-popup-starfield`, only renders while the popup is open, but the context exists from boot).
 - WebGL context loss: `intro-starfield.js` registers `webglcontextlost`/`webglcontextrestored` handlers and rebuilds the program on restore — replicate on any new context.
 
 ---
@@ -322,12 +328,12 @@ All surfaces render inside the single `Renderer` RAF loop (`src/webgl/renderer.j
 ## Accessibility
 
 - Keyboard: Tab through muses (each `.muse-orbit-item` gets `tabindex="0"` + `role="button"` in `MuseScroll.attachHandlers`), Enter/Space opens popup, Escape closes.
-- The Muse popup (`#muse-popup`) has `role="dialog" aria-modal="true"` + `aria-labelledby` and a focus-trap (shared `createFocusTrap` / `wireModalDismiss` in `src/ui/focus-trap.js`). Focus is restored to the previously-focused element on close.
-- `.muse-popup-close` is `clamp(44px, 10vw, 52px)` ≥ WCAG mobile minimum.
+- The Muse popup (`#muse-popup`) has `role="dialog" aria-modal="true"`, `aria-labelledby="muse-popup-title"` (the muse name), and a focus-trap over the whole popup (shared `createFocusTrap` / `wireModalDismiss` in `src/ui/focus-trap.js`) so the prev/next/close buttons stay reachable. Focus is restored to the previously-focused element on close. Prev/next arrows + ←/→ keys + swipe navigate; reduced-motion swaps without the flip.
+- The popup controls (`.muse-popup-nav` — prev/next and the top-right `.muse-popup-close`) are `clamp(44px, 8vw, 56px)` ≥ WCAG mobile minimum, with `aria-label`s.
 - Mobile orbit tap surface expanded via `.muse-orbit-item::before { inset: -16px }` halo (preserves the transform-based centring).
 - Orbit auto-rotation pauses for 2s on `touchstart` inside the muse section so mobile users have a stable target.
 - Muse orbit headings render in solid `var(--color-black)` for AA contrast on off-white (per-muse hex tones — esp. Thunor `#F8D86A` — failed AA).
-- `prefers-reduced-motion`: disables CSS animations, transitions, and popup particles. WebGL canvases continue rendering (visual ambience, not vestibular motion).
+- `prefers-reduced-motion`: disables CSS animations/transitions; the popup skips the 3D tilt and the card flip (instant crossfade), and the galaxy renders a static scatter (no rotation/inward drift). WebGL canvases continue rendering (visual ambience, not vestibular motion).
 - Touch targets: 44px minimum (social icons 52px).
 - Focus indicators: 2px outline + 2px offset.
 
@@ -343,13 +349,16 @@ public/assets/images/
 ├── cocoex-text.png / cocoex-text-black.png
 ├── muse/
 │   ├── muse_logo_black.png
-│   └── lunes.png · ares.png · rabu.png · thunor.png · shukra.png · dosei.png · solis.png
+│   ├── lunes.png · ares.png · rabu.png · thunor.png · shukra.png · dosei.png · solis.png   (colored ring+glyph — orbit)
+│   └── lunes-white.png · ares-white.png · … · solis-white.png                               (white — popup symbol)
 ├── comet-collabs/
 │   ├── comet-collabs-logo.png · comet-collabs-logo-white.png
 │   └── process-one.png … process-five.png
 └── partnerships/
-    └── partner-1.png … partner-5.png
+    └── C.Volpi.png · CdTortona.png · Lukso.png · Peng.png · RJB.png · SFT.png · SIRX.png · TN.png · "Vinili e vinelli.png" · WR.png   (10 named logos)
 ```
+
+`src/data.js` `PARTNERS` lists these 10 by `{ name, src }` (src URL-encoded for the file with a space); `initEvents` renders them into the marquee with `name` as alt/aria text.
 
 ---
 
@@ -372,7 +381,9 @@ Element IDs/selectors are stable; the module that owns each is listed (grep `ind
 | Muse orbit items | `.muse-orbit-item` (×7) | `sections/muse.js` (`MuseScroll`) |
 | Muse shared logo | `.muse-shared-logo` (`#muse-logo-white` / `#muse-logo-black`) | `sections/muse.js` |
 | Muse intro copy | `.muse-intro-copy` | `sections/muse.js` |
-| Muse popup | `#muse-popup` | `ui/muse-popup.js` + `ui/focus-trap.js` |
+| Muse popup | `#muse-popup` (title `#muse-popup-title` / cause `#muse-popup-cause` / text `#muse-popup-text` / disc `.muse-card-shell`+`.muse-card-inside` / symbol `#muse-popup-img`) | `ui/muse-popup.js` + `ui/focus-trap.js` |
+| Muse popup nav / close | `#muse-popup-prev` / `#muse-popup-next` / `#muse-popup-close` (`.muse-popup-nav`) | `ui/muse-popup.js` |
+| Muse popup starfield / galaxy | `#muse-popup-starfield` (WebGL) / `#muse-popup-galaxy` (2D) | `webgl/starfield.js` / `ui/muse-galaxy.js` |
 | Comet intro panel | `.comet-panel-intro` / `#comet-collab-intro` (literal 200vh) | `sections/comet.js` |
 | Floating processes | `.floating-processes` (×5 `.floating-process`) | `ui/floating-processes.js` |
 | Process starline | `#process-link-canvas` | `ui/process-links.js` (2D) |

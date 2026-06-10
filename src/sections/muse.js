@@ -78,30 +78,43 @@ const MuseScroll = {
   },
 
   attachHandlers() {
-    for (const item of this.items) {
-      const el = item.el;
-      const color = el.getAttribute('data-color');
-      const popupTitle = el.getAttribute('data-popup-title');
+    // Build the ordered muse list once. Cause is parsed from data-popup-title
+    // ("Lunes · Water"); the popup symbol is the white variant of each muse.
+    this.muses = this.items.map(({ el }) => {
+      const popupTitle = el.getAttribute('data-popup-title') || '';
       const heading = el.querySelector('.muse-text h3');
       const paragraph = el.querySelector('.muse-text p');
-      const img = el.querySelector('.muse-image img');
+      const name = (heading ? heading.textContent : popupTitle.split('·')[0]).trim();
+      const cause = popupTitle.includes('·') ? popupTitle.split('·')[1].trim() : '';
+      const description = paragraph ? paragraph.textContent.trim() : '';
+      // Split into sentences so each renders on its own line in the popup (every
+      // muse description is two sentences) — sentence 2 never trails mid-line.
+      const sentences = (description.match(/[^.]+\./g) || [description]).map((s) => s.trim());
+      return {
+        name,
+        cause,
+        description,
+        sentences,
+        color: el.getAttribute('data-color'),
+        img: `assets/images/muse/${name.toLowerCase()}-white.png`,
+      };
+    });
+    MusePopup.setMuses(this.muses);
 
+    this.items.forEach(({ el }, i) => {
+      const popupTitle = el.getAttribute('data-popup-title');
       el.setAttribute('tabindex', '0');
       el.setAttribute('role', 'button');
       if (popupTitle) el.setAttribute('aria-label', popupTitle);
       el.style.cursor = 'pointer';
 
-      const open = () => MusePopup.open(
-        popupTitle || (heading ? heading.textContent : ''),
-        paragraph ? paragraph.textContent : '',
-        color,
-        img ? img.src : ''
-      );
+      const open = () => MusePopup.open(i);
       el.addEventListener('click', open);
       el.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
       });
-    }
+    });
+
     this.container.addEventListener('touchstart', () => {
       this.orbitPauseUntil = performance.now() + 2000;
     }, { passive: true });
@@ -112,8 +125,8 @@ const MuseScroll = {
   },
 };
 
-export function initMuse() {
-  MusePopup.init();
+export function initMuse(popupStarfield, popupGalaxy) {
+  MusePopup.init(popupStarfield, popupGalaxy);
   MuseScroll.init();
 
   Renderer.add({ sections: ['muse'], render: () => MuseScroll.update() });

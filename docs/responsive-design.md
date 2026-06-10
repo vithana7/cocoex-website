@@ -30,7 +30,7 @@ Three layout-only breakpoints plus a landscape height query, all in `src/styles/
 | Breakpoint | What changes |
 |---|---|
 | `≤1024px` Tablet | `touch-action: manipulation` on muse orbit items; comet intro padding |
-| `≤768px` Mobile | Comet method panel stacks vertically (`flex-direction: column`, ordered children); mobile font floors; muse-popup body width cap; orbit tap halo |
+| `≤768px` Mobile | Comet method panel stacks vertically (`flex-direction: column`, ordered children); mobile font floors; muse-popup body width cap; orbit tap halo; partnership marquee item spacing tightened |
 | `≤480px` Small | Tighter mission-overlay padding; comet min-heights reduced |
 | `max-height: 500px` | Muse popup card shrinks (height-relative `30vh` sizing) so it fits landscape phones |
 
@@ -66,7 +66,7 @@ Full-height surfaces declare `height: 100vh` immediately followed by `height: 10
 
 ## Muse Popup on Short Viewports
 
-`.muse-popup-content` keeps the card's aura glow (box-shadow) and the close button unclipped. On short/landscape phones (`@media (max-height: 500px)` in `responsive.css`) the card stack would exceed the popup, so the media query shrinks `.muse-card-wrapper` to height-relative `clamp(140px, 30vh, 200px)` and tightens gaps instead of switching to scroll — scrolling would clip the glow.
+`.muse-popup-content` keeps the card's aura glow (box-shadow) unclipped; the close and prev/next controls are popup-level children (`.muse-popup-nav`, viewport-anchored) so copy length never moves them. `.muse-card-wrapper` is `flex-shrink:0` so the flex column can't squash the disc into an oval, and `.muse-popup-body` reserves a constant `min-height` (copy top-aligned) so variable-length descriptions don't shift the disc between muses. On short/landscape phones (`@media (max-height: 500px)` in `responsive.css`) the card stack would exceed the popup, so the media query shrinks `.muse-card-wrapper` to height-relative `clamp(140px, 30vh, 200px)` and tightens gaps instead of switching to scroll — scrolling would clip the glow.
 
 ## Resize Handling
 
@@ -78,7 +78,7 @@ All interactive elements are ≥ 44px (WCAG AA). The mobile orbit tap surface is
 
 ## Reduced Motion
 
-`@media (prefers-reduced-motion: reduce)` lives in `src/styles/base.css` and disables CSS animations, transitions, and the muse-popup particle system (`MusePopup.createParticles` also early-returns under the same media query). WebGL canvases continue rendering — they are visual ambience, not motion that triggers a vestibular response.
+`@media (prefers-reduced-motion: reduce)` lives in `src/styles/base.css` and disables CSS animations and transitions. The muse popup also honours it in JS: the 3D pointer tilt and the card-switch **flip** are skipped (instant crossfade), and the spiral-galaxy field (`muse-galaxy.js`) renders a **static scatter** (no rotation/inward drift). WebGL canvases continue rendering — they are visual ambience, not motion that triggers a vestibular response.
 
 ## Font Size Floors (≤768px)
 

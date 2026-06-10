@@ -16,6 +16,8 @@ import { createIntroStarfield } from './webgl/intro-starfield.js';
 import { createStarfield } from './webgl/starfield.js';
 import { initIntro } from './sections/intro.js';
 import { initMuse } from './sections/muse.js';
+import { MusePopup } from './ui/muse-popup.js';
+import { createMuseGalaxy } from './ui/muse-galaxy.js';
 import { initComet } from './sections/comet.js';
 import { initEvents } from './sections/events.js';
 
@@ -31,17 +33,24 @@ function boot() {
   const unified = createStarfield('unified-starfield-canvas');                 // white-on-black
   const museBg = createStarfield('muse-background-canvas', { invert: true, intensity: 0.9 });
   const cometBg = createStarfield('comet-collab-background-canvas', { invert: true, intensity: 0.9 });
-  [introStarfield, unified, museBg, cometBg].forEach((s) => s.init());
+  const popupStars = createStarfield('muse-popup-starfield', { intensity: 0.4 }); // reactive modal bg
+  [introStarfield, unified, museBg, cometBg, popupStars].forEach((s) => s.init());
+
+  const popupGalaxy = createMuseGalaxy('muse-popup-galaxy'); // 2D spiral particles
+  popupGalaxy.init();
 
   // Register each starfield as a gated render layer.
   Renderer.add({ sections: ['intro'], render: (n) => introStarfield.render(n) });
-  Renderer.add({ sections: ['muse', 'comet'], render: (n) => unified.render(n) });
+  Renderer.add({ sections: ['muse', 'comet', 'events'], render: (n) => unified.render(n) });
   Renderer.add({ sections: ['muse'], render: (n) => museBg.render(n) });
   Renderer.add({ sections: ['comet'], render: (n) => cometBg.render(n) });
+  // Popup surfaces render only while the modal is open (any section).
+  Renderer.add({ active: () => MusePopup.isOpen, render: (n) => popupStars.render(n) });
+  Renderer.add({ active: () => MusePopup.isOpen, render: (n) => popupGalaxy.render(n) });
 
   // 4. Sections (each registers its own per-frame layers + GSAP timelines).
   const intro = initIntro(introStarfield);
-  const muse = initMuse();
+  const muse = initMuse(popupStars, popupGalaxy);
   const comet = initComet();
   initEvents();
 
@@ -59,7 +68,8 @@ function boot() {
     clearTimeout(rt);
     rt = setTimeout(() => {
       applyHeightsToCss();
-      [introStarfield, unified, museBg, cometBg].forEach((s) => s.resize());
+      [introStarfield, unified, museBg, cometBg, popupStars].forEach((s) => s.resize());
+      popupGalaxy.resize();
       intro.resize();
       muse.resize();
       comet.resize();

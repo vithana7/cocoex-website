@@ -134,20 +134,11 @@
   .muse-popup-body {
     max-width: 320px;
   }
-
-  .muse-popup-hint {
-    font-size: 12px;
-    bottom: var(--spacing-md);
-  }
 }
 
 @media screen and (max-width: 480px) {
   .mission-overlay {
     padding: 0 clamp(0.5rem, 3vw, 1rem);
-  }
-
-  .muse-popup-hint {
-    font-size: clamp(10px, 2vw, 12px);
   }
 
   .comet-panels {
