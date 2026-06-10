@@ -15,6 +15,7 @@ const MuseScroll = {
   animationTime: 0,
   orbitSpeed: 0.00015, // ~240s per rotation
   orbitPauseUntil: 0,
+  hovering: false, // desktop hover freezes the whole orbit so a muse is catchable
   lastTime: performance.now(),
   initialized: false,
 
@@ -55,7 +56,7 @@ const MuseScroll = {
     const delta = now - this.lastTime;
     this.lastTime = now;
 
-    if (!this.orbitPauseUntil || now >= this.orbitPauseUntil) {
+    if (!this.hovering && (!this.orbitPauseUntil || now >= this.orbitPauseUntil)) {
       this.animationTime += delta * this.orbitSpeed;
     }
 
@@ -101,8 +102,13 @@ const MuseScroll = {
     });
     MusePopup.setMuses(this.muses);
 
+    // Only hover-capable (desktop) pointers freeze the orbit — matches the CSS
+    // `@media (hover: hover)` flip; on touch a tap just opens the popup.
+    const canHover = window.matchMedia('(hover: hover)').matches;
+
     this.items.forEach(({ el }, i) => {
       const popupTitle = el.getAttribute('data-popup-title');
+      el.style.setProperty('--muse-color', el.getAttribute('data-color'));
       el.setAttribute('tabindex', '0');
       el.setAttribute('role', 'button');
       if (popupTitle) el.setAttribute('aria-label', popupTitle);
@@ -113,6 +119,17 @@ const MuseScroll = {
       el.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
       });
+
+      if (canHover) {
+        // Freeze on hover/focus so the (now still) card is easy to click; the
+        // CSS flip reveals the name in the same window.
+        const freeze = () => { this.hovering = true; };
+        const thaw = () => { this.hovering = false; };
+        el.addEventListener('mouseenter', freeze);
+        el.addEventListener('mouseleave', thaw);
+        el.addEventListener('focus', freeze);
+        el.addEventListener('blur', thaw);
+      }
     });
 
     this.container.addEventListener('touchstart', () => {

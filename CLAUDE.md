@@ -1,6 +1,6 @@
 # cocoex.xyz — AI Context & Technical Reference
 
-> **UPDATED AT:** 2026-06-10 (muse popup overhaul: white symbol on colored disc, prev/next nav [arrows/←→/swipe, wrap], 3D pointer tilt, Y-flip on switch, reactive popup starfield + 2D spiral-galaxy particles absorbed at the rim, engraved symbol + disc noise, sentence-split copy; close is the top-right arrow-twin. Now 5 WebGL + 3 2D-canvas surfaces. Partnership strip: 10 real logos, seamless `max-content` marquee, capped logo widths, transparent events section over the starfield with a 50% veil + edge fades.)
+> **UPDATED AT:** 2026-06-10 (muse orbit cards: each orbiting muse is now a mini flip card — white symbol engraved on a `--muse-color` radial disc [front] that flips on `:hover`/`:focus-within` to the muse name [back], gated to `@media (hover: hover)`; hovering/focusing freezes the whole orbit [`MuseScroll.hovering`] so the card is catchable; the old black name label is gone, `.muse-text` kept hidden as the popup data source; touch just opens the popup. Prior: muse popup overhaul — white symbol on colored disc, prev/next nav [arrows/←→/swipe, wrap], 3D pointer tilt, Y-flip on switch, reactive popup starfield + 2D spiral-galaxy particles absorbed at the rim, engraved symbol + disc noise, sentence-split copy; close is the top-right arrow-twin. 5 WebGL + 3 2D-canvas surfaces. Partnership strip: 10 real logos, seamless `max-content` marquee, capped logo widths, transparent events section over the starfield with a 50% veil + edge fades.)
 > Run `/doc-minder` after any meaningful change to keep this file current.
 
 ---
@@ -80,7 +80,7 @@ Muse colors are used for: orbit dot fills, popup aura glow, muse tags in campaig
 | `src/webgl/shaders/glsl-utils.js` | `SIMPLEX_NOISE`, `STAR_FIELD`, `VERTEX_QUAD` (verbatim GLSL). |
 | `src/webgl/shaders/intro-frag.js` | `INTRO_FRAG` (cosmic noise + pulse) + `STARFIELD_FRAG` (factory shader). |
 | `src/sections/intro.js` | Orbit → transition text → 2D-canvas constellation explosion → smoke clear → mission reveal; builds GSAP timelines wired to `timeline.js`; owns intro-overlay teardown at the TRUE intro end. |
-| `src/sections/muse.js` | `initMuse`: `MuseScroll` adaptive-ellipse orbit (depth + zIndex churn fix); registers gated layer; black→white switch + logo crossfade. |
+| `src/sections/muse.js` | `initMuse`: `MuseScroll` adaptive-ellipse orbit (depth + zIndex churn fix); orbit items are hover-flip cards (`hovering` flag freezes the orbit on hover/focus, per-item `--muse-color`); registers gated layer; black→white switch + logo crossfade. |
 | `src/sections/comet.js` | `initComet`: pill `Toggle` (attached listeners, no inline onclick); registers `ProcessLinks.draw` as gated layer; two sequential 200vh sticky panels. |
 | `src/sections/events.js` | `initEvents`: partnership logo marquee (duplicated track). |
 | `src/ui/focus-trap.js` | `getFocusable`, `createFocusTrap`, `wireModalDismiss`. |
@@ -91,7 +91,7 @@ Muse colors are used for: orbit dot fills, popup aura glow, muse tags in campaig
 | `src/styles/tokens.css` | `:root` design tokens — colors, 7 muse hexes, font clamps, logo sizes, spacing, z-index, transitions. |
 | `src/styles/base.css` | reset, `html/body` height 100% + body `overflow-y:auto` for Lenis, scrollbar, `canvas.bg-layer`, `.visually-hidden`, `prefers-reduced-motion`. |
 | `src/styles/intro.css` | intro section; `.intro-spacer { height: var(--intro-h) }`; orbit dots, mission overlay, unified starfield, white-section. |
-| `src/styles/muse.css` | `.muse-panel { height: var(--muse-h) }`; sticky muse stage; orbit items; full popup system. |
+| `src/styles/muse.css` | `.muse-panel { height: var(--muse-h) }`; sticky muse stage; orbit hover-flip cards (`.muse-orbit-card`/`-shell`/`-face`/`-disc`/`-name`); full popup system. |
 | `src/styles/comet.css` | `.comet-panel-intro` / `.comet-panel-tabs` literal `200vh` each; pill toggle; `@keyframes fadeInPanel`. |
 | `src/styles/events-footer.css` | partnership marquee + footer. |
 | `src/styles/responsive.css` | 1024/768/480 breakpoints + `max-height:500px`; reduced-motion lives in `base.css`. |
@@ -122,7 +122,7 @@ Key elements: `#bg-canvas` (WebGL starfield), `#dot-white`, `#dot-black`, `#intr
 ---
 
 ### 2. Muse — Intro → Orbit (section `muse`, 450vh, follows intro at ~640vh)
-**HTML:** `index.html:60–111` (single `.muse-section-wrapper` → `.section-panel.muse-panel` → `.muse-stage`) · **CSS:** `src/styles/muse.css` · **JS:** `src/sections/muse.js` (`MuseScroll` + `buildMuseTimeline`)
+**HTML:** `index.html:60–175` (single `.muse-section-wrapper` → `.section-panel.muse-panel` → `.muse-stage`) · **CSS:** `src/styles/muse.css` · **JS:** `src/sections/muse.js` (`MuseScroll` + `buildMuseTimeline`)
 
 **ONE overlapping panel.** Intro and orbit share `.muse-stage` (sticky), so the center logo stays put while the background flips black→white. The 450vh panel height is `var(--muse-h)`. Phases (from `timeline.js`): `muse.fadein` 100, `muse.hold` 250, `muse.switch` 100.
 - **Intro fade-in (0–100vh into the panel):** `.muse-shared-logo` + `.muse-intro-copy` fade in (**pure opacity, no translateY/slide** — the copy stays put and just appears) over the black starfield. Copy is a short couplet: "Seven causes. / One constellation." (top) + the framework line (bottom), both centered. The two lines sit at `top: 16%` / `bottom: 16%` for breathing room from the center logo.
@@ -133,6 +133,8 @@ Key elements: `#bg-canvas` (WebGL starfield), `#dot-white`, `#dot-black`, `#intr
 The switch is race-free: intro layers are transparent (black starfield shows through), only the white `.muse-section` is opaque, so fading white IN over the transparent intro has no opaque-over-opaque fight.
 
 7 `.muse-orbit-item` elements rotate on an adaptive ellipse (`MuseScroll.calcRadius`/`update`). Ratio interpolates smoothly with viewport aspect (no breakpoint pop): wide → horizontal, square → near-circular, tall → vertical. Each muse has depth scaling from `sin(angle)` (front ~1.05, back ~0.65) with matching `zIndex` — `zIndex` is only written when its rounded value changes (a per-frame stacking-context churn fix). `data-angle` is parsed once on init.
+
+Each orbit item is a **mini flip card** that mirrors the popup disc: `.muse-orbit-item` (JS writes per-frame `translate/scale`) → `.muse-orbit-card` (perspective) → `.muse-orbit-card-shell` (flips) → two `.muse-orbit-face`s. **Front** = the **white** symbol (`<muse>-white.png`) engraved on a `--muse-color` radial-gradient disc with SVG-noise grain (same recipe as the popup `.muse-card-inside`); **back** = the muse **name** (`.muse-orbit-name`, white + dark text-shadow for AA on the light hues). The flip lives on the inner shell so it never fights the item's per-frame transform — a CSS-only `rotateY(180deg)` on `:hover`/`:focus-within`, gated behind `@media (hover: hover)` (`prefers-reduced-motion` drops the transition). On hover/focus the **whole orbit freezes** (`MuseScroll.hovering` flag skips the `animationTime` advance) so the now-still card is easy to click; `mouseleave`/`blur` thaws. Per-item `--muse-color` is set from `data-color` in `attachHandlers`. The old black name label under each muse is gone; the original `.muse-text` (`h3` + `p`) stays in the DOM `display:none` + `aria-hidden` purely as the popup's data source. Touch devices skip the flip/freeze entirely — a tap just opens the popup.
 
 Click any muse → **Muse Popup** (`src/ui/muse-popup.js` `MusePopup`). Layout: **name** header (`#muse-popup-title`, the `aria-labelledby` target) above the disc; **cause** subtitle (`#muse-popup-cause`, bold italic) + **description** below. The disc (`.muse-card-inside`) is a muse-color radial gradient with a faint SVG-noise grain; the **white** symbol (`<muse>-white.png`) sits on it with an engrave filter (dark-below + light-above drop-shadows). 3D pointer **tilt** drives the shine/glare via CSS vars. Behind it: a reactive WebGL **starfield** (`#muse-popup-starfield`) + a 2D **spiral-galaxy** particle field (`#muse-popup-galaxy`) whose dots are absorbed onto the disc rim.
 - **Navigation:** prev/next arrow buttons (`#muse-popup-prev`/`#muse-popup-next`) + keyboard ←/→ + horizontal swipe, **wrapping** 0↔6. Switching does a **3D Y-flip** of `.muse-card-shell` (direction follows the arrow), swapping symbol + disc color + galaxy color at the edge-on moment; title/cause/description fade in sync. Reduced-motion → instant crossfade.
@@ -332,7 +334,7 @@ All surfaces render inside the single `Renderer` RAF loop (`src/webgl/renderer.j
 - The popup controls (`.muse-popup-nav` — prev/next and the top-right `.muse-popup-close`) are `clamp(44px, 8vw, 56px)` ≥ WCAG mobile minimum, with `aria-label`s.
 - Mobile orbit tap surface expanded via `.muse-orbit-item::before { inset: -16px }` halo (preserves the transform-based centring).
 - Orbit auto-rotation pauses for 2s on `touchstart` inside the muse section so mobile users have a stable target.
-- Muse orbit headings render in solid `var(--color-black)` for AA contrast on off-white (per-muse hex tones — esp. Thunor `#F8D86A` — failed AA).
+- Muse orbit names live on the flip card's back face (`.muse-orbit-name`) in white with a dark text-shadow for AA contrast on the colored discs (esp. the light hues Thunor `#F8D86A` / Rabu `#8CB07F`). The hover/focus flip is gated to hover-capable pointers (`@media (hover: hover)`), so touch users reach the name via the popup, and the orbit-freeze listeners are likewise hover-only (a tap can't strand the orbit frozen).
 - `prefers-reduced-motion`: disables CSS animations/transitions; the popup skips the 3D tilt and the card flip (instant crossfade), and the galaxy renders a static scatter (no rotation/inward drift). WebGL canvases continue rendering (visual ambience, not vestibular motion).
 - Touch targets: 44px minimum (social icons 52px).
 - Focus indicators: 2px outline + 2px offset.
@@ -349,8 +351,8 @@ public/assets/images/
 ├── cocoex-text.png / cocoex-text-black.png
 ├── muse/
 │   ├── muse_logo_black.png
-│   ├── lunes.png · ares.png · rabu.png · thunor.png · shukra.png · dosei.png · solis.png   (colored ring+glyph — orbit)
-│   └── lunes-white.png · ares-white.png · … · solis-white.png                               (white — popup symbol)
+│   ├── lunes.png · ares.png · rabu.png · thunor.png · shukra.png · dosei.png · solis.png   (colored ring+glyph — UNUSED; orbit now uses the white variants on a colored disc)
+│   └── lunes-white.png · ares-white.png · … · solis-white.png                               (white — orbit flip-card front + popup symbol)
 ├── comet-collabs/
 │   ├── comet-collabs-logo.png · comet-collabs-logo-white.png
 │   └── process-one.png … process-five.png
@@ -378,7 +380,7 @@ Element IDs/selectors are stable; the module that owns each is listed (grep `ind
 | Unified starfield | `#unified-starfield-canvas` | `starfield.js` (white-on-black) |
 | Muse panel | `.muse-panel` (`height: var(--muse-h)`) / `.muse-stage` | `sections/muse.js` |
 | Muse backdrop | `#muse-background-canvas` | `starfield.js` (inverted) |
-| Muse orbit items | `.muse-orbit-item` (×7) | `sections/muse.js` (`MuseScroll`) |
+| Muse orbit items | `.muse-orbit-item` (×7) → `.muse-orbit-card`/`-card-shell`/`-face`(`--front`/`--back`)/`-disc`/`-name`; hidden `.muse-text` data source | `sections/muse.js` (`MuseScroll`) |
 | Muse shared logo | `.muse-shared-logo` (`#muse-logo-white` / `#muse-logo-black`) | `sections/muse.js` |
 | Muse intro copy | `.muse-intro-copy` | `sections/muse.js` |
 | Muse popup | `#muse-popup` (title `#muse-popup-title` / cause `#muse-popup-cause` / text `#muse-popup-text` / disc `.muse-card-shell`+`.muse-card-inside` / symbol `#muse-popup-img`) | `ui/muse-popup.js` + `ui/focus-trap.js` |
