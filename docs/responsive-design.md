@@ -48,13 +48,17 @@ The interpolation anchors are `aspect 0.6` and `aspect 1.4`, mapped via `t = cla
 
 Each muse also gets depth scaling from `sin(angle)` — front muses scale up (~1.05×), back ones down (~0.65×) — with a matching `zIndex`. The `zIndex` is written only when its rounded value changes (a per-frame stacking-context churn fix), so the orbit reads as a 3D ring on every aspect without thrashing layout.
 
-## Mobile Scroll: Drag + Touch Coexistence
+## Constellation Explosion — Portrait Transpose
 
-`FloatingProcesses` (`src/ui/floating-processes.js`) uses a **passive** `touchmove` listener on `document`. Scroll is blocked only on the dragged element via `element.style.touchAction = 'none'` (set in `startDrag()`, cleared in `endDrag()`).
+The intro constellation (`#constellation-canvas`, `initFireworkDots` in `src/sections/intro.js`) is authored in a landscape **1400×800** reference space. On a desktop that fits fine, but on a portrait phone `Math.min(w/1400, h/800)` picks the tiny width ratio, shrinking the constellation into a small horizontal cluster floating mid-screen.
 
-**Why passive:** a non-passive document-level `touchmove` listener kills all mobile scroll on the rest of the page. The previous implementation had this and made the site unscrollable on iOS during certain interactions. Do not add `{ passive: false }` back.
+So when `height > width`, the layout is **transposed 90°**: the fit box becomes `800×1400` and each dot is rotated — ref-x drives the vertical axis, ref-y drives the horizontal (`rx = p.y`, `ry = refWidth - p.x`). The constellation then runs tall and fills the portrait viewport. Desktop/landscape is untouched. `intro.resize()` re-runs `initFireworkDots()` so an orientation flip re-projects cleanly.
 
-The muse orbit auto-rotation also pauses for 2s on `touchstart` inside the section (`MuseScroll.attachHandlers`) so mobile users have a stable tap target.
+## Mobile Scroll & Touch
+
+The comet floating-process images are **non-interactive** — placed once and left to a CSS `float` bob, with `pointer-events: none`. Drag was removed (it conflicted with mobile scroll and the fixed layout reads better); there are no document-level `touchmove` listeners anymore.
+
+The muse orbit auto-rotation pauses for 2s on `touchstart` inside the section (`MuseScroll.attachHandlers`) so mobile users have a stable tap target.
 
 ## iOS Safari `100vh` Toolbar Fix
 

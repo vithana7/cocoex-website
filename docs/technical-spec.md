@@ -8,12 +8,12 @@ The site is a Vite + ES-module build: vanilla JS organised into small modules, G
 
 ## Scroll Budget
 
-Total page height ≈ **1440vh** (intro 640 + muse 400 + comet 400, plus the static events page + footer). All scroll-driven distances live in `src/scroll/timeline.js`. Never hardcode `vh` values inline.
+Total page height ≈ **1490vh** (intro 640 + muse 450 + comet 400, plus the static events page + footer). All scroll-driven distances live in `src/scroll/timeline.js`. Never hardcode `vh` values inline.
 
 | Section | Span | Position | Phases (`timeline.js`) |
 |---|---|---|---|
 | Landing + Mission | 640vh | Fixed overlay | `intro.orbit` 192 + `intro.text` 48 + `intro.explosion` 140 + `intro.mission` 100 + `intro.missionHold` 160 |
-| Muse (intro → orbit) | 400vh | Sticky `.muse-stage`, one overlapping panel | `muse.fadein` 100 + `muse.hold` 200 + `muse.switch` 100 |
+| Muse (intro → orbit) | 450vh | Sticky `.muse-stage`, one overlapping panel | `muse.fadein` 100 + `muse.hold` 250 + `muse.switch` 100 |
 | Comet Intro | 200vh | Sticky `.comet-panel-intro` | `comet.introIn` 100 + `comet.introHold` 100 |
 | Comet Methods | 200vh | Sticky `.comet-panel-tabs` | `comet.methodsIn` 100 + `comet.methodsHold` 100 |
 | Events + Footer | static | Normal flow | — |
@@ -23,7 +23,7 @@ Muse intro and orbit are **one overlapping sticky panel** (the center logo stays
 ### Why these values?
 
 - **640vh intro:** five phases need room. Orbit + transition text + a front-loaded constellation explosion that settles and holds, then a smoke-clear, a mission fade-in, and a long readable hold before the joint fade-out into muse. The hold was lengthened (`missionHold` 160) so the mission statement reads comfortably.
-- **400vh muse:** fade-in 100 + readable hold 200 + black→white switch 100. No orbit dwell — the orbit is visible through the switch, so you scroll straight into comet.
+- **450vh muse:** fade-in 100 + readable hold 250 + black→white switch 100. The intro copy fades in with **pure opacity** (no slide). No orbit dwell — the orbit is visible through the switch, so you scroll straight into comet.
 - **200vh per comet panel:** intro = fade-in 100 + hold 100; tabs = methods fade 100 + dwell 100.
 
 **Rule of thumb:** any phase under 100vh stutters on trackpads. Any phase over 200vh feels slack — Lenis's lerp amplifies that.
@@ -165,7 +165,7 @@ These were the per-frame costs that motivated the rebuild. Do not reintroduce th
 
 **`overflow-y: scroll` on both `html` and `body`.** Doubled scrollbar; one stops responding to GSAP. Set on one only.
 
-**Drag interferes with scroll.** Document-level `touchmove` must be `{ passive: true }`. Block scroll only on the dragged element via `style.touchAction = 'none'`. See `FloatingProcesses.startDrag/endDrag`.
+**Floating processes are non-interactive.** The comet `.floating-process` images are placed once and bob via CSS only — `pointer-events: none`, no drag. Drag was removed (it conflicted with mobile scroll). Do not re-add `touchmove`/drag handlers.
 
 **WebGL context limit.** Browsers cap concurrent WebGL contexts (~8–16). Four are active — stay under eight. Reuse the starfield factory.
 
@@ -192,7 +192,7 @@ These were the per-frame costs that motivated the rebuild. Do not reintroduce th
 Before a release, scroll through the entire page on:
 
 - Chrome / Firefox / Safari / Edge desktop (latest).
-- iOS Safari (current iPhone): touch drag on floating images, popup interactions, no scroll freeze.
+- iOS Safari (current iPhone): popup interactions, portrait constellation runs tall, no scroll freeze.
 - Android Chrome: Lenis-driven scroll smooth, DPR cap visible (no overheating).
 - 320px / 375px / 768px / 1024px / 1440px / 1920px viewports.
 - `prefers-reduced-motion`: CSS animations and popup particles disabled.

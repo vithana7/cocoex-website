@@ -1,6 +1,6 @@
 # cocoex.xyz — AI Context & Technical Reference
 
-> **UPDATED AT:** 2026-06-10 (Vite + ES-module modular rebuild; mission centered + longer hold)
+> **UPDATED AT:** 2026-06-10 (landing idle logo + scroll hint; muse intro pure fade, hold 250vh; portrait-transposed constellation; process drag removed)
 > Run `/doc-minder` after any meaningful change to keep this file current.
 
 ---
@@ -85,7 +85,7 @@ Muse colors are used for: orbit dot fills, popup aura glow, muse tags in campaig
 | `src/sections/events.js` | `initEvents`: partnership logo marquee (duplicated track). |
 | `src/ui/focus-trap.js` | `getFocusable`, `createFocusTrap`, `wireModalDismiss`. |
 | `src/ui/muse-popup.js` | `MusePopup` — 3D tilt card, 12 particles, GSAP entrance, focus-trap. |
-| `src/ui/floating-processes.js` | `FloatingProcesses` — 5 draggable imgs; passive document `touchmove`; `touchAction:'none'` only during drag. |
+| `src/ui/floating-processes.js` | `FloatingProcesses` — places 5 process imgs once (`setInitialPositions`); they bob via CSS `float` animation. Drag was removed; `pointer-events: none`. |
 | `src/ui/process-links.js` | `ProcessLinks` — 2D-canvas starline connecting the 5 processes (jank fix: no per-frame `shadowBlur`, cheap translucent strokes + epsilon redraw-skip). |
 | `src/styles/tokens.css` | `:root` design tokens — colors, 7 muse hexes, font clamps, logo sizes, spacing, z-index, transitions. |
 | `src/styles/base.css` | reset, `html/body` height 100% + body `overflow-y:auto` for Lenis, scrollbar, `canvas.bg-layer`, `.visually-hidden`, `prefers-reduced-motion`. |
@@ -97,19 +97,20 @@ Muse colors are used for: orbit dot fills, popup aura glow, muse tags in campaig
 
 Assets live in `public/assets/images/` — Vite serves `public/` at the site root, so HTML references them as `assets/images/...`. `PartnershipSlider` (now `initEvents`) uses a hardcoded array from `data.js`; Stardust/Horizon panels render static markup.
 
-**Total scroll height:** ~1440vh (intro 640 incl. mission overlay + muse 400 + comet 400, plus the static events page + footer). Heights are injected from `timeline.js` — see SCROLL pacing below.
+**Total scroll height:** ~1490vh (intro 640 incl. mission overlay + muse 450 + comet 400, plus the static events page + footer). Heights are injected from `timeline.js` — see SCROLL pacing below.
 
 ---
 
 ## Page Sections (Top → Bottom)
 
 ### 1. Landing / Intro + Mission (`0–640vh`, section `intro`)
-**HTML:** `index.html:23–48` · **CSS:** `src/styles/intro.css` · **JS:** `src/sections/intro.js` (timelines) + `src/webgl/intro-starfield.js` (`#bg-canvas`)
+**HTML:** `index.html:24–54` · **CSS:** `src/styles/intro.css` · **JS:** `src/sections/intro.js` (timelines) + `src/webgl/intro-starfield.js` (`#bg-canvas`)
 
 Fixed overlay. The mission statement is part of this section — it overlays the settled constellation dots rather than living in its own scroll section. The section height is injected as `var(--intro-h)`; `.intro-spacer` reads it. The intro is built from five `timeline.js` phases (see SCROLL pacing): `intro.orbit` 192, `intro.text` 48, `intro.explosion` 140, `intro.mission` 100, `intro.missionHold` 160 → **640vh total**.
+- **Landing idle (before any scroll):** `.intro-content` carries the `intro-idle` class, which shows ONLY the centered cocoex logo (at the 80px orbit-START size, `ORBIT.logoMinSize`) gently pulsing, plus a bottom-centered scroll-down arrow hint (`#scroll-hint`). The orbit dots are hidden. The orbit ScrollTrigger's `onUpdate` toggles `intro-idle` off the instant `progress > 0.001` (and clears the inline logo size so `updateOrbit` takes over with no size jump).
 - **`intro.orbit` (0–192vh):** white + black dots orbit center; logo scales up, 2 full rotations (`updateOrbit`).
 - **`intro.text` (192–240vh):** transition text fades in below logo, holds, then fades out.
-- **`intro.explosion` (240–380vh):** 7 colored constellation dots explode from center on the 2D `#constellation-canvas` (z-depth render, big bang pulse via `introStarfield.setPulse`), front-loaded so they settle then hold.
+- **`intro.explosion` (240–380vh):** 7 colored constellation dots explode from center on the 2D `#constellation-canvas` (z-depth render, big bang pulse via `introStarfield.setPulse`), front-loaded so they settle then hold. The layout reference is landscape (1400×800); on a **portrait** viewport (`height > width`) `initFireworkDots` transposes it 90° (ref-x → vertical, ref-y → horizontal) so the constellation runs tall instead of cramming into a small horizontal cluster. `resize()` re-projects if the explosion already ran (orientation change).
 - **`intro.mission` (380–480vh):** smoke clears, then the mission fades in. Smoke = BOTH the 2D constellation (`#constellation-canvas`) AND the cosmic-noise WebGL backdrop (`#bg-canvas`) fading to opacity 0 over the first half of this phase (`smokeLayers`); the mission overlay then fades in over the back half. Transition SPEEDS are fixed fractions of this short phase so they stay constant.
 - **`intro.missionHold` (480–640vh):** mission holds fully bright, then `.intro-content` fades out over the last 25% of the phase, handing off to the muse intro fading in underneath.
 
@@ -119,13 +120,13 @@ Key elements: `#bg-canvas` (WebGL starfield), `#dot-white`, `#dot-black`, `#intr
 
 ---
 
-### 2. Muse — Intro → Orbit (section `muse`, 400vh, follows intro at ~640vh)
-**HTML:** `index.html:54–106` (single `.muse-section-wrapper` → `.section-panel.muse-panel` → `.muse-stage`) · **CSS:** `src/styles/muse.css` · **JS:** `src/sections/muse.js` (`MuseScroll` + `buildMuseTimeline`)
+### 2. Muse — Intro → Orbit (section `muse`, 450vh, follows intro at ~640vh)
+**HTML:** `index.html:60–111` (single `.muse-section-wrapper` → `.section-panel.muse-panel` → `.muse-stage`) · **CSS:** `src/styles/muse.css` · **JS:** `src/sections/muse.js` (`MuseScroll` + `buildMuseTimeline`)
 
-**ONE overlapping panel.** Intro and orbit share `.muse-stage` (sticky), so the center logo stays put while the background flips black→white. The 400vh panel height is `var(--muse-h)`. Phases (from `timeline.js`): `muse.fadein` 100, `muse.hold` 200, `muse.switch` 100.
-- **Intro fade-in (0–100vh into the panel):** `.muse-shared-logo` + `.muse-intro-copy` fade up over the black starfield. Copy is a short couplet: "Seven causes. / One constellation." (top) + the framework line (bottom), both centered.
-- **Hold (100–300vh):** intro holds fully readable.
-- **Switch (300–400vh):** the white `.muse-section` bg fades in, the center logo **opacity-crossfades white→black** (two stacked `<img>`: `#muse-logo-white` out, `#muse-logo-black` in — NO `filter()` tween), and the intro copy fades out as the orbit takes over.
+**ONE overlapping panel.** Intro and orbit share `.muse-stage` (sticky), so the center logo stays put while the background flips black→white. The 450vh panel height is `var(--muse-h)`. Phases (from `timeline.js`): `muse.fadein` 100, `muse.hold` 250, `muse.switch` 100.
+- **Intro fade-in (0–100vh into the panel):** `.muse-shared-logo` + `.muse-intro-copy` fade in (**pure opacity, no translateY/slide** — the copy stays put and just appears) over the black starfield. Copy is a short couplet: "Seven causes. / One constellation." (top) + the framework line (bottom), both centered. The two lines sit at `top: 16%` / `bottom: 16%` for breathing room from the center logo.
+- **Hold (100–350vh):** intro holds fully readable.
+- **Switch (350–450vh):** the white `.muse-section` bg fades in, the center logo **opacity-crossfades white→black** (two stacked `<img>`: `#muse-logo-white` out, `#muse-logo-black` in — NO `filter()` tween), and the intro copy fades out as the orbit takes over.
 - **No orbit dwell:** you scroll straight from the orbit into the comet intro. The orbit is visible THROUGH the 100vh switch, so its on-screen time already feels generous.
 
 The switch is race-free: intro layers are transparent (black starfield shows through), only the white `.muse-section` is opaque, so fading white IN over the transparent intro has no opaque-over-opaque fight.
@@ -139,16 +140,16 @@ WebGL: `#muse-background-canvas` (inverted starfield — black stars on off-whit
 ---
 
 ### 3. Comet Collab Intro (section `comet` panel 1, `comet-panel-intro` = literal 200vh)
-**HTML:** `index.html:110–129` · **CSS:** `src/styles/comet.css` · **JS:** `src/sections/comet.js` (`buildCometTimeline`) + `src/ui/floating-processes.js` + `src/ui/process-links.js`
+**HTML:** `index.html:116–135` · **CSS:** `src/styles/comet.css` · **JS:** `src/sections/comet.js` (`buildCometTimeline`) + `src/ui/floating-processes.js` + `src/ui/process-links.js`
 
 Sticky panel. Constellation hides over `COMET_CONST_HIDE_VH = 40`vh (from `timeline.js`, overlaps the fade-in). The intro fades in over 100vh, holds, then fades out as the panel scrolls away (phases `comet.introIn` 100 + `comet.introHold` 100). The White Comet Collabs logo descent is CSS-positioned (**no JS descent tween**). Intro copy ends "...through Stardust and Horizon." then "Guided by Muse, in a continuous loop of creation and impact." on its own line, centered.
 
-5 **draggable** floating process images (`.floating-process`, positions set in `FloatingProcesses.setInitialPositions`). A faint white **starline** (`#process-link-canvas`, 2D, drawn by `ProcessLinks` registered as a gated `Renderer` layer) connects them in order 1→2→3→4→5, redrawing live from `getBoundingClientRect()` as they bob/drag — skipping the redraw when no node moved beyond a 0.4px epsilon, and faking the glow with cheap translucent strokes instead of per-frame `shadowBlur`. Touch drag with `passive: true` document `touchmove`; scroll blocked mid-drag only via `touchAction: 'none'`.
+5 floating process images (`.floating-process`, positions set once in `FloatingProcesses.setInitialPositions`, then left to a CSS `float` bob). **Drag was removed** — users liked the fixed arrangement; the elements are `pointer-events: none` and carry no `draggable` attribute or drag listeners. A faint white **starline** (`#process-link-canvas`, 2D, drawn by `ProcessLinks` registered as a gated `Renderer` layer) connects them in order 1→2→3→4→5, redrawing live from `getBoundingClientRect()` as they bob — skipping the redraw when no node moved beyond a 0.4px epsilon, and faking the glow with cheap translucent strokes instead of per-frame `shadowBlur`.
 
 ---
 
 ### 4. Comet Methods Toggle (section `comet` panel 2, `comet-panel-tabs` = literal 200vh)
-**HTML:** `index.html:131–181` · **CSS:** `src/styles/comet.css` · **JS:** `src/sections/comet.js` (`Toggle`)
+**HTML:** `index.html:137–186` · **CSS:** `src/styles/comet.css` · **JS:** `src/sections/comet.js` (`Toggle`)
 
 Second sticky panel (sequential, not overlapping the intro). Methods panel fades in over 100vh, then holds through closure (phases `comet.methodsIn` 100 + `comet.methodsHold` 100). Comet ends here — there is **no connected-images panel**.
 
@@ -161,7 +162,7 @@ The toggle is wired by `Toggle.init()` attaching `click` listeners to `#tab-star
 ---
 
 ### 5. Events Page (section `events`, static after comet)
-**HTML:** `index.html:184–189` · **CSS:** `src/styles/events-footer.css` · **JS:** `src/sections/events.js` (`initEvents`)
+**HTML:** `index.html:190–194` · **CSS:** `src/styles/events-footer.css` · **JS:** `src/sections/events.js` (`initEvents`)
 
 `.events-page-wrapper` → `.partnership-section` only.
 
@@ -170,7 +171,7 @@ The toggle is wired by `Toggle.init()` attaching `click` listeners to `#tab-star
 ---
 
 ### Footer (Static at end of flow)
-**HTML:** `index.html:191–203` · **CSS:** `src/styles/events-footer.css` (`.social-links`)
+**HTML:** `index.html:197–209` · **CSS:** `src/styles/events-footer.css` (`.social-links`)
 
 Static footer at the page end. 3 social icons (Telegram, Instagram, LinkedIn). cocoex text logo.
 
@@ -259,9 +260,9 @@ intro.explosion   140   // constellation explodes + settles
 intro.mission     100   // smoke clears + mission fade-in
 intro.missionHold 160   // mission holds bright, then fades out
 
-// MUSE — section total 400vh
-muse.fadein       100   // intro logo + copy fade up
-muse.hold         200   // intro holds fully readable
+// MUSE — section total 450vh
+muse.fadein       100   // intro logo + copy fade in (pure opacity)
+muse.hold         250   // intro holds fully readable
 muse.switch       100   // black→white + logo crossfade → orbit
 
 // COMET — section total 400vh (two literal 200vh sticky panels)
@@ -406,7 +407,7 @@ Element IDs/selectors are stable; the module that owns each is listed (grep `ind
 
 **Canvas touch blocking:** never rely on inherited `pointer-events: none` for canvas elements on iOS/Android — set it explicitly on the canvas.
 
-**Drag + scroll conflict:** `FloatingProcesses` uses a passive `touchmove` listener on `document`. Scroll blocking during drag is via `element.style.touchAction = 'none'` set in `startDrag()` and cleared in `endDrag()`. Do not add `{ passive: false }` back to the document-level listener — it kills all mobile scroll.
+**Floating processes are non-interactive (by design):** the 5 `.floating-process` images are placed once and bob via CSS only — `pointer-events: none`, no `draggable`, no drag listeners. Drag was deliberately removed (it conflicted with mobile scroll and the fixed layout reads better). Do NOT re-add drag/`touchmove` handlers.
 
 **Never:** add frameworks, pollute global scope, duplicate `timeline.js` vh values anywhere, use `scroll-behavior: smooth` on `html {}` (breaks GSAP), use `overflow-y: scroll` on both `html` and `body`.
 
