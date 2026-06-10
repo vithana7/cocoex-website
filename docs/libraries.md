@@ -90,7 +90,7 @@ Rules:
 
 ## WebGL
 
-Native WebGL 1.0, no wrappers. Three factory starfield canvases share one shader (`createStarfield`, `src/webgl/starfield.js`); the intro has its own shader (`createIntroStarfield`, `src/webgl/intro-starfield.js`) — 4 WebGL contexts total. See `technical-spec.md` § "WebGL Architecture" for rationale.
+Native WebGL 1.0, no wrappers. Four factory starfield canvases share one shader (`createStarfield`, `src/webgl/starfield.js` — unified, muse backdrop, comet backdrop, and the reactive muse-popup starfield); the intro has its own shader (`createIntroStarfield`, `src/webgl/intro-starfield.js`) — 5 WebGL contexts total. (Plus three 2D canvases: the intro constellation, the comet process-starline, and the muse-popup spiral galaxy.) See `technical-spec.md` § "WebGL Architecture" for rationale.
 
 Shared GLSL is imported from `src/webgl/shaders/glsl-utils.js` (`SIMPLEX_NOISE`, `STAR_FIELD`, `VERTEX_QUAD`) and the fragment sources in `src/webgl/shaders/intro-frag.js` (`INTRO_FRAG`, `STARFIELD_FRAG`):
 

@@ -75,12 +75,12 @@ The loop is one `requestAnimationFrame` for the whole page. Each tick renders **
 
 ## WebGL Architecture: One Shader Factory
 
-Three of the four WebGL surfaces are produced by `createStarfield(canvasId, options)` (`src/webgl/starfield.js`) — one shader (`STARFIELD_FRAG`), parameterised:
+Four of the five WebGL surfaces are produced by `createStarfield(canvasId, options)` (`src/webgl/starfield.js`) — one shader (`STARFIELD_FRAG`), parameterised:
 
 - `invert: true` — fragment output becomes `1.0 - color`, turning the canonical white-on-black starfield into black-on-offwhite. Used for the muse and comet backdrops (light surface).
-- `intensity` — multiplies star brightness; inverted variants use `0.9` to read against off-white.
+- `intensity` — multiplies star brightness; inverted variants use `0.9` to read against off-white; the popup starfield is recolored/pulsed at runtime by `MusePopup` (tints `starColor` to the muse hue + an intensity pulse on open/switch).
 
-Instances (created in `src/main.js`): the unified white-on-black starfield (`#unified-starfield-canvas`, shared by muse + comet), the muse backdrop (`#muse-background-canvas`, inverted), and the comet backdrop (`#comet-collab-background-canvas`, inverted).
+Instances (created in `src/main.js`): the unified white-on-black starfield (`#unified-starfield-canvas`, fixed full-screen, shared by muse + comet + the transparent events section), the muse backdrop (`#muse-background-canvas`, inverted), the comet backdrop (`#comet-collab-background-canvas`, inverted), and the **muse popup starfield** (`#muse-popup-starfield`, reactive). The popup also has a 2D spiral-galaxy particle layer (`src/ui/muse-galaxy.js`); both popup surfaces register as gated layers with `active: () => MusePopup.isOpen` rather than a section tag.
 
 **Why a factory:** the previous architecture had separate gradient shaders that drifted out of sync, duplicated GLSL, and triggered extra `gl.useProgram()` switches. One shader with two parameters removed the duplication and makes adding a surface trivial — pass options, don't write a shader. Shared GLSL (`SIMPLEX_NOISE`, `STAR_FIELD`, `VERTEX_QUAD`) lives in `src/webgl/shaders/glsl-utils.js`.
 
@@ -167,7 +167,7 @@ These were the per-frame costs that motivated the rebuild. Do not reintroduce th
 
 **Floating processes are non-interactive.** The comet `.floating-process` images are placed once and bob via CSS only — `pointer-events: none`, no drag. Drag was removed (it conflicted with mobile scroll). Do not re-add `touchmove`/drag handlers.
 
-**WebGL context limit.** Browsers cap concurrent WebGL contexts (~8–16). Four are active — stay under eight. Reuse the starfield factory.
+**WebGL context limit.** Browsers cap concurrent WebGL contexts (~8–16). Five are active (the 5th, `#muse-popup-starfield`, only renders while the popup is open but its context exists from boot) — stay under eight. Reuse the starfield factory.
 
 **WebGL context loss.** Mobile browsers can drop contexts at any time. `intro-starfield.js` registers `webglcontextlost`/`webglcontextrestored` and rebuilds the program on restore. Replicate this on any new context.
 
@@ -195,6 +195,6 @@ Before a release, scroll through the entire page on:
 - iOS Safari (current iPhone): popup interactions, portrait constellation runs tall, no scroll freeze.
 - Android Chrome: Lenis-driven scroll smooth, DPR cap visible (no overheating).
 - 320px / 375px / 768px / 1024px / 1440px / 1920px viewports.
-- `prefers-reduced-motion`: CSS animations and popup particles disabled.
-- Keyboard navigation: Tab through muses, Enter opens popup, Escape closes.
+- `prefers-reduced-motion`: CSS animations disabled; popup tilt + card flip skipped (crossfade), galaxy field static.
+- Keyboard navigation: Tab through muses, Enter opens popup, ←/→ switch muses, Escape closes.
 - All external links open in a new tab with `rel="noopener noreferrer"`.

@@ -8,9 +8,9 @@ export function initEvents() {
   const track = document.createElement('div');
   track.className = 'partnership-track';
 
-  const logoHTML = (src, i) => `
-    <a href="#" target="_blank" rel="noopener noreferrer" aria-label="Partner ${i + 1}">
-      <img src="${src}" alt="Partner ${i + 1}" class="partnership-logo" loading="lazy" decoding="async">
+  const logoHTML = (p) => `
+    <a href="#" target="_blank" rel="noopener noreferrer" aria-label="${p.name}">
+      <img src="${p.src}" alt="${p.name}" class="partnership-logo" decoding="async">
     </a>`;
 
   const set = PARTNERS.map(logoHTML).join('');

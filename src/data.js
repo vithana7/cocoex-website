@@ -51,9 +51,20 @@ export const MUSES = [
   { name: 'Solis',  cause: 'Well-being',       color: 'var(--solis)' },
 ];
 
-export const PARTNERS = [1, 2, 3, 4, 5].map(
-  (n) => `assets/images/partnerships/partner-${n}.png`
-);
+// Partner logos in public/assets/images/partnerships/. `name` drives alt/aria text;
+// `src` is URL-encoded so filenames with spaces resolve correctly.
+export const PARTNERS = [
+  { name: 'C. Volpi',         file: 'C.Volpi.png' },
+  { name: 'CdTortona',        file: 'CdTortona.png' },
+  { name: 'Lukso',            file: 'Lukso.png' },
+  { name: 'Peng',             file: 'Peng.png' },
+  { name: 'RJB',              file: 'RJB.png' },
+  { name: 'SFT',              file: 'SFT.png' },
+  { name: 'SIRX',             file: 'SIRX.png' },
+  { name: 'TN',               file: 'TN.png' },
+  { name: 'Vinili e Vinelli', file: 'Vinili e vinelli.png' },
+  { name: 'WR',               file: 'WR.png' },
+].map((p) => ({ name: p.name, src: `assets/images/partnerships/${encodeURIComponent(p.file)}` }));
 
 export function easeOutCubic(t) {
   return 1 - Math.pow(1 - t, 3);
