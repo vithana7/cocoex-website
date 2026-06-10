@@ -177,48 +177,115 @@
   z-index: 25;
 }
 
-.muse-orbit-item .muse-image {
+/* Each orbiting muse is a mini popup card: a white symbol on a colored disc (front)
+   that flips on hover to reveal the muse name (back). The flip lives on an inner
+   shell so it never fights the per-frame translate/scale MuseScroll writes to the
+   .muse-orbit-item — same separation the popup uses (wrapper vs. shell). */
+.muse-orbit-card {
   width: var(--muse-orbit-image-size);
   height: var(--muse-orbit-image-size);
+  perspective: 600px;
+}
+
+.muse-orbit-card-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Desktop hover / keyboard focus flips the card to the name face (decision: touch
+   devices just open the popup, so the flip is gated behind hover-capable pointers). */
+@media (hover: hover) {
+  .muse-orbit-item:hover .muse-orbit-card-shell,
+  .muse-orbit-item:focus-within .muse-orbit-card-shell {
+    transform: rotateY(180deg);
+  }
+}
+
+.muse-orbit-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.muse-orbit-face--back {
+  transform: rotateY(180deg);
+}
+
+/* Colored disc — same radial-gradient + film-grain recipe as the popup card. */
+.muse-orbit-disc {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: radial-gradient(
+    circle at 50% 38%,
+    var(--muse-color, #5783A6) 0%,
+    color-mix(in srgb, var(--muse-color, #5783A6) 70%, #000 30%) 100%
+  );
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
-.muse-orbit-item .muse-image img {
-  width: 100%;
-  height: 100%;
+.muse-orbit-disc::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.18;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+/* White symbol — engraved into the disc (dark below + light above + soft drop). */
+.muse-orbit-face--front img {
+  position: relative;
+  z-index: 2;
+  width: 78%;
+  height: 78%;
   object-fit: contain;
   display: block;
-  filter: drop-shadow(1px 4px 1px rgba(0, 0, 0, 0.2)) saturate(1.4) brightness(1.1);
+  filter:
+    drop-shadow(0 2px 1px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 -1px 1px rgba(255, 255, 255, 0.35))
+    drop-shadow(0 6px 16px rgba(0, 0, 0, 0.35));
 }
 
-.muse-orbit-item .muse-text {
-  text-align: center;
-  max-width: 200px;
-  padding: var(--spacing-xs);
-}
-
-.muse-orbit-item .muse-text h3 {
+/* Name face — Canela title on the disc; white + soft dark shadow so it stays
+   legible on the lighter muse hues (Thunor, Rabu). */
+.muse-orbit-name {
+  position: relative;
+  z-index: 2;
   font-family: var(--font-canela);
-  font-size: var(--font-h2-size);
-  line-height: var(--font-h2-height);
+  font-size: clamp(15px, 2vw, 24px);
   font-weight: var(--font-h1-weight);
   text-transform: uppercase;
   letter-spacing: -0.02em;
-  margin-bottom: 0;
-  cursor: pointer;
-  color: var(--color-black);
-  transition: transform var(--transition-medium);
-  filter: drop-shadow(0 4px 1px rgba(255, 255, 255, 0.5));
+  text-align: center;
+  padding: 0 0.4em;
+  color: var(--color-white);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 0 12px rgba(0, 0, 0, 0.25);
 }
 
-.muse-orbit-item .muse-text h3:hover {
-  transform: scale(1.1);
-}
-
-.muse-orbit-item .muse-text p {
+/* Kept in the DOM (hidden) as the popup's data source — h3 = name, p = description. */
+.muse-orbit-item .muse-text {
   display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .muse-orbit-card-shell {
+    transition: none;
+  }
 }
 
 /* Muse Popup Modal — 3D tilt card */
