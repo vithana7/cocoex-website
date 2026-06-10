@@ -12,101 +12,81 @@ The cocoex website is a scroll-driven interactive experience built with modern w
 
 ### Site Structure
 
-**Total Scroll Height:** ~1570vh (15.7x viewport height)
+**Total Scroll Height:** ~1440vh (heights are injected from `src/scroll/timeline.js`)
 
-1. **Intro Animation** - 0 to 400vh
-2. **Mission Text** - 400 to 550vh
-3. **Muse Portfolio** - 550 to 820vh
-4. **Comet Collab** - 820 to 1570vh
+1. **Intro + Mission** - 640vh (orbit → transition text → constellation explosion → mission reveal)
+2. **Muse Portfolio** - 400vh (one overlapping sticky panel: intro → orbit)
+3. **Comet Collab** - 400vh (two sequential 200vh sticky panels: intro, methods)
+4. **Events + Footer** - static, at the end of the flow
 
 ### Features
 
-#### 1. Animated Introduction (0-400vh)
+#### 1. Animated Introduction + Mission (640vh)
 
-**Scroll-driven animation in three phases:**
+**Scroll-driven, five timeline phases:**
 
-- **Phase 1 (0-40%)**: Orbiting white and black dots converge to center while logo scales from 80px to 250px with 2 full rotations
-- **Phase 2 (30-50%)**: Transition text "art as infrastructure for change" appears below logo at 76% orbit progress
-- **Phase 3 (50-100%)**: Constellation explosion - seven colored dots explode into 3D constellation pattern with depth layering
+- **Orbit (192vh)**: orbiting white and black dots converge to center while the logo scales up with 2 full rotations
+- **Transition text (48vh)**: a short line fades in below the logo, holds, then fades out
+- **Explosion (140vh)**: seven colored dots explode from center into a 3D constellation (z-depth layering, big-bang pulse), then settle and hold
+- **Mission reveal (100vh)**: the constellation + cosmic-noise backdrop fade out, then the mission statement fades in (centered)
+- **Mission hold (160vh)**: the mission holds fully readable, then fades out into the Muse section
 
 **Technical Features:**
-- WebGL starfield background with twinkling stars and simplex noise
-- Big bang pulse effect (dispersive wave from center)
-- Z-depth rendering for constellation dots (-0.5 to 0.6 range)
-- Hardware-accelerated animations using GSAP ScrollTrigger
+- WebGL cosmic-noise starfield background with a dispersive big-bang pulse
+- Z-depth rendering for the 2D-canvas constellation dots
+- Mission and intro overlay torn down at the true (unbuffered) intro end
 
-#### 2. Mission Statement (400-550vh)
-
-**Simple fade-in text reveal:**
-
-- cocoex mission and philosophy
-- Description of comet collab ecosystem
-- Stardust and Horizon methods
-- Muse framework introduction
-
-**Optimization:**
-- Reduced from 350vh to 150vh for smoother scroll
-- Removed word highlighting for better performance
-- Pure opacity transition (60fps on most devices)
-
-#### 3. Muse Portfolio (550-820vh)
+#### 2. Muse Portfolio (400vh, one overlapping panel)
 
 **Interactive orbiting layout featuring seven muses:**
 
-**Scroll Breakdown:**
-- **0-150vh**: Black intro page with Muse logo and description
-- **150-270vh**: Smooth crossfade transition (120vh)
-- **270vh+**: Orbiting muse layout visible
+**Scroll Breakdown (within the panel):**
+- **0-100vh**: intro logo + copy fade up over the black starfield
+- **100-300vh**: intro holds fully readable
+- **300-400vh**: background flips black→white, the center logo crossfades, the orbit takes over
 
-**The Seven Muses:**
-- **Lunes** (#5783A6) - Mystery and intuition
-- **Ares** (#D54D2E) - Passion and courage
-- **Rabu** (#8CB07F) - Communication and connection
-- **Thunor** (#F8D86A) - Thunder and strength
-- **Shukra** (#5E47A1) - Beauty and harmony
-- **Dosei** (#7F49A2) - Wisdom and structure
-- **Solis** (#D48348) - Warmth and vitality
+**The Seven Muses (cause per muse):**
+- **Lunes** (#5783A6) - Water
+- **Ares** (#D54D2E) - Reforestation
+- **Rabu** (#8CB07F) - Human Rights
+- **Thunor** (#F8D86A) - Renewable Energy
+- **Shukra** (#5E47A1) - Bio-diversity
+- **Dosei** (#7F49A2) - Zero Hunger
+- **Solis** (#D48348) - Well-being
 
 **Interactive Features:**
-- Continuous 240-second orbital rotation (horizontal ellipse)
-- Click muse image or name to open detailed modal
-- Colored aura effects in popup (unique to each muse)
-- Floating particle animations
-- Keyboard navigation (Tab, Escape)
+- Continuous orbital rotation on an adaptive ellipse (axis follows viewport aspect)
+- Click a muse to open a detailed modal (3D tilt card, colored aura, 12 particles)
+- Keyboard navigation (Tab, Enter/Space, Escape) with focus trap
+- Auto-rotation pauses 2s on touch for a stable tap target
 
 **Visual Effects:**
-- WebGL animated gradient (7-color blend with simplex noise)
-- Unified starfield background (shared with Comet section)
-- GSAP-driven smooth animations
+- Inverted starfield backdrop (black stars on off-white) via the shader factory
+- Unified starfield shared with the Comet section
 
-#### 4. Comet Collab (820-1570vh)
+#### 3. Comet Collab (400vh, two sequential 200vh panels)
 
 **Two-method impact ecosystem:**
 
-**Scroll Breakdown:**
-- **0-120vh**: Intro page with white Comet logo and methods description
-- **120-400vh**: Logo descends to bottom, text moves up (280vh animation)
-- **400-520vh**: Crossfade transition to connected images (120vh)
-- **520vh+**: Static display of 5 process images with WebGL background
+**Panel 1 — Intro (200vh):** white Comet Collabs logo (CSS-positioned), methods copy, and 5 **draggable** floating process images connected by a faint 2D-canvas starline that redraws live as they bob/drag.
+
+**Panel 2 — Methods (200vh):** a pill toggle switches between the Stardust and Horizon flows (`.active` panels, no inline onclick).
 
 **Methods Explained:**
-- **Stardust**: Artist-driven fundraising campaigns where artists select causes, create works, and split proceeds with organizations
-- **Horizon**: Future Lab where communities move through four steps (Critique → Realisation) to transform shared vision into art and real-world change
+- **Stardust**: artists select a cause, create a work, launch a fundraising campaign, and split proceeds with the partner NGO
+- **Horizon**: a Future Lab where communities collectively define a cause and partner, then turn it into art and impact (adds a `+Horizon` step)
 
 **Visual Features:**
-- WebGL animated gradient background (identical shader to Muse section)
-- Unified starfield beneath gradient
-- 5 connected process images displaying methodology
-- Smooth scroll-driven logo animation with reversible motion
+- Inverted starfield backdrop via the shader factory
+- 5 draggable process images joined by a live starline (`process-links.js`)
 
-#### 5. Footer
+#### 4. Events + Footer
 
-**Fixed positioning, revealed at page end:**
+**Static, at the end of the flow:**
 
-- Social links: Telegram, Instagram, LinkedIn
-- Touch-friendly targets (52px minimum)
-- Hover states with scale transform
-- cocoex text logo (172px width)
+- Partnership logo marquee (5 logos, duplicated track for a seamless CSS loop)
+- Social links: Telegram, Instagram, LinkedIn (touch targets ≥ 44px)
+- cocoex text logo
 - Keyboard accessible
 
 ## Tech Stack
@@ -114,15 +94,16 @@ The cocoex website is a scroll-driven interactive experience built with modern w
 ### Core Technologies
 - **HTML5** - Semantic markup with ARIA labels
 - **CSS3** - Custom properties, Grid, Flexbox
-- **Vanilla JavaScript** - ES6+ with IIFE pattern
-- **GSAP 3.12.5** - ScrollTrigger animation library
+- **Vanilla JavaScript** - ES modules, bundled by Vite
+- **Vite** (`^5.4.0`) - Dev server + production build
+- **GSAP 3.12.5** + **Lenis 1.3.4** - npm dependencies, imported as ES modules (not CDN)
 - **WebGL** - Custom GLSL shaders for visual effects
 
 ### Architecture
-- IIFE module pattern with namespace isolation
-- Master render loop (consolidates all WebGL animations)
-- Centralized timing constants (`SCROLL_TIMING`)
-- Shared GLSL utilities (simplex noise, star field rendering)
+- ES modules under `src/` (no IIFE, no global scope) — single entry `/src/main.js`
+- Single gated `Renderer` RAF loop (renders only on-screen WebGL layers)
+- Declarative scroll pacing in `src/scroll/timeline.js` (one `PHASES` array drives CSS heights + GSAP offsets)
+- Shared GLSL utilities + one parameterised starfield shader factory
 - Passive event listeners + debounced resize (150ms)
 
 ### Typography
@@ -134,33 +115,32 @@ The cocoex website is a scroll-driven interactive experience built with modern w
 
 ```
 cocoex-website/
-├── index.html              # Main HTML structure
-├── css/
-│   └── styles.css          # Styling with CSS custom properties (1729 lines)
-├── js/
-│   └── main.js             # Animation logic (2617 lines)
-├── assets/
-│   ├── images/
-│   │   ├── logowhite.png
-│   │   ├── cocoex-text.png
-│   │   ├── muse/           # 7 muse images + logo
-│   │   └── comet-collabs/  # 5 process images + logos
-│   └── fonts/              # (via Adobe Fonts CDN)
+├── index.html              # Single module entry (<script type="module" src="/src/main.js">)
+├── package.json            # type:module; gsap, lenis deps; vite devDep
+├── vite.config.js          # base './', target es2018, outDir dist, port 5173
+├── src/
+│   ├── main.js             # boot(): wire scroll, WebGL surfaces, sections
+│   ├── data.js             # CONFIG, MUSES, PARTNERS, constellation geometry, easing
+│   ├── scroll/             # timeline.js (PHASES), smooth-scroll.js, section-gate.js
+│   ├── webgl/              # renderer.js, gl-context.js, starfield.js, intro-starfield.js, shaders/
+│   ├── sections/           # intro.js, muse.js, comet.js, events.js
+│   ├── ui/                 # focus-trap.js, muse-popup.js, floating-processes.js, process-links.js
+│   └── styles/             # tokens, base, intro, muse, comet, events-footer, responsive
+├── public/
+│   └── assets/images/      # served at site root (muse/, comet-collabs/, partnerships/)
 ├── tools/
 │   └── coordinate-picker.html  # Dev tool for constellation positioning
 ├── README.md               # This file
-└── CLAUDE.md              # Project context for Claude Code
+└── CLAUDE.md               # Project context for Claude Code
 ```
 
 ## Performance
 
-### Bundle Size
-- **HTML**: 10.2KB (~3.5KB gzipped)
-- **CSS**: 38.4KB (~9.2KB gzipped)
-- **JavaScript**: 92KB (~23KB gzipped)
-- **Total Core**: 140.6KB (~35.7KB gzipped)
-- **GSAP CDN**: 47KB (cached after first load)
-- **Images**: ~1MB total (lazy loaded)
+### Bundle
+- `npm run build` emits a hashed, minified, tree-shaken bundle to `dist/` (JS + CSS + copied `public/` assets).
+- GSAP, ScrollTrigger and Lenis are bundled in (no separate CDN request).
+- Images (~1MB total) are emitted as files (`assetsInlineLimit: 0`) and lazy-loaded.
+- Run `npm run build && du -sh dist` for current sizes.
 
 ### Performance Benchmarks
 - **Lighthouse Score**: 95+ (Performance, Accessibility, Best Practices, SEO)
@@ -188,22 +168,20 @@ cocoex-website/
 **Animation Performance:**
 - Hardware-accelerated properties only (`transform`, `opacity`)
 - GSAP ScrollTrigger with `scrub: true` for 60fps interpolation
-- Extended scroll durations (100vh+ per animation phase)
-- Master render loop consolidates all animations
-- `will-change` hints on animated elements
+- Extended scroll durations (100vh+ per timeline phase)
+- Single gated `Renderer` RAF loop renders only on-screen WebGL layers
+- No per-frame `shadowBlur` (starline) and no per-frame zIndex writes (orbit) — measured jank fixes
 
 **WebGL Optimization:**
-- Shared GLSL utilities reduce code duplication
-- Cached WebGL program state (minimizes GPU context switches)
-- Mobile DPR capped at 2x (reduces pixel count by 33% on high-DPI devices)
-- Early exit in shader star generation
-- 4 WebGL canvases total (intro, unified starfield, muse gradient, comet gradient)
+- Shared GLSL utilities + one parameterised starfield shader factory
+- Shared RAF timestamp across surfaces
+- Mobile DPR capped at 2x (reduces pixel count by ~33% on high-DPI devices)
+- 4 WebGL contexts total (intro + unified starfield + muse + comet backdrops)
 
 **Loading Performance:**
 - Passive event listeners for scroll/resize
 - Debounced resize handler (150ms)
-- Z-index layering minimizes repaints
-- Centralized `SCROLL_TIMING` prevents cascading changes
+- Declarative `timeline.js` (one source of truth) prevents cascading changes
 - Lazy image loading
 
 ### Known Limitations
@@ -245,17 +223,11 @@ cocoex-website/
 ### Local Development
 
 ```bash
-# Using Python 3
-python3 -m http.server 8000
-
-# Using Node.js
-npx serve . -l 8000
-
-# Using PHP
-php -S localhost:8000
+npm install        # first time only
+npm run dev        # Vite dev server (auto-opens http://localhost:5173)
+npm run build      # production bundle → dist/
+npm run preview    # serve the built dist/ locally
 ```
-
-Then visit `http://localhost:8000`
 
 ### Development Tools
 
@@ -281,19 +253,18 @@ Then visit `http://localhost:8000`
 ## Code Standards
 
 ### CSS Best Practices
-- CSS custom properties in `:root` for theming
-- Mobile-first responsive design (min-width media queries)
-- Section-based organization with header comments
+- Design tokens (`:root`) in `src/styles/tokens.css`; `clamp()` over media queries
+- `clamp()` for type/spacing; media queries reserved for layout-only changes
+- One stylesheet per concern under `src/styles/`
 - Hardware acceleration via `transform`/`opacity`
 - Avoid `!important` (exceptions: specificity conflicts, reduced motion overrides)
 
 ### JavaScript Best Practices
-- IIFE pattern for global scope isolation
-- Module structure: CONSTANTS → DOM → STATE → UTILS → MODULES → INIT
-- Centralized timing via `SCROLL_TIMING` object
-- Shared GLSL code via `GLSL_UTILS` object
+- Small ES modules under `src/` (no IIFE, no global scope); one entry `/src/main.js`
+- Scroll pacing centralized in `src/scroll/timeline.js` (declarative `PHASES`)
+- Shared GLSL imported from `src/webgl/shaders/`; one starfield shader factory
 - Debounced resize, passive event listeners
-- Master render loop consolidates animations
+- Single gated `Renderer` RAF loop
 
 ### HTML Best Practices
 - Semantic HTML5 elements (avoid div soup)
@@ -305,12 +276,15 @@ Then visit `http://localhost:8000`
 
 ## Dependencies
 
-External libraries loaded from CDN:
+npm dependencies, imported as ES modules and bundled by Vite (no CDN `<script>` tags):
 
-- [GSAP 3.12.5](https://greensock.com/gsap/) - Animation framework (core library)
-- [ScrollTrigger](https://greensock.com/scrolltrigger/) - Scroll-based animation plugin
-- [MotionPathPlugin](https://greensock.com/docs/v3/Plugins/MotionPathPlugin) - Path-based animations (registered, minimal usage)
-- [Adobe Fonts (Typekit)](https://fonts.adobe.com/) - Canela font family
+- [GSAP 3.12.5](https://greensock.com/gsap/) - Animation framework + ScrollTrigger (`import { gsap } from 'gsap'`)
+- [Lenis 1.3.4](https://github.com/darkroomengineering/lenis) - Smooth scroll (`import Lenis from 'lenis'`)
+- [Vite ^5.4.0](https://vitejs.dev/) - Dev server + build tooling (devDependency)
+
+Loaded via `<link>` in `index.html` (the one remaining external resource):
+
+- [Adobe Fonts (Typekit)](https://fonts.adobe.com/) - Canela font family (kit ID `afs8ors`)
 
 ## Testing
 
@@ -343,9 +317,9 @@ External libraries loaded from CDN:
 
 **Scroll position reads 0:** Use multiple fallback sources with OR operator (`window.scrollY || window.pageYOffset || document.documentElement.scrollTop`).
 
-**WebGL performance drops:** Cache WebGL program state, cap mobile DPR at 2x.
+**WebGL performance drops:** off-screen layers should be gated out by section; cap mobile DPR at 2x; reuse the starfield factory.
 
-**Animations too fast/jerky:** Increase scroll duration values in `SCROLL_TIMING` (minimum 2-3vh per phase for 60fps).
+**Animations too fast/jerky:** increase the relevant phase `vh` in `src/scroll/timeline.js` `PHASES` (minimum 100vh per scroll-driven phase for 60fps).
 
 See `CLAUDE.md` for detailed debugging techniques and troubleshooting guide.
 
@@ -362,4 +336,4 @@ All rights reserved. cocoex 2024-2026.
 
 ---
 
-**Last Updated:** March 9, 2026
+**Last Updated:** June 10, 2026

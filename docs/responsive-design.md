@@ -1,14 +1,14 @@
 # Responsive Design Decisions
 
-Why the layout looks the way it does at every viewport. For specific values, read `css/styles.css` directly — this doc is rationale, not a CSS dump.
+Why the layout looks the way it does at every viewport. For specific values, read `src/styles/*.css` directly (tokens in `tokens.css`, breakpoints in `responsive.css`) — this doc is rationale, not a CSS dump.
 
 ## Strategy: `clamp()` Over Media Queries
 
-Typography, logos, spacing, and most component widths use CSS `clamp(min, preferred, max)`. Media queries are reserved for **layout-only** changes (stacking, hiding, switching ellipse axis).
+Typography, logos, spacing, and most component widths use CSS `clamp(min, preferred, max)`. Media queries are reserved for **layout-only** changes (stacking, hiding, tightening padding).
 
-**Why:** smooth scaling between any viewport sizes, no breakpoint pop, fewer rules to maintain. Removed ~200 lines of fixed responsive CSS during the March 2026 overhaul.
+**Why:** smooth scaling between any viewport sizes, no breakpoint pop, fewer rules to maintain.
 
-Token table (defined in `:root` of `css/styles.css`):
+Token table (defined in `:root` of `src/styles/tokens.css`):
 
 | Token | Range |
 |---|---|
@@ -25,56 +25,57 @@ Never hardcode pixel typography. Reference the variable.
 
 ## Breakpoint Philosophy
 
-Three layout-only breakpoints exist. Each one changes structure, not size.
+Three layout-only breakpoints plus a landscape height query, all in `src/styles/responsive.css`. Each changes structure, not type scale (with the exception of the mobile font floors below).
 
 | Breakpoint | What changes |
 |---|---|
-| `≤1024px` Tablet | `touch-action: manipulation` on interactive surfaces |
-| `≤768px` Mobile | Comet panels stack vertically; mobile-readable font overrides; muse-popup constraints |
-| `≤480px` Small | Tighter padding |
+| `≤1024px` Tablet | `touch-action: manipulation` on muse orbit items; comet intro padding |
+| `≤768px` Mobile | Comet method panel stacks vertically (`flex-direction: column`, ordered children); mobile font floors; muse-popup body width cap; orbit tap halo |
+| `≤480px` Small | Tighter mission-overlay padding; comet min-heights reduced |
+| `max-height: 500px` | Muse popup card shrinks (height-relative `30vh` sizing) so it fits landscape phones |
 
 ## Muse Orbit Ellipse — Adaptive Axis
 
-The orbit aspect ratio is computed continuously from `window.innerWidth / window.innerHeight` inside `MuseScroll.calculateOrbitRadius` — there are no breakpoint jumps:
+The orbit aspect ratio is computed continuously from `window.innerWidth / window.innerHeight` inside `MuseScroll.calcRadius` (`src/sections/muse.js`) — there are no breakpoint jumps:
 
 | Viewport aspect | Shape | Why |
 |---|---|---|
-| ≤ 0.6 (portrait phones) | Vertical 1.8× tall | Orbit reads as a column, fills available height |
+| ≤ 0.6 (portrait phones) | Vertical, taller axis | Orbit reads as a column, fills available height |
 | ~1.0 (square) | Near-circular | Balanced reveal |
-| ≥ 1.4 (desktop landscape) | Horizontal 1.8× wide | Wide sweeping motion |
+| ≥ 1.4 (desktop landscape) | Horizontal, wider axis | Wide sweeping motion |
 
-The interpolation anchors are `aspect 0.6` (fully vertical) and `aspect 1.4` (fully horizontal), mapped via `t = clamp((aspect - 0.6) / 0.8, 0, 1)` in `MuseScroll.calculateOrbitRadius`.
+The interpolation anchors are `aspect 0.6` and `aspect 1.4`, mapped via `t = clamp((aspect - 0.6) / 0.8, 0, 1)`. From `t`, a `horizontalBias` in `[-1, 1]` drives an `ellipseStretch` of up to `1.8×` on the dominant axis. Because it is continuous, resizing or device rotation never "pops" the ellipse.
 
-The interpolation between these anchors is smooth, so resizing or device rotation never "pops" the ellipse. Each muse also gets depth scaling derived from `sin(angle)` (front muses ~1.05×, back muses ~0.65×) with matching `zIndex`, so the orbit reads as a 3D ring on every aspect.
+Each muse also gets depth scaling from `sin(angle)` — front muses scale up (~1.05×), back ones down (~0.65×) — with a matching `zIndex`. The `zIndex` is written only when its rounded value changes (a per-frame stacking-context churn fix), so the orbit reads as a 3D ring on every aspect without thrashing layout.
 
 ## Mobile Scroll: Drag + Touch Coexistence
 
-`FloatingProcesses` uses a **passive** `touchmove` listener on `document`. Scroll is blocked only on the dragged element via `element.style.touchAction = 'none'` (set in `startDrag()`, cleared in `endDrag()`).
+`FloatingProcesses` (`src/ui/floating-processes.js`) uses a **passive** `touchmove` listener on `document`. Scroll is blocked only on the dragged element via `element.style.touchAction = 'none'` (set in `startDrag()`, cleared in `endDrag()`).
 
-**Why passive:** a non-passive document-level `touchmove` listener kills all mobile scroll on the rest of the page. The previous implementation had this and made the site unscrollable on iOS during certain interactions.
+**Why passive:** a non-passive document-level `touchmove` listener kills all mobile scroll on the rest of the page. The previous implementation had this and made the site unscrollable on iOS during certain interactions. Do not add `{ passive: false }` back.
+
+The muse orbit auto-rotation also pauses for 2s on `touchstart` inside the section (`MuseScroll.attachHandlers`) so mobile users have a stable tap target.
 
 ## iOS Safari `100vh` Toolbar Fix
 
-Every `height: 100vh` is followed by a `height: 100dvh` (or `min-height: 100svh`). `100vh` on iOS Safari includes the dynamic toolbar area, hiding content behind it. `100dvh` shrinks with the visible viewport; `100svh` always uses the smallest viewport. Browsers without these units fall back to the `100vh` declaration above.
+Full-height surfaces declare `height: 100vh` immediately followed by `height: 100dvh` (or `min-height: 100svh`). See `comet.css` (`.section-panel` children), `muse.css` (`.muse-stage`), and `intro.css`. `100vh` on iOS Safari includes the dynamic toolbar area, hiding content behind it; `100dvh` shrinks with the visible viewport and `100svh` uses the smallest viewport. Browsers without these units fall back to the `100vh` declaration above.
 
 ## Muse Popup on Short Viewports
 
-`.muse-popup-content` keeps `overflow: visible` so the card's aura glow (box-shadow) and the close button (positioned above the card) are never clipped. On short/landscape phones (`@media (max-height: 500px)`) the card stack would otherwise exceed the 80vh popup, so a media query shrinks `.muse-card-wrapper` (height-relative `30vh` sizing) and tightens gaps instead of switching to scroll — scrolling would clip the glow.
+`.muse-popup-content` keeps the card's aura glow (box-shadow) and the close button unclipped. On short/landscape phones (`@media (max-height: 500px)` in `responsive.css`) the card stack would exceed the popup, so the media query shrinks `.muse-card-wrapper` to height-relative `clamp(140px, 30vh, 200px)` and tightens gaps instead of switching to scroll — scrolling would clip the glow.
 
-## Orientation Change
+## Resize Handling
 
-`main.js:998` listens to `orientationchange` and calls `ScrollTrigger.refresh()` after 300ms. iOS does not commit new viewport dimensions immediately on rotation; refreshing earlier reads stale values and breaks every scrub trigger.
+`src/main.js` debounces `resize` (150ms) and, on fire, re-injects section heights (`applyHeightsToCss`), resizes every WebGL/2D surface, recomputes the orbit ellipse, and calls `ScrollTrigger.refresh()`. GSAP triggers read live `window.innerHeight` through `timeline.js` px getters with `invalidateOnRefresh: true`, so the refresh recomputes every scrub offset correctly. (There is no separate `orientationchange` handler — the debounced resize covers rotation.)
 
 ## Touch Targets
 
-All interactive elements are ≥ 44px (WCAG AA). Footer social icons use `clamp(44px, 6vw, 52px)` to give thumb space on phones without inflating on desktop.
+All interactive elements are ≥ 44px (WCAG AA). The mobile orbit tap surface is expanded with a `.muse-orbit-item::before { inset: -16px }` halo (preserves the transform-based centring). Footer social icons give thumb space on phones without inflating on desktop.
 
 ## Reduced Motion
 
-`@media (prefers-reduced-motion: reduce)` in `css/styles.css` disables CSS animations, transitions, and the muse-popup particle system. WebGL canvases continue rendering — they are visual ambience, not motion that triggers vestibular response. If that becomes a concern, gate `masterRender()` on the same media query.
+`@media (prefers-reduced-motion: reduce)` lives in `src/styles/base.css` and disables CSS animations, transitions, and the muse-popup particle system (`MusePopup.createParticles` also early-returns under the same media query). WebGL canvases continue rendering — they are visual ambience, not motion that triggers a vestibular response.
 
 ## Font Size Floors (≤768px)
 
-Several `clamp()` minimums are too small at portrait widths. The mobile media query overrides specific elements with floors ≥ 12px:
-
-`.comet-panel-subtitle`, `.comet-panel-body`, `.step-title`, `.step-body`, `.step-addon-badge`, `.pill-opt` — see `css/styles.css` § "Responsive Styles - Mobile" for exact values. The override `vw` units are tuned so that on a 375px screen the preferred and minimum nearly coincide, then scale back up as the viewport widens.
+Several `clamp()` minimums are too small at portrait widths. The `≤768px` query in `responsive.css` overrides specific elements with floors ≥ 11–13px: `.comet-panel-subtitle`, `.comet-panel-title`, `.comet-panel-body`, `.step-num`, `.step-title`, `.step-body`, `.step-addon-badge`, `.pill-opt`, `.comet-cta`. The override `vw` units are tuned so that on a ~375px screen preferred and minimum nearly coincide, then scale back up as the viewport widens.
