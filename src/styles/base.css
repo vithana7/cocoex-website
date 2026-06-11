@@ -78,6 +78,59 @@ canvas.bg-layer {
   white-space: nowrap; border: 0;
 }
 
+/* Reusable animated muse-spectrum border-beam — the "AI Mode" running glow, and the
+   STANDARD glow for buttons going forward. Add `beam-glow` to any positioned element
+   with a border-radius: a bright spectrum wedge of a conic gradient sweeps the border
+   (::before, masked to the ring) over a soft blurred bloom (::after). Angle is tweened
+   via the Houdini @property; the global reduced-motion rule below freezes the spin. */
+@property --beam-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.beam-glow {
+  position: relative;
+  isolation: isolate; /* contain the bloom's negative z-index */
+}
+
+.beam-glow::before,
+.beam-glow::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(from var(--beam-angle),
+    rgba(213, 77, 46, 0) 0deg,
+    #D54D2E 40deg, #D48348 60deg, #F8D86A 80deg,
+    #8CB07F 100deg, #5783A6 120deg, #5E47A1 140deg,
+    rgba(127, 73, 162, 0) 170deg,
+    transparent 360deg);
+  animation: beam-spin 5s linear infinite;
+}
+
+/* Crisp ring: cut out the interior so only the border band shows. */
+.beam-glow::before {
+  padding: 2px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  z-index: 1;
+}
+
+/* Soft bloom behind the element. */
+.beam-glow::after {
+  filter: blur(9px);
+  opacity: 0.5;
+  z-index: -1;
+}
+
+@keyframes beam-spin {
+  to { --beam-angle: 360deg; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *,

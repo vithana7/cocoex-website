@@ -37,7 +37,7 @@ export function initComet() {
   ProcessLinks.init();
   Toggle.init();
 
-  Renderer.add({ sections: ['comet'], render: () => ProcessLinks.draw() });
+  Renderer.add({ sections: ['comet'], render: (now) => ProcessLinks.draw(now) });
 
   buildCometTimeline();
   return { resize: () => ProcessLinks.resize() };

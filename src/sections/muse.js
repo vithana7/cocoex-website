@@ -123,11 +123,12 @@ const MuseScroll = {
       if (canHover) {
         // Freeze on hover/focus so the (now still) card is easy to click; the
         // CSS flip reveals the name in the same window.
-        const freeze = () => { this.hovering = true; };
         const thaw = () => { this.hovering = false; };
-        el.addEventListener('mouseenter', freeze);
+        el.addEventListener('mouseenter', () => { this.hovering = true; });
         el.addEventListener('mouseleave', thaw);
-        el.addEventListener('focus', freeze);
+        // Only freeze on KEYBOARD focus (focus-visible) — closing the popup restores
+        // focus here programmatically, which must NOT re-freeze the orbit for mouse users.
+        el.addEventListener('focus', () => { if (el.matches(':focus-visible')) this.hovering = true; });
         el.addEventListener('blur', thaw);
       }
     });

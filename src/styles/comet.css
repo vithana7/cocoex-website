@@ -25,7 +25,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--spacing-xl) var(--spacing-md);
-  gap: clamp(3rem, 8vh, 6rem);
+  gap: clamp(1.75rem, 4.5vh, 3.5rem);
   z-index: 5;
   opacity: 1;
   will-change: opacity;
@@ -59,9 +59,9 @@
 
 .comet-methods-text {
   font-family: var(--font-canela);
-  font-weight: var(--font-h2-weight);
-  font-size: var(--font-h2-size);
-  line-height: var(--font-h2-height);
+  font-weight: var(--font-body-weight);
+  font-size: var(--font-body-size);
+  line-height: var(--font-body-height);
   color: var(--color-white);
   text-align: center;
   text-transform: none;
@@ -74,6 +74,8 @@
   color: rgba(0, 0, 0, 0);
   -webkit-text-stroke: 1px var(--color-white);
   text-stroke: 1px var(--color-white);
+  /* The hollow letters crowd together — a little tracking makes the outline readable. */
+  letter-spacing: 0.04em;
 }
 
 .comet-methods-guided {
@@ -132,8 +134,8 @@
 
 .floating-process {
   position: absolute;
-  width: clamp(80px, 12vw, 140px);
-  height: clamp(80px, 12vw, 140px);
+  width: clamp(44px, 6vw, 84px);
+  height: clamp(44px, 6vw, 84px);
   pointer-events: none;
   will-change: transform;
   animation: float 6s ease-in-out infinite;
@@ -187,6 +189,9 @@
   flex-shrink: 0;
 }
 
+/* The pill carries the reusable `.beam-glow` class (see base.css) for the running
+   muse-spectrum glow. No backdrop-filter here: it re-blurred the animated bloom every
+   frame and stuttered the slider — the bloom alone reads fine on the offwhite panel. */
 .comet-pill {
   position: relative;
   display: inline-flex;
@@ -195,7 +200,6 @@
   border: 1px solid var(--color-black);
   border-radius: 50px;
   padding: 4px;
-  backdrop-filter: blur(10px);
 }
 
 .pill-slider {
@@ -206,7 +210,10 @@
   height: calc(100% - 8px);
   background: var(--color-black);
   border-radius: 50px;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* will-change promotes the slider to its own layer so its transform tween composites
+     independently of the pill's per-frame beam repaint (was the glitchy stutter). */
+  will-change: transform;
+  transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
   z-index: 1;
 }
 
@@ -226,22 +233,29 @@
   padding: clamp(10px, 1.2vw, 14px) clamp(24px, 3vw, 36px);
   border-radius: 50px;
   cursor: pointer;
-  transition: color 0.3s ease;
+  transition: color 0.34s ease;
   white-space: nowrap;
   z-index: 2;
   flex: 1 1 50%;
   min-width: 0;
 }
 
+/* Delay the WHITEN so the new label turns white as the black slider arrives under it
+   (otherwise it briefly goes white-on-offwhite and vanishes — read as a two-step
+   switch). The de-activating label darkens immediately (rule above, no delay). */
 .pill-opt.active {
   color: var(--color-white);
+  transition: color 0.28s ease 0.1s;
 }
 
 .pill-opt:hover:not(.active) {
   color: rgba(0, 0, 0, 0.6);
 }
 
-.pill-opt:focus {
+/* :focus-visible (not :focus) so a MOUSE click doesn't pop an outline ring around the
+   button before the slider slides — that read as the switch happening in two steps.
+   Keyboard users still get the ring. */
+.pill-opt:focus-visible {
   outline: 2px solid var(--color-black);
   outline-offset: 4px;
 }
@@ -275,7 +289,11 @@
   animation: fadeInPanel 0.5s ease;
   position: relative;
   width: 100%;
-  align-content: center;
+  /* Pin the grid block to the TOP (not centered) so the subtitle/title land at the
+     same Y for both Stardust (4 steps) and Horizon (5 steps + addon). Centering made
+     the taller Horizon block ride higher, so the headers visibly jumped on toggle.
+     Mobile overrides display to flex-column, so this only affects desktop. */
+  align-content: start;
 }
 
 @keyframes fadeInPanel {
@@ -311,11 +329,11 @@
 
 .comet-panel-body {
   font-family: var(--font-canela);
-  font-size: var(--font-h2-size);
-  line-height: var(--font-h2-height);
+  font-size: var(--font-lead-size);
+  line-height: var(--font-lead-height);
   font-weight: var(--font-body-weight);
   color: var(--color-black);
-  text-align: justify;
+  text-align: left;
   margin-bottom: var(--spacing-lg);
 }
 
@@ -395,15 +413,29 @@
   position: relative;
 }
 
+/* The "+ Horizon" badge lives INLINE in front of the "Future Lab" title — it's the
+   one piece that differentiates Horizon from Stardust, so it sits ON step 2's title
+   rather than floating above. The title row flexes so the pill aligns with the text;
+   wraps to its own line only if the column gets tight. */
+.step-addon .step-title {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: clamp(0.4rem, 1vw, 0.6rem);
+}
+
 .step-addon-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
   font-family: var(--font-canela);
-  font-size: clamp(12px, 1.2vw, 14px);
+  font-size: clamp(11px, 1vw, 13px);
   font-weight: var(--font-body-weight);
   text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
   color: var(--color-white);
   background: var(--color-black);
-  padding: 4px 12px;
+  padding: 0.4em 0.9em;
   border-radius: 20px;
-  margin-bottom: var(--spacing-xs);
 }

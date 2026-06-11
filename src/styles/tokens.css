@@ -23,6 +23,12 @@
   --font-h2-height: clamp(18px, 1.8vw, 26px);
   --font-h2-weight: 400;
 
+  /* Lead paragraph — the tier between H2 (caption) and body (statement). For
+     explanatory prose that was reading as fine-print at H2 (≤22px). */
+  --font-lead-size: clamp(18px, 1.7vw, 26px);
+  --font-lead-height: clamp(26px, 2.4vw, 36px);
+  --font-lead-weight: 400;
+
   --font-body-size: clamp(20px, 2.5vw, 36px);
   --font-body-height: clamp(26px, 3vw, 42px);
   --font-body-weight: 400;

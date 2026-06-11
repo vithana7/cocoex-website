@@ -39,12 +39,15 @@
 
         <div class="final-dot" id="final-dot"></div>
 
-        <div class="transition-text" id="transition-text">
-          <p>"Unleashing the compounds of existence through ART, IMPACT, and COMMUNITY."
-            <br><span class="tagline">cocoex · compounds co-exist</span></p>
+        <div class="intro-tagline" id="intro-tagline">
+          <p>cocoex · compounds co-exist</p>
         </div>
 
         <canvas class="constellation-canvas" id="constellation-canvas"></canvas>
+
+        <div class="intro-statement" id="intro-statement">
+          <p>Unleashing the compounds of existence through ART, IMPACT, and COMMUNITY.</p>
+        </div>
 
         <div class="mission-overlay" id="mission-overlay" aria-label="Mission statement">
           <p class="reveal-text reveal-text-top" id="reveal-text"><em>cocoex</em> is a non-profit lab where artists, creators and collectors turn art into real environmental and social change.</p>
@@ -72,7 +75,7 @@
                       <div class="muse-orbit-disc"><img src="assets/images/muse/lunes-white.png" alt="Lunes" loading="lazy" decoding="async"></div>
                     </div>
                     <div class="muse-orbit-face muse-orbit-face--back">
-                      <div class="muse-orbit-disc"><span class="muse-orbit-name">Lunes</span></div>
+                      <div class="muse-orbit-disc"><span class="muse-orbit-name">Lunes</span><span class="muse-orbit-cause">Water</span></div>
                     </div>
                   </div>
                 </div>
@@ -85,7 +88,7 @@
                       <div class="muse-orbit-disc"><img src="assets/images/muse/ares-white.png" alt="Ares" loading="lazy" decoding="async"></div>
                     </div>
                     <div class="muse-orbit-face muse-orbit-face--back">
-                      <div class="muse-orbit-disc"><span class="muse-orbit-name">Ares</span></div>
+                      <div class="muse-orbit-disc"><span class="muse-orbit-name">Ares</span><span class="muse-orbit-cause">Reforestation</span></div>
                     </div>
                   </div>
                 </div>
@@ -98,7 +101,7 @@
                       <div class="muse-orbit-disc"><img src="assets/images/muse/rabu-white.png" alt="Rabu" loading="lazy" decoding="async"></div>
                     </div>
                     <div class="muse-orbit-face muse-orbit-face--back">
-                      <div class="muse-orbit-disc"><span class="muse-orbit-name">Rabu</span></div>
+                      <div class="muse-orbit-disc"><span class="muse-orbit-name">Rabu</span><span class="muse-orbit-cause">Human Rights</span></div>
                     </div>
                   </div>
                 </div>
@@ -111,7 +114,7 @@
                       <div class="muse-orbit-disc"><img src="assets/images/muse/thunor-white.png" alt="Thunor" loading="lazy" decoding="async"></div>
                     </div>
                     <div class="muse-orbit-face muse-orbit-face--back">
-                      <div class="muse-orbit-disc"><span class="muse-orbit-name">Thunor</span></div>
+                      <div class="muse-orbit-disc"><span class="muse-orbit-name">Thunor</span><span class="muse-orbit-cause">Renewable Energy</span></div>
                     </div>
                   </div>
                 </div>
@@ -124,7 +127,7 @@
                       <div class="muse-orbit-disc"><img src="assets/images/muse/shukra-white.png" alt="Shukra" loading="lazy" decoding="async"></div>
                     </div>
                     <div class="muse-orbit-face muse-orbit-face--back">
-                      <div class="muse-orbit-disc"><span class="muse-orbit-name">Shukra</span></div>
+                      <div class="muse-orbit-disc"><span class="muse-orbit-name">Shukra</span><span class="muse-orbit-cause">Bio-diversity</span></div>
                     </div>
                   </div>
                 </div>
@@ -137,7 +140,7 @@
                       <div class="muse-orbit-disc"><img src="assets/images/muse/dosei-white.png" alt="Dosei" loading="lazy" decoding="async"></div>
                     </div>
                     <div class="muse-orbit-face muse-orbit-face--back">
-                      <div class="muse-orbit-disc"><span class="muse-orbit-name">Dosei</span></div>
+                      <div class="muse-orbit-disc"><span class="muse-orbit-name">Dosei</span><span class="muse-orbit-cause">Zero Hunger</span></div>
                     </div>
                   </div>
                 </div>
@@ -150,7 +153,7 @@
                       <div class="muse-orbit-disc"><img src="assets/images/muse/solis-white.png" alt="Solis" loading="lazy" decoding="async"></div>
                     </div>
                     <div class="muse-orbit-face muse-orbit-face--back">
-                      <div class="muse-orbit-disc"><span class="muse-orbit-name">Solis</span></div>
+                      <div class="muse-orbit-disc"><span class="muse-orbit-name">Solis</span><span class="muse-orbit-cause">Well-being</span></div>
                     </div>
                   </div>
                 </div>
@@ -183,7 +186,7 @@
           </div>
 
           <div class="comet-collab-intro-content">
-            <p class="comet-methods-text">Comet Collab is an ecosystem where artists, collectors, activists, and communities converge through Stardust and Horizon.<br><span class="comet-methods-guided">Guided by Muse, in a continuous loop of creation and impact.</span></p>
+            <p class="comet-methods-text">Comet Collab is an ecosystem where artists, collectors, activists, and communities converge through <em>Stardust</em> and <em>Horizon</em>.<br><span class="comet-methods-guided">Guided by Muse, in a continuous loop of creation and impact.</span></p>
           </div>
 
           <div class="floating-processes" id="floating-processes">
@@ -202,9 +205,9 @@
           <canvas class="comet-collab-background-canvas" id="comet-collab-background-canvas" aria-hidden="true"></canvas>
 
           <div class="comet-toggle-wrap">
-            <div class="comet-pill">
-              <button class="pill-opt active" id="tab-stardust">I · Stardust</button>
-              <button class="pill-opt" id="tab-horizon">II · Horizon</button>
+            <div class="comet-pill beam-glow">
+              <button class="pill-opt active" id="tab-stardust">Stardust</button>
+              <button class="pill-opt" id="tab-horizon">Horizon</button>
               <div class="pill-slider" id="pillSlider"></div>
             </div>
           </div>
@@ -238,7 +241,7 @@
               </div>
               <div class="comet-steps">
                 <div class="step-row"><div class="step-num">01</div><div class="step-content"><div class="step-title">Choose</div><div class="step-body">Select a social cause aligned with one of the seven Muses</div></div></div>
-                <div class="step-row step-addon"><div class="step-num">02</div><div class="step-content"><div class="step-addon-badge">+ Horizon</div><div class="step-title">Future Lab</div><div class="step-body">A participatory process where the community explores the challenge and votes on the partner organisation</div></div></div>
+                <div class="step-row step-addon"><div class="step-num">02</div><div class="step-content"><div class="step-title"><span class="step-addon-badge">+ Horizon</span>Future Lab</div><div class="step-body">A participatory process where the community explores the challenge and votes on the partner organisation</div></div></div>
                 <div class="step-row"><div class="step-num">03</div><div class="step-content"><div class="step-title">Create</div><div class="step-body">Transform it into art — any form, any medium</div></div></div>
                 <div class="step-row"><div class="step-num">04</div><div class="step-content"><div class="step-title">Raise</div><div class="step-body">Launch the fundraising campaign through sales and events</div></div></div>
                 <div class="step-row"><div class="step-num">05</div><div class="step-content"><div class="step-title">Impact</div><div class="step-body">Funds reach the chosen organisation. cocoex does not profit.</div></div></div>
@@ -253,6 +256,7 @@
       <section class="events-page-wrapper" id="events-page">
         <div class="partnership-section">
           <h2 class="partnership-title">Partnership</h2>
+          <p class="partnership-intro">Those who have hosted us, supported the work, and made the impact possible.</p>
           <div class="partnership-slideshow" id="partnership-slideshow"></div>
         </div>
       </section>

@@ -32,7 +32,8 @@ export function initIntro(introStarfield) {
     dotWhite: document.getElementById('dot-white'),
     dotBlack: document.getElementById('dot-black'),
     finalDot: document.getElementById('final-dot'),
-    transitionText: document.getElementById('transition-text'),
+    introTagline: document.getElementById('intro-tagline'),
+    introStatement: document.getElementById('intro-statement'),
     constCanvas: document.getElementById('constellation-canvas'),
     missionOverlay: document.getElementById('mission-overlay'),
     introContent: document.querySelector('.intro-content'),
@@ -305,8 +306,8 @@ export function initIntro(introStarfield) {
 
 function buildIntroTimelines({ el, updateOrbit, updateExplosion }) {
   const orbit = phase('intro.orbit');
-  const text = phase('intro.text');
   const explosion = phase('intro.explosion');
+  const statement = phase('intro.statement');
   const mission = phase('intro.mission');
   const missionHold = phase('intro.missionHold');
 
@@ -347,11 +348,67 @@ function buildIntroTimelines({ el, updateOrbit, updateExplosion }) {
     },
   });
 
-  // Transition text: in / hold / out across the text phase.
-  gsap.timeline({ scrollTrigger: trig(text) })
-    .fromTo(el.transitionText, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: 'none' })
-    .to(el.transitionText, { opacity: 1, duration: 0.3, ease: 'none' })
-    .to(el.transitionText, { opacity: 0, duration: 0.3, ease: 'none' });
+  // Beat 1 — tagline: fades in over the BACK HALF of the orbit (logo mostly formed),
+  // holds while the orbit finishes, fades out as the burst begins. Spanning a custom
+  // sub-range (orbit 45% → into explosion 12%) gives it ~100vh of reading time vs the
+  // old ~14vh hold. The fractions live here (not timeline.js) because it's a sub-range
+  // of two phases, not a phase of its own.
+  const orbitSpan = () => orbit.endPx() - orbit.startPx();
+  const explosionSpan = () => explosion.endPx() - explosion.startPx();
+  if (el.introTagline) {
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: '.scroll-container',
+        start: () => `top+=${orbit.startPx() + orbitSpan() * 0.45}px top`,
+        end: () => `top+=${explosion.startPx() + explosionSpan() * 0.12}px top`,
+        scrub: true,
+        invalidateOnRefresh: true,
+      },
+    })
+      .fromTo(el.introTagline, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'none' })
+      .to(el.introTagline, { opacity: 1, duration: 0.5, ease: 'none' })
+      .to(el.introTagline, { opacity: 0, duration: 0.2, ease: 'none' });
+
+    // "Dia" text reveal: a muse-spectrum band sweeps across the tagline once each time it
+    // scrolls into view (the opacity above handles visibility; this is just the colour
+    // sweep, --sweep 100→0). Skipped under reduced-motion (text stays plain white).
+    const taglineP = el.introTagline.querySelector('p');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (taglineP && !reduced) {
+      const sweep = gsap.fromTo(taglineP,
+        { '--sweep': 100 },
+        { '--sweep': 0, duration: 1.5, ease: 'power1.inOut', paused: true });
+      ScrollTrigger.create({
+        trigger: '.scroll-container',
+        start: () => `top+=${orbit.startPx() + orbitSpan() * 0.45}px top`,
+        end: () => `top+=${explosion.startPx() + explosionSpan() * 0.12}px top`,
+        invalidateOnRefresh: true,
+        onEnter: () => sweep.restart(),
+        onEnterBack: () => sweep.restart(),
+      });
+    }
+  }
+
+  // Beat 2 — statement: fades in DURING the outward burst (explosion progress 0→~0.4
+  // = the first ~19% of this range), holds over the settling/settled constellation,
+  // fades out before the mission smoke-clear. Spanning explosion.start → statement.end
+  // so the reveal is synced to the dots flying outward, not after they've settled.
+  if (el.introStatement) {
+    const b2Start = () => explosion.startPx();
+    const b2End = () => statement.endPx();
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: '.scroll-container',
+        start: () => `top+=${b2Start()}px top`,
+        end: () => `top+=${b2End()}px top`,
+        scrub: true,
+        invalidateOnRefresh: true,
+      },
+    })
+      .fromTo(el.introStatement, { opacity: 0 }, { opacity: 1, duration: 0.19, ease: 'none' })
+      .to(el.introStatement, { opacity: 1, duration: 0.66, ease: 'none' })
+      .to(el.introStatement, { opacity: 0, duration: 0.15, ease: 'none' });
+  }
 
   // Phase 3: explosion. Front-loaded: dots settle over the first ~70% of the
   // combined explosion+mission span, then hold while scroll continues.

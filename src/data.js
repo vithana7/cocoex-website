@@ -53,18 +53,20 @@ export const MUSES = [
 
 // Partner logos in public/assets/images/partnerships/. `name` drives alt/aria text;
 // `src` is URL-encoded so filenames with spaces resolve correctly.
+// `url`: each partner's site or Instagram. Empty → the logo renders but isn't a link.
+// Fill these in to make the logos clickable.
 export const PARTNERS = [
-  { name: 'C. Volpi',         file: 'C.Volpi.png' },
-  { name: 'CdTortona',        file: 'CdTortona.png' },
-  { name: 'Lukso',            file: 'Lukso.png' },
-  { name: 'Peng',             file: 'Peng.png' },
-  { name: 'RJB',              file: 'RJB.png' },
-  { name: 'SFT',              file: 'SFT.png' },
-  { name: 'SIRX',             file: 'SIRX.png' },
-  { name: 'TN',               file: 'TN.png' },
-  { name: 'Vinili e Vinelli', file: 'Vinili e vinelli.png' },
-  { name: 'WR',               file: 'WR.png' },
-].map((p) => ({ name: p.name, src: `assets/images/partnerships/${encodeURIComponent(p.file)}` }));
+  { name: 'C. Volpi',         file: 'C.Volpi.png',         url: '' },
+  { name: 'CdTortona',        file: 'CdTortona.png',       url: '' },
+  { name: 'Lukso',            file: 'Lukso.png',           url: '' },
+  { name: 'Peng',             file: 'Peng.png',            url: '' },
+  { name: 'RJB',              file: 'RJB.png',             url: '' },
+  { name: 'SFT',              file: 'SFT.png',             url: '' },
+  { name: 'SIRX',             file: 'SIRX.png',            url: '' },
+  { name: 'TN',               file: 'TN.png',              url: '' },
+  { name: 'Vinili e Vinelli', file: 'Vinili e vinelli.png', url: '' },
+  { name: 'WR',               file: 'WR.png',              url: '' },
+].map((p) => ({ name: p.name, url: p.url || '', src: `assets/images/partnerships/${encodeURIComponent(p.file)}` }));
 
 export function easeOutCubic(t) {
   return 1 - Math.pow(1 - t, 3);

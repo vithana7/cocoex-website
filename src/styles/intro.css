@@ -139,7 +139,9 @@
   50%      { transform: translate(-50%, -50%) scale(1.1); }
 }
 
-.transition-text {
+/* Beat 1 — the tagline, shown below the forming logo during the orbit phase
+   (fades in over the back half, holds to the burst). Identity line, kept small. */
+.intro-tagline {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -150,22 +152,61 @@
   text-align: center;
   width: 90%;
   max-width: 600px;
-  will-change: opacity, transform;
+  will-change: opacity;
 }
-.transition-text p {
+.intro-tagline p {
   font-family: var(--font-canela);
-  font-size: clamp(14px, 2vw, 22px);
-  line-height: var(--font-h2-height);
+  /* Matches the .intro-statement size (the text that follows) — per request. */
+  font-size: clamp(15px, 2.1vw, 24px);
+  line-height: 1.45;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  margin: 0;
+  /* "Dia" text reveal — a muse-spectrum colour band sweeps across the (otherwise white)
+     text and settles back to white. The band position is driven by --sweep, tweened in
+     intro.js when the tagline scrolls into view. Background-clip paints the gradient INTO
+     the glyphs; drop-shadow (not text-shadow, which needs a painted fill) keeps it legible
+     over the busy intro. At --sweep 0% and 100% the band is off the text → pure white. */
+  --sweep: 100; /* unitless 100→0 (tweened by GSAP); *1% in background-position */
+  background: linear-gradient(100deg,
+    #fff 0%, #fff 42%,
+    #D54D2E 46%, #D48348 48%, #F8D86A 50%, #8CB07F 52%, #5783A6 54%,
+    #fff 58%, #fff 100%);
+  background-size: 300% 100%;
+  background-position: calc(var(--sweep) * 1%) 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.85));
+}
+
+/* Beat 2 — the "Unleashing…" statement, revealed over the SETTLED constellation
+   (its own intro.statement phase, before the smoke clears into the mission). */
+.intro-statement {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+  text-align: center;
+  width: 90%;
+  max-width: 640px;
+  will-change: opacity;
+}
+.intro-statement p {
+  font-family: var(--font-canela);
+  font-size: clamp(15px, 2.1vw, 24px);
+  line-height: 1.45;
   font-weight: var(--font-h2-weight);
   color: var(--color-white);
   letter-spacing: 0.02em;
-  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.9);
   padding: 0 var(--spacing-md);
-  max-width: 600px;
-}
-.transition-text .tagline {
-  font-size: clamp(11px, 1.5vw, 16px);
-  font-style: italic;
+  margin: 0;
+  text-wrap: balance;
 }
 
 .constellation-canvas {

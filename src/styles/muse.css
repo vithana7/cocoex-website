@@ -71,9 +71,9 @@
   font-family: var(--font-canela);
   font-size: var(--font-h1-size);
   line-height: var(--font-h1-height);
-  font-weight: var(--font-h2-weight);
+  font-weight: var(--font-h1-weight);
   color: var(--color-white);
-  opacity: 0.9;
+  opacity: 1;
   max-width: 800px;
   width: 90%;
   text-align: center;
@@ -91,9 +91,9 @@
   left: 50%;
   transform: translateX(-50%);
   font-family: var(--font-canela);
-  font-size: var(--font-body-size);
-  line-height: var(--font-body-height);
-  font-weight: var(--font-h2-weight);
+  font-size: var(--font-lead-size);
+  line-height: var(--font-lead-height);
+  font-weight: var(--font-lead-weight);
   color: var(--color-white);
   opacity: 0.9;
   max-width: 800px;
@@ -198,8 +198,12 @@
 /* Desktop hover / keyboard focus flips the card to the name face (decision: touch
    devices just open the popup, so the flip is gated behind hover-capable pointers). */
 @media (hover: hover) {
+  /* :focus-visible (not :focus-within): closing the popup restores focus to the orbit
+     item, and :focus-within would leave it stuck flipped (showing the name) until you
+     clicked elsewhere. :focus-visible only matches KEYBOARD focus, so a mouse open→close
+     no longer strands the card flipped; keyboard users still get the flip. */
   .muse-orbit-item:hover .muse-orbit-card-shell,
-  .muse-orbit-item:focus-within .muse-orbit-card-shell {
+  .muse-orbit-item:focus-visible .muse-orbit-card-shell {
     transform: rotateY(180deg);
   }
 }
@@ -266,8 +270,21 @@
     drop-shadow(0 6px 16px rgba(0, 0, 0, 0.35));
 }
 
+/* Name + cause stack on the (hover-only) back face. Both uppercase; hierarchy is
+   carried by size + weight, not case. Fixed sizes (not fit-to-width) so "WATER" and
+   "RENEWABLE ENERGY" share the same type size — the longer one just wraps. */
+.muse-orbit-face--back .muse-orbit-disc {
+  flex-direction: column;
+  gap: clamp(0.05rem, 0.3vw, 0.18rem);
+  /* Minimal side padding so long single words (REFORESTATION) get the full chord. */
+  padding: 0 0.15em;
+}
+
 /* Name face — Canela title on the disc; white + soft dark shadow so it stays
    legible on the lighter muse hues (Thunor, Rabu). */
+/* Canela ships only 400 + 700, so name and cause share weight 700 — the hierarchy is
+   carried by SIZE (name clearly larger) + tracking, not weight. Cause is bold (was 400,
+   illegible small) with generous tracking so the small uppercase label reads cleanly. */
 .muse-orbit-name {
   position: relative;
   z-index: 2;
@@ -275,11 +292,30 @@
   font-size: clamp(15px, 2vw, 24px);
   font-weight: var(--font-h1-weight);
   text-transform: uppercase;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
   text-align: center;
-  padding: 0 0.4em;
   color: var(--color-white);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 0 12px rgba(0, 0, 0, 0.25);
+}
+
+.muse-orbit-cause {
+  position: relative;
+  z-index: 2;
+  font-family: var(--font-canela);
+  /* Smaller + tight tracking so the longest single word (REFORESTATION) fits one line
+     with margin inside the circle; still bold so it stays legible. text-wrap:balance
+     evens the 2-word causes (Renewable Energy / Human Rights) across two lines. */
+  font-size: clamp(9px, 1.05vw, 12px);
+  font-weight: var(--font-h1-weight);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.12;
+  text-align: center;
+  text-wrap: balance;
+  max-width: 100%;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 /* Kept in the DOM (hidden) as the popup's data source — h3 = name, p = description. */
@@ -378,6 +414,7 @@
   font-weight: var(--font-h1-weight);
   color: var(--color-white);
   letter-spacing: 0.01em;
+  text-transform: uppercase;
   margin: 0;
   padding: 0;
   text-align: center;
@@ -535,10 +572,11 @@
   max-width: 400px;
   padding: 0;
   margin-top: clamp(0.15rem, 0.5vh, 0.4rem);
-  /* Holds the tallest 2-sentence copy so the card stays level; surplus sits BELOW
-     the text (flex-start), not under the subtitle. Kept modest so the column doesn't
-     overflow max-height:80vh and shove the card upward. */
-  min-height: clamp(5rem, 11vh, 6.75rem);
+  /* Reserve ≥ the tallest description so all 7 discs land level — without leaking off
+     the viewport. Re-measured at the smaller text (real Canela, confirmed loaded):
+     tallest = 128px @1440 / 144px @≤768 (320px column). clamp(148,10vw,160) covers both.
+     Verified all 7 bodies equal at 390/768/1024/1440. (Was 200px — too tall, it leaked.) */
+  min-height: clamp(148px, 10vw, 160px);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -546,7 +584,10 @@
 
 .muse-popup-text {
   font-family: var(--font-canela);
-  font-size: clamp(14px, 1.1vw, 17px);
+  /* Decoupled from --font-lead-size: lead (≤26px) overflowed the column. Near-flat:
+     mobile stays ~18px (reads well), desktop caps at 20px (= the cause subtitle), only
+     a touch bigger than the original ≤17px. */
+  font-size: clamp(18px, 1.4vw, 20px);
   /* Unitless ratio (≥1.5, WCAG) so it tracks font-size — the px clamp scaled on its
      own vw curve and collapsed to ~1.3 at mid widths, hurting legibility. */
   line-height: 1.6;

@@ -17,7 +17,7 @@ export const FloatingProcesses = {
       { top: '25%', left: '75%' },
       { top: '80%', left: '8%' },
       { top: '60%', left: '80%' },
-      { top: '75%', left: '45%' },
+      { top: '87%', left: '45%' }, // nudged lower — was too close to the intro text
     ];
     this.processes.forEach((p, i) => {
       const pos = positions[i];

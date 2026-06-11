@@ -1,6 +1,6 @@
 # cocoex.xyz — AI Context & Technical Reference
 
-> **UPDATED AT:** 2026-06-10 (muse orbit cards: each orbiting muse is now a mini flip card — white symbol engraved on a `--muse-color` radial disc [front] that flips on `:hover`/`:focus-within` to the muse name [back], gated to `@media (hover: hover)`; hovering/focusing freezes the whole orbit [`MuseScroll.hovering`] so the card is catchable; the old black name label is gone, `.muse-text` kept hidden as the popup data source; touch just opens the popup. Prior: muse popup overhaul — white symbol on colored disc, prev/next nav [arrows/←→/swipe, wrap], 3D pointer tilt, Y-flip on switch, reactive popup starfield + 2D spiral-galaxy particles absorbed at the rim, engraved symbol + disc noise, sentence-split copy; close is the top-right arrow-twin. 5 WebGL + 3 2D-canvas surfaces. Partnership strip: 10 real logos, seamless `max-content` marquee, capped logo widths, transparent events section over the starfield with a 50% veil + edge fades.)
+> **UPDATED AT:** 2026-06-11 (TEXT-LAYOUT PASS + RUNNING-GLOW. Type: new `--font-lead-size` tier between H2 and body for explanatory prose. Reusable **`.beam-glow`** in base.css — animated muse-spectrum border-beam (Houdini `@property --beam-angle` conic wedge, masked ring + blurred bloom) = the STANDARD glow for all buttons; first use on the comet pill. Intro text split: `#transition-text` → `#intro-tagline` (Beat 1, fades in over the orbit back-half) + `#intro-statement` ("Unleashing…", no quotes, fades in DURING the outward burst); dropped `intro.text` phase, added `intro.statement` 80vh → **intro section is now 672vh** (was 640). Muse popup: name UPPERCASE, description re-sized to `clamp(18,1.4vw,20)` with `min-height: clamp(148px,10vw,160px)` (measured, level, no leak). Orbit card back gains a cause caption (`.muse-orbit-cause`). Comet: floating images smaller, starline rewritten as a **muse-spectrum comet** running the wire with fluid `easeInOutSine` motion + speed-based stretch (no shadowBlur), pill toggle gains `.beam-glow` + `:focus-visible` + smoothed slider, labels dropped "I·/II·", "Stardust"/"Horizon" hollow in the intro copy, panel body → lead size + left-aligned (no justify). Events: framing line under the title + more top buffer. Intro tagline now does a **"Dia" text reveal** — a muse-spectrum colour band sweeps across the white text (CSS `background-clip:text` gradient driven by `--sweep`, GSAP-tweened on scroll-in). Unified starfield now also renders during **`intro`** (fixes a first-load bug where the mission sat on black until the muse gate woke the canvas). Orbit flip `:focus-within` → `:focus-visible` + JS freeze guard (fixes the card staying flipped after closing the popup). Partnership logos are linkable via a per-partner `url` in `data.js` (empty → non-clickable). Prior: muse orbit flip cards; popup overhaul. 5 WebGL + 3 2D-canvas surfaces.)
 > Run `/doc-minder` after any meaningful change to keep this file current.
 
 ---
@@ -87,45 +87,45 @@ Muse colors are used for: orbit dot fills, popup aura glow, muse tags in campaig
 | `src/ui/muse-popup.js` | `MusePopup` — modal over the orbit. Holds the ordered muse array; `open(index)` / `next()` / `prev()` / `goTo(index, dir)` with wrap. White symbol on a colored disc; 3D pointer tilt; **Y-flip** on muse switch (swap at edge-on); reactive popup starfield (tints to muse hue + intensity pulse) + galaxy color; keyboard ←/→, swipe, focus-trap. Renders the description as one block per sentence. |
 | `src/ui/muse-galaxy.js` | `createMuseGalaxy(canvasId)` — 2D spiral-galaxy particle field for the popup (~120 dots, polar `(r,θ)`, differential rotation + inward drift, outer-biased density). Drawn by the gated `Renderer` only while the popup is open; centers on the live card rect; portrait `sy` stretch; particles draw as velocity-aligned **streaks** that brighten and dissolve onto the disc rim (absorbed, never over the face). |
 | `src/ui/floating-processes.js` | `FloatingProcesses` — places 5 process imgs once (`setInitialPositions`); they bob via CSS `float` animation. Drag was removed; `pointer-events: none`. |
-| `src/ui/process-links.js` | `ProcessLinks` — 2D-canvas starline connecting the 5 processes (jank fix: no per-frame `shadowBlur`, cheap translucent strokes + epsilon redraw-skip). |
+| `src/ui/process-links.js` | `ProcessLinks` — 2D-canvas starline connecting the 5 processes. A **muse-spectrum comet** runs the wire 1→5 with fluid `easeInOutSine` motion + speed-based streak stretch (motion blur), looping with a fade-hidden seam. `draw(now)` redraws EVERY frame (animated) but stays cheap — NO per-frame `shadowBlur` (faked glow with translucent gradient strokes). |
 | `src/styles/tokens.css` | `:root` design tokens — colors, 7 muse hexes, font clamps, logo sizes, spacing, z-index, transitions. |
-| `src/styles/base.css` | reset, `html/body` height 100% + body `overflow-y:auto` for Lenis, scrollbar, `canvas.bg-layer`, `.visually-hidden`, `prefers-reduced-motion`. |
-| `src/styles/intro.css` | intro section; `.intro-spacer { height: var(--intro-h) }`; orbit dots, mission overlay, unified starfield, white-section. |
-| `src/styles/muse.css` | `.muse-panel { height: var(--muse-h) }`; sticky muse stage; orbit hover-flip cards (`.muse-orbit-card`/`-shell`/`-face`/`-disc`/`-name`); full popup system. |
-| `src/styles/comet.css` | `.comet-panel-intro` / `.comet-panel-tabs` literal `200vh` each; pill toggle; `@keyframes fadeInPanel`. |
-| `src/styles/events-footer.css` | partnership marquee + footer. |
+| `src/styles/base.css` | reset, `html/body` height 100% + body `overflow-y:auto` for Lenis, scrollbar, `canvas.bg-layer`, `.visually-hidden`, `prefers-reduced-motion`; **reusable `.beam-glow`** (`@property --beam-angle` + `@keyframes beam-spin` — animated muse-spectrum border-beam, the standard button glow). |
+| `src/styles/intro.css` | intro section; `.intro-spacer { height: var(--intro-h) }`; orbit dots, `.intro-tagline` / `.intro-statement` (the two transition beats), mission overlay, unified starfield, white-section. |
+| `src/styles/muse.css` | `.muse-panel { height: var(--muse-h) }`; sticky muse stage; orbit hover-flip cards (`.muse-orbit-card`/`-shell`/`-face`/`-disc`/`-name`/`-cause`); full popup system. |
+| `src/styles/comet.css` | `.comet-panel-intro` / `.comet-panel-tabs` literal `200vh` each; pill toggle (`.comet-pill.beam-glow`, `:focus-visible`); `@keyframes fadeInPanel`. |
+| `src/styles/events-footer.css` | partnership marquee + `.partnership-intro` framing line + footer. |
 | `src/styles/responsive.css` | 1024/768/480 breakpoints + `max-height:500px`; reduced-motion lives in `base.css`. |
 
 Assets live in `public/assets/images/` — Vite serves `public/` at the site root, so HTML references them as `assets/images/...`. `PartnershipSlider` (now `initEvents`) uses a hardcoded array from `data.js`; Stardust/Horizon panels render static markup.
 
-**Total scroll height:** ~1490vh (intro 640 incl. mission overlay + muse 450 + comet 400, plus the static events page + footer). Heights are injected from `timeline.js` — see SCROLL pacing below.
+**Total scroll height:** ~1522vh (intro 672 incl. mission overlay + muse 450 + comet 400, plus the static events page + footer). Heights are injected from `timeline.js` — see SCROLL pacing below.
 
 ---
 
 ## Page Sections (Top → Bottom)
 
-### 1. Landing / Intro + Mission (`0–640vh`, section `intro`)
-**HTML:** `index.html:24–54` · **CSS:** `src/styles/intro.css` · **JS:** `src/sections/intro.js` (timelines) + `src/webgl/intro-starfield.js` (`#bg-canvas`)
+### 1. Landing / Intro + Mission (`0–672vh`, section `intro`)
+**HTML:** `index.html:24–57` · **CSS:** `src/styles/intro.css` · **JS:** `src/sections/intro.js` (timelines) + `src/webgl/intro-starfield.js` (`#bg-canvas`)
 
-Fixed overlay. The mission statement is part of this section — it overlays the settled constellation dots rather than living in its own scroll section. The section height is injected as `var(--intro-h)`; `.intro-spacer` reads it. The intro is built from five `timeline.js` phases (see SCROLL pacing): `intro.orbit` 192, `intro.text` 48, `intro.explosion` 140, `intro.mission` 100, `intro.missionHold` 160 → **640vh total**.
+Fixed overlay. The mission statement is part of this section — it overlays the settled constellation dots rather than living in its own scroll section. The section height is injected as `var(--intro-h)`; `.intro-spacer` reads it. The intro is built from five `timeline.js` phases (see SCROLL pacing): `intro.orbit` 192, `intro.explosion` 140, `intro.statement` 80, `intro.mission` 100, `intro.missionHold` 160 → **672vh total**. (The two transition copy "beats" are NOT their own phases — see below.)
 - **Landing idle (before any scroll):** `.intro-content` carries the `intro-idle` class, which shows ONLY the centered cocoex logo (at the 80px orbit-START size, `ORBIT.logoMinSize`) gently pulsing, plus a bottom-centered scroll-down arrow hint (`#scroll-hint`). The orbit dots are hidden. The orbit ScrollTrigger's `onUpdate` toggles `intro-idle` off the instant `progress > 0.001` (and clears the inline logo size so `updateOrbit` takes over with no size jump).
-- **`intro.orbit` (0–192vh):** white + black dots orbit center; logo scales up, 2 full rotations (`updateOrbit`).
-- **`intro.text` (192–240vh):** transition text fades in below logo, holds, then fades out.
-- **`intro.explosion` (240–380vh):** 7 colored constellation dots explode from center on the 2D `#constellation-canvas` (z-depth render, big bang pulse via `introStarfield.setPulse`), front-loaded so they settle then hold. The layout reference is landscape (1400×800); on a **portrait** viewport (`height > width`) `initFireworkDots` transposes it 90° (ref-x → vertical, ref-y → horizontal) so the constellation runs tall instead of cramming into a small horizontal cluster. `resize()` re-projects if the explosion already ran (orientation change).
-- **`intro.mission` (380–480vh):** smoke clears, then the mission fades in. Smoke = BOTH the 2D constellation (`#constellation-canvas`) AND the cosmic-noise WebGL backdrop (`#bg-canvas`) fading to opacity 0 over the first half of this phase (`smokeLayers`); the mission overlay then fades in over the back half. Transition SPEEDS are fixed fractions of this short phase so they stay constant.
-- **`intro.missionHold` (480–640vh):** mission holds fully bright, then `.intro-content` fades out over the last 25% of the phase, handing off to the muse intro fading in underneath.
+- **`intro.orbit` (0–192vh):** white + black dots orbit center; logo scales up, 2 full rotations (`updateOrbit`). **Beat 1 — tagline** (`#intro-tagline`, "cocoex · compounds co-exist") fades in over the BACK HALF of this phase (sub-range `orbit 45% → explosion 12%`, driven in `intro.js`, not a phase) and holds to the burst — sized to match the statement. It also does a **"Dia" text reveal**: a muse-spectrum colour band sweeps across the otherwise-white text (`.intro-tagline p` is `background-clip:text` over a gradient whose position is the `--sweep` var; GSAP tweens `--sweep` 100→0 over 1.5s on `ScrollTrigger` enter/enterBack, skipped under reduced-motion).
+- **`intro.explosion` (192–332vh):** 7 colored constellation dots explode from center on the 2D `#constellation-canvas` (z-depth render, big bang pulse via `introStarfield.setPulse`), front-loaded so they settle then hold. The layout reference is landscape (1400×800); on a **portrait** viewport (`height > width`) `initFireworkDots` transposes it 90° (ref-x → vertical, ref-y → horizontal). `resize()` re-projects if the explosion already ran. **Beat 2 — statement** (`#intro-statement`, "Unleashing the compounds of existence through ART, IMPACT, and COMMUNITY." — no quotation marks) fades in DURING the outward burst (range `explosion.start → statement.end`, fade-in over the first ~19%), holds over the settled constellation, fades out before the mission.
+- **`intro.statement` (332–412vh):** dedicated hold/fade-out room for Beat 2 over the settled constellation (smoke hasn't cleared yet).
+- **`intro.mission` (412–512vh):** smoke clears, then the mission fades in. Smoke = BOTH the 2D constellation (`#constellation-canvas`) AND the cosmic-noise WebGL backdrop (`#bg-canvas`) fading to opacity 0 over the first half of this phase (`smokeLayers`); the mission overlay then fades in over the back half.
+- **`intro.missionHold` (512–672vh):** mission holds fully bright, then `.intro-content` fades out over the last 25% of the phase, handing off to the muse intro fading in underneath.
 
-The mission overlay (`#mission-overlay`) now centers both `.reveal-text` lines together as one vertically + horizontally centered flex block (no longer top16% / bottom16%). `<em>cocoex</em>` renders as hollow outlined text.
+The mission overlay (`#mission-overlay`) centers both `.reveal-text` lines together as one centered flex block. `<em>cocoex</em>` renders as hollow outlined text.
 
-Key elements: `#bg-canvas` (WebGL starfield), `#dot-white`, `#dot-black`, `#intro-logo`, `#final-dot`, `#transition-text`, `#constellation-canvas`, `#mission-overlay` / `#reveal-text`.
+Key elements: `#bg-canvas` (WebGL starfield), `#dot-white`, `#dot-black`, `#intro-logo`, `#final-dot`, `#intro-tagline` (Beat 1), `#constellation-canvas`, `#intro-statement` (Beat 2), `#mission-overlay` / `#reveal-text`.
 
 ---
 
-### 2. Muse — Intro → Orbit (section `muse`, 450vh, follows intro at ~640vh)
-**HTML:** `index.html:60–175` (single `.muse-section-wrapper` → `.section-panel.muse-panel` → `.muse-stage`) · **CSS:** `src/styles/muse.css` · **JS:** `src/sections/muse.js` (`MuseScroll` + `buildMuseTimeline`)
+### 2. Muse — Intro → Orbit (section `muse`, 450vh, follows intro at ~672vh)
+**HTML:** `index.html:61–178` (single `.muse-section-wrapper` → `.section-panel.muse-panel` → `.muse-stage`) · **CSS:** `src/styles/muse.css` · **JS:** `src/sections/muse.js` (`MuseScroll` + `buildMuseTimeline`)
 
 **ONE overlapping panel.** Intro and orbit share `.muse-stage` (sticky), so the center logo stays put while the background flips black→white. The 450vh panel height is `var(--muse-h)`. Phases (from `timeline.js`): `muse.fadein` 100, `muse.hold` 250, `muse.switch` 100.
-- **Intro fade-in (0–100vh into the panel):** `.muse-shared-logo` + `.muse-intro-copy` fade in (**pure opacity, no translateY/slide** — the copy stays put and just appears) over the black starfield. Copy is a short couplet: "Seven causes. / One constellation." (top) + the framework line (bottom), both centered. The two lines sit at `top: 16%` / `bottom: 16%` for breathing room from the center logo.
+- **Intro fade-in (0–100vh into the panel):** `.muse-shared-logo` + `.muse-intro-copy` fade in (**pure opacity, no translateY/slide** — the copy stays put and just appears) over the black starfield. Copy is a short couplet: the hook "Seven causes. / One constellation." (top, LEADS — H1 size, weight 700) + the framework line (bottom, `--font-lead-size`, demoted so the hook leads), both centered. The two lines sit at `top: 16%` / `bottom: 16%` for breathing room from the center logo.
 - **Hold (100–350vh):** intro holds fully readable.
 - **Switch (350–450vh):** the white `.muse-section` bg fades in, the center logo **opacity-crossfades white→black** (two stacked `<img>`: `#muse-logo-white` out, `#muse-logo-black` in — NO `filter()` tween), and the intro copy fades out as the orbit takes over.
 - **No orbit dwell:** you scroll straight from the orbit into the comet intro. The orbit is visible THROUGH the 100vh switch, so its on-screen time already feels generous.
@@ -134,50 +134,50 @@ The switch is race-free: intro layers are transparent (black starfield shows thr
 
 7 `.muse-orbit-item` elements rotate on an adaptive ellipse (`MuseScroll.calcRadius`/`update`). Ratio interpolates smoothly with viewport aspect (no breakpoint pop): wide → horizontal, square → near-circular, tall → vertical. Each muse has depth scaling from `sin(angle)` (front ~1.05, back ~0.65) with matching `zIndex` — `zIndex` is only written when its rounded value changes (a per-frame stacking-context churn fix). `data-angle` is parsed once on init.
 
-Each orbit item is a **mini flip card** that mirrors the popup disc: `.muse-orbit-item` (JS writes per-frame `translate/scale`) → `.muse-orbit-card` (perspective) → `.muse-orbit-card-shell` (flips) → two `.muse-orbit-face`s. **Front** = the **white** symbol (`<muse>-white.png`) engraved on a `--muse-color` radial-gradient disc with SVG-noise grain (same recipe as the popup `.muse-card-inside`); **back** = the muse **name** (`.muse-orbit-name`, white + dark text-shadow for AA on the light hues). The flip lives on the inner shell so it never fights the item's per-frame transform — a CSS-only `rotateY(180deg)` on `:hover`/`:focus-within`, gated behind `@media (hover: hover)` (`prefers-reduced-motion` drops the transition). On hover/focus the **whole orbit freezes** (`MuseScroll.hovering` flag skips the `animationTime` advance) so the now-still card is easy to click; `mouseleave`/`blur` thaws. Per-item `--muse-color` is set from `data-color` in `attachHandlers`. The old black name label under each muse is gone; the original `.muse-text` (`h3` + `p`) stays in the DOM `display:none` + `aria-hidden` purely as the popup's data source. Touch devices skip the flip/freeze entirely — a tap just opens the popup.
+Each orbit item is a **mini flip card** that mirrors the popup disc: `.muse-orbit-item` (JS writes per-frame `translate/scale`) → `.muse-orbit-card` (perspective) → `.muse-orbit-card-shell` (flips) → two `.muse-orbit-face`s. **Front** = the **white** symbol (`<muse>-white.png`) engraved on a `--muse-color` radial-gradient disc with SVG-noise grain (same recipe as the popup `.muse-card-inside`); **back** = the muse **name** (`.muse-orbit-name`) **+ cause caption** (`.muse-orbit-cause`, smaller), both UPPERCASE, stacked and centred, white + dark text-shadow for AA on the light hues (cause wraps to 2 lines on long ones like "Renewable Energy"). The flip lives on the inner shell so it never fights the item's per-frame transform — a CSS-only `rotateY(180deg)` on `:hover`/`:focus-visible`, gated behind `@media (hover: hover)` (`prefers-reduced-motion` drops the transition). **`:focus-visible` not `:focus-within`** — closing the popup restores focus to the orbit item, and `:focus-within` left the card stuck flipped (the JS freeze likewise now only fires on `:focus-visible`). On hover/focus the **whole orbit freezes** (`MuseScroll.hovering` flag skips the `animationTime` advance) so the now-still card is easy to click; `mouseleave`/`blur` thaws. Per-item `--muse-color` is set from `data-color` in `attachHandlers`. The old black name label under each muse is gone; the original `.muse-text` (`h3` + `p`) stays in the DOM `display:none` + `aria-hidden` purely as the popup's data source. Touch devices skip the flip/freeze entirely — a tap just opens the popup.
 
-Click any muse → **Muse Popup** (`src/ui/muse-popup.js` `MusePopup`). Layout: **name** header (`#muse-popup-title`, the `aria-labelledby` target) above the disc; **cause** subtitle (`#muse-popup-cause`, bold italic) + **description** below. The disc (`.muse-card-inside`) is a muse-color radial gradient with a faint SVG-noise grain; the **white** symbol (`<muse>-white.png`) sits on it with an engrave filter (dark-below + light-above drop-shadows). 3D pointer **tilt** drives the shine/glare via CSS vars. Behind it: a reactive WebGL **starfield** (`#muse-popup-starfield`) + a 2D **spiral-galaxy** particle field (`#muse-popup-galaxy`) whose dots are absorbed onto the disc rim.
+Click any muse → **Muse Popup** (`src/ui/muse-popup.js` `MusePopup`). Layout: **name** header (`#muse-popup-title`, the `aria-labelledby` target, UPPERCASE) above the disc; **cause** subtitle (`#muse-popup-cause`, bold italic) + **description** (`#muse-popup-text`, `clamp(18px,1.4vw,20px)` — capped at the cause size) below. The disc (`.muse-card-inside`) is a muse-color radial gradient with a faint SVG-noise grain; the **white** symbol (`<muse>-white.png`) sits on it with an engrave filter (dark-below + light-above drop-shadows). 3D pointer **tilt** drives the shine/glare via CSS vars. Behind it: a reactive WebGL **starfield** (`#muse-popup-starfield`) + a 2D **spiral-galaxy** particle field (`#muse-popup-galaxy`) whose dots are absorbed onto the disc rim.
 - **Navigation:** prev/next arrow buttons (`#muse-popup-prev`/`#muse-popup-next`) + keyboard ←/→ + horizontal swipe, **wrapping** 0↔6. Switching does a **3D Y-flip** of `.muse-card-shell` (direction follows the arrow), swapping symbol + disc color + galaxy color at the edge-on moment; title/cause/description fade in sync. Reduced-motion → instant crossfade.
 - **Close:** top-right **`.muse-popup-close`** styled as the arrow-twin (`.muse-popup-nav`), pinned to the popup (not the content) so copy length never moves it. Escape / click-outside also close.
-- **Card stays level across muses:** `.muse-card-wrapper` is `flex-shrink:0` (never squished into an oval) and `.muse-popup-body` reserves a constant `min-height` with copy top-aligned, so variable-length descriptions don't shift the disc.
+- **Card stays level across muses:** `.muse-card-wrapper` is `flex-shrink:0` (never squished into an oval) and `.muse-popup-body` reserves a constant `min-height: clamp(148px, 10vw, 160px)` (measured against real Canela so the tallest description fits at every width — all 7 bodies equal, disc level, no overflow/leak) with copy top-aligned, so variable-length descriptions don't shift the disc.
 
 WebGL: `#muse-background-canvas` (inverted starfield — black stars on off-white), a `createStarfield(..., { invert: true })` instance created in `main.js`.
 
 ---
 
 ### 3. Comet Collab Intro (section `comet` panel 1, `comet-panel-intro` = literal 200vh)
-**HTML:** `index.html:116–135` · **CSS:** `src/styles/comet.css` · **JS:** `src/sections/comet.js` (`buildCometTimeline`) + `src/ui/floating-processes.js` + `src/ui/process-links.js`
+**HTML:** `index.html:181–202` · **CSS:** `src/styles/comet.css` · **JS:** `src/sections/comet.js` (`buildCometTimeline`) + `src/ui/floating-processes.js` + `src/ui/process-links.js`
 
 Sticky panel. Constellation hides over `COMET_CONST_HIDE_VH = 40`vh (from `timeline.js`, overlaps the fade-in). The intro fades in over 100vh, holds, then fades out as the panel scrolls away (phases `comet.introIn` 100 + `comet.introHold` 100). The White Comet Collabs logo descent is CSS-positioned (**no JS descent tween**). Intro copy ends "...through Stardust and Horizon." then "Guided by Muse, in a continuous loop of creation and impact." on its own line, centered.
 
-5 floating process images (`.floating-process`, positions set once in `FloatingProcesses.setInitialPositions`, then left to a CSS `float` bob). **Drag was removed** — users liked the fixed arrangement; the elements are `pointer-events: none` and carry no `draggable` attribute or drag listeners. A faint white **starline** (`#process-link-canvas`, 2D, drawn by `ProcessLinks` registered as a gated `Renderer` layer) connects them in order 1→2→3→4→5, redrawing live from `getBoundingClientRect()` as they bob — skipping the redraw when no node moved beyond a 0.4px epsilon, and faking the glow with cheap translucent strokes instead of per-frame `shadowBlur`.
+5 floating process images (`.floating-process`, positions set once in `FloatingProcesses.setInitialPositions`, then left to a CSS `float` bob). **Drag was removed** — users liked the fixed arrangement; the elements are `pointer-events: none` and carry no `draggable` attribute or drag listeners. A thin **starline** (`#process-link-canvas`, 2D, `ProcessLinks` registered as a gated `Renderer` layer, fed the shared `now`) connects them 1→2→3→4→5, reading live `getBoundingClientRect()` as they bob. A **muse-spectrum comet** (the toggle beam, in canvas) runs the wire with fluid `easeInOutSine` motion — velocity `sin(πp)`, zero only at the two endpoints so it flows through interior nodes without stalling — its streak length tracking speed (motion blur), looping with a short fade so the seam is invisible. Glow is faked with translucent gradient strokes; NO per-frame `shadowBlur`.
 
 ---
 
 ### 4. Comet Methods Toggle (section `comet` panel 2, `comet-panel-tabs` = literal 200vh)
-**HTML:** `index.html:137–186` · **CSS:** `src/styles/comet.css` · **JS:** `src/sections/comet.js` (`Toggle`)
+**HTML:** `index.html:203–254` · **CSS:** `src/styles/comet.css` · **JS:** `src/sections/comet.js` (`Toggle`)
 
 Second sticky panel (sequential, not overlapping the intro). Methods panel fades in over 100vh, then holds through closure (phases `comet.methodsIn` 100 + `comet.methodsHold` 100). Comet ends here — there is **no connected-images panel**.
 
-Pill toggle (`.comet-pill`) switches between:
+Pill toggle (`.comet-pill.beam-glow`) — labels are just "Stardust" / "Horizon" (no "I·/II·"; the numbering lives in the panel subtitles). Carries the reusable `.beam-glow` running-glow. Switches between:
 - **Stardust:** artist flow (select cause → create work → launch campaign → funds split)
-- **Horizon:** Future Lab flow, with `+Horizon` badge addon
+- **Horizon:** Future Lab flow, with the `+Horizon` badge **inline in front of the "Future Lab" step title** (the differentiator)
 
-The toggle is wired by `Toggle.init()` attaching `click` listeners to `#tab-stardust` / `#tab-horizon` (**no inline onclick, no global `window.switchTab`**); `Toggle.switch(method)` flips `.active` classes + the `#pillSlider` position.
+The toggle is wired by `Toggle.init()` attaching `click` listeners to `#tab-stardust` / `#tab-horizon` (**no inline onclick, no global `window.switchTab`**); `Toggle.switch(method)` flips `.active` classes + the `#pillSlider` position. Switch smoothness: `.pill-slider` has `will-change: transform` (composites independent of the beam repaint), the active label's whiten is delayed `0.1s` so it changes as the slider arrives (no white-on-offwhite flash), and the focus ring is `:focus-visible` only (no mouse-click outline pop). No `backdrop-filter` on the pill — it re-blurred the moving bloom and stuttered. The two panels top-align (`align-content: start`) so headers don't jump between Stardust/Horizon. Panel body copy is `--font-lead-size`, left-aligned (was justified). Titles are solid (the **hollow/outline** treatment lives on the words "Stardust"/"Horizon" in the *intro* copy, not the panel titles).
 
 ---
 
 ### 5. Events Page (section `events`, static after comet)
-**HTML:** `index.html:190–194` · **CSS:** `src/styles/events-footer.css` · **JS:** `src/sections/events.js` (`initEvents`)
+**HTML:** `index.html:256–262` · **CSS:** `src/styles/events-footer.css` · **JS:** `src/sections/events.js` (`initEvents`)
 
-`.events-page-wrapper` → `.partnership-section` only.
+`.events-page-wrapper` → `.partnership-section` only. A framing line (`.partnership-intro`, "Those who have hosted us, supported the work, and made the impact possible.") sits under the `.partnership-title`; the wrapper has extra top padding so the title isn't tight to the section edge.
 
-**Partnership marquee:** `initEvents` builds a `.partnership-track`, fills it with the `PARTNERS` array from `data.js` (10 `{ name, src }` logos → each an `<a><img>` with `name` as alt/aria), and **duplicates the set once** for a seamless CSS marquee loop. Seamless loop requires BOTH: `.partnership-track { width: max-content }` (so `translateX(-50%)` is 50% of the *content*, not the parent width — the bug that made it jump) AND per-item `margin-right` rather than container `gap` (so each item's trailing margin makes the seam align; `gap` is off by half a gap). Logos are capped via `max-width` + `object-fit: contain` so wide marks (Lukso/Peng) don't dominate. The `.events-page-wrapper` is **transparent** so the fixed unified starfield (now gated to `events` too) shows behind the strip; `.partnership-slideshow` lays a `rgba(0,0,0,0.5)` veil (stars still read) and fades its left/right edges with a horizontal `mask-image` linear-gradient so the strip eases in/out instead of a flat cut.
+**Partnership marquee:** `initEvents` builds a `.partnership-track`, fills it with the `PARTNERS` array from `data.js` (10 `{ name, src, url }` logos → each an `<a><img>` with `name` as alt/aria), and **duplicates the set once** for a seamless CSS marquee loop. Each `<a>` is a real `target="_blank"` link when the partner has a `url`, else a non-clickable wrapper (no href) — fill in the `url`s in `data.js` to make logos clickable. Seamless loop requires BOTH: `.partnership-track { width: max-content }` (so `translateX(-50%)` is 50% of the *content*, not the parent width — the bug that made it jump) AND per-item `margin-right` rather than container `gap` (so each item's trailing margin makes the seam align; `gap` is off by half a gap). Logos are capped via `max-width` + `object-fit: contain` so wide marks (Lukso/Peng) don't dominate. The `.events-page-wrapper` is **transparent** so the fixed unified starfield (now gated to `events` too) shows behind the strip; `.partnership-slideshow` lays a `rgba(0,0,0,0.5)` veil (stars still read) and fades its left/right edges with a horizontal `mask-image` linear-gradient so the strip eases in/out instead of a flat cut.
 
 ---
 
 ### Footer (Static at end of flow)
-**HTML:** `index.html:197–209` · **CSS:** `src/styles/events-footer.css` (`.social-links`)
+**HTML:** `index.html:264–276` · **CSS:** `src/styles/events-footer.css` (`.social-links`)
 
 Static footer at the page end. 3 social icons (Telegram, Instagram, LinkedIn). cocoex text logo.
 
@@ -202,11 +202,12 @@ Static footer at the page end. 3 social icons (Telegram, Instagram, LinkedIn). c
 ### Typography
 ```css
 --font-canela: 'canela', Georgia, serif
---font-h1-size: clamp(24px, 3vw, 48px)   /* weight 700 */
---font-h2-size: clamp(14px, 1.5vw, 22px)  /* weight 400 */
---font-body-size: clamp(20px, 2.5vw, 36px) /* weight 400 */
+--font-h1-size: clamp(24px, 3vw, 48px)    /* weight 700 */
+--font-h2-size: clamp(14px, 1.5vw, 22px)  /* weight 400 — caption/subtitle */
+--font-lead-size: clamp(18px, 1.7vw, 26px) /* weight 400 — LEAD paragraph tier, between H2 and body */
+--font-body-size: clamp(20px, 2.5vw, 36px) /* weight 400 — statement */
 ```
-All text sizes use `clamp()` — never hardcode px values for typography.
+All text sizes use `clamp()` — never hardcode px values for typography. The `--font-lead-size` tier exists for explanatory prose that read as fine-print at H2 (used by `.muse-intro-text-bottom`, `.comet-panel-body`, `.partnership-intro`). Two deliberate one-off clamps that do NOT use the tokens: `.muse-popup-text` `clamp(18px,1.4vw,20px)` (dense popup column, capped at the cause size) and the intro tagline/statement.
 
 ### Responsive Logo Sizes
 ```css
@@ -259,10 +260,10 @@ RHYTHM: 1 scroll = 100vh. Every fade-in is followed by a REAL hold so content ne
 
 Current `PHASES` (copy exact values from the file — this is a snapshot):
 ```javascript
-// INTRO — section total 640vh
-intro.orbit       192   // logo grows + dots orbit, 2 rotations
-intro.text         48   // transition text in/hold/out
-intro.explosion   140   // constellation explodes + settles
+// INTRO — section total 672vh
+intro.orbit       192   // logo grows + dots orbit, 2 rotations (Beat 1 tagline fades in over the back half)
+intro.explosion   140   // constellation explodes + settles (Beat 2 statement fades in during the burst)
+intro.statement    80   // statement holds over the settled constellation, fades out before mission
 intro.mission     100   // smoke clears + mission fade-in
 intro.missionHold 160   // mission holds bright, then fades out
 
@@ -294,7 +295,7 @@ The mission/smoke/fade transitions are derived inside `buildIntroTimelines` as f
 
 Static content lives in `src/data.js` (imported, not fetched):
 
-- **`PARTNERS`** — 10 partner logos as `{ name, src }` objects (`src` URL-encoded; see Asset Map), consumed by `initEvents` for the marquee.
+- **`PARTNERS`** — 10 partner logos as `{ name, src, url }` objects (`src` URL-encoded; `url` = each partner's site/Instagram, empty by default → non-clickable), consumed by `initEvents` for the marquee.
 - **`MUSES`** — canonical muse name / cause / CSS-var color.
 - **`CONFIG`, `DOT_COLORS`, `CONSTELLATION_REF`, `CONNECTIONS`** — intro layout params + constellation geometry.
 - **Stardust / Horizon panels:** static HTML in `index.html`. `Toggle` only flips the active panel — no data-driven rendering.
@@ -311,7 +312,7 @@ All surfaces render inside the single `Renderer` RAF loop (`src/webgl/renderer.j
 |---|---|---|---|---|
 | Intro starfield | `#bg-canvas` | `createIntroStarfield` (`src/webgl/intro-starfield.js`) | WebGL (own shader + pulse) | `intro` |
 | Constellation | `#constellation-canvas` | `src/sections/intro.js` (`drawExplosion`) | 2D | `intro` (cleared on exit) |
-| Unified starfield | `#unified-starfield-canvas` | `createStarfield` (white-on-black, fixed full-screen) | WebGL | `muse`, `comet`, `events` |
+| Unified starfield | `#unified-starfield-canvas` | `createStarfield` (white-on-black, fixed full-screen) | WebGL | `intro`, `muse`, `comet`, `events` |
 | Muse backdrop | `#muse-background-canvas` | `createStarfield(..., { invert: true })` | WebGL | `muse` |
 | Comet backdrop | `#comet-collab-background-canvas` | `createStarfield(..., { invert: true })` | WebGL | `comet` |
 | Process starline | `#process-link-canvas` | `ProcessLinks` (`src/ui/process-links.js`) | 2D | `comet` (intro panel) |
@@ -360,7 +361,7 @@ public/assets/images/
     └── C.Volpi.png · CdTortona.png · Lukso.png · Peng.png · RJB.png · SFT.png · SIRX.png · TN.png · "Vinili e vinelli.png" · WR.png   (10 named logos)
 ```
 
-`src/data.js` `PARTNERS` lists these 10 by `{ name, src }` (src URL-encoded for the file with a space); `initEvents` renders them into the marquee with `name` as alt/aria text.
+`src/data.js` `PARTNERS` lists these 10 by `{ name, src, url }` (src URL-encoded for the file with a space; `url` optional → clickable link); `initEvents` renders them into the marquee with `name` as alt/aria text.
 
 ---
 
@@ -374,7 +375,7 @@ Element IDs/selectors are stable; the module that owns each is listed (grep `ind
 | Intro spacer | `.intro-spacer` (`height: var(--intro-h)`) | `timeline.js` injects height |
 | Intro starfield | `#bg-canvas` | `intro-starfield.js` |
 | Orbit dots / logo / merged dot | `#dot-white` `#dot-black` `#intro-logo` `#final-dot` | `sections/intro.js` |
-| Transition text | `#transition-text` | `sections/intro.js` |
+| Transition beats | `#intro-tagline` (Beat 1) / `#intro-statement` (Beat 2) | `sections/intro.js` |
 | Constellation canvas | `#constellation-canvas` | `sections/intro.js` (2D) |
 | Mission overlay | `#mission-overlay` / `.reveal-text` (top + bottom, centered) | `sections/intro.js` |
 | Unified starfield | `#unified-starfield-canvas` | `starfield.js` (white-on-black) |
@@ -414,7 +415,7 @@ Element IDs/selectors are stable; the module that owns each is listed (grep `ind
 
 **WebGL performance:** one shared `Renderer` RAF loop; off-screen layers are gated out by section. DPR cap at 2× is non-negotiable. Use the starfield factory rather than new shaders.
 
-**Process starline jank:** `ProcessLinks.draw` must NOT set `ctx.shadowBlur` per frame (the original's worst cost) — the glow is faked with wide translucent strokes, and the redraw is skipped when no node moved past a 0.4px epsilon. Keep both.
+**Process starline jank:** `ProcessLinks.draw(now)` must NOT set `ctx.shadowBlur` per frame (the original's worst cost) — the glow is faked with wide translucent gradient strokes. It now redraws EVERY frame (the running comet is animated, so the old epsilon redraw-skip was removed) — that's fine because the draw is just a few cheap strokes; the ONLY hard rule is no `shadowBlur`.
 
 **Muse zIndex churn:** `MuseScroll.update` only writes `el.style.zIndex` when its rounded depth value changes — writing every frame forces stacking-context recalcs (a measured jank source). Keep the `lastZ` guard.
 

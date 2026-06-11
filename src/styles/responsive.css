@@ -36,8 +36,8 @@
   }
 
   .floating-process {
-    width: clamp(60px, 15vw, 100px);
-    height: clamp(60px, 15vw, 100px);
+    width: clamp(40px, 10vw, 68px);
+    height: clamp(40px, 10vw, 68px);
   }
 
   .comet-panel.active {
@@ -111,10 +111,10 @@
     line-height: 1.3;
   }
 
+  /* Badge is inline in front of "Future Lab" on mobile too — just trim its size. */
   .step-addon-badge {
-    font-size: clamp(12px, 2.8vw, 14px);
-    padding: clamp(3px, 0.8vw, 5px) clamp(8px, 2vw, 10px);
-    margin-bottom: clamp(0.2rem, 0.5vh, 0.3rem);
+    font-size: clamp(11px, 2.6vw, 13px);
+    padding: 0.35em 0.8em;
   }
 
   .pill-opt {

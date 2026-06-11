@@ -41,7 +41,12 @@ function boot() {
 
   // Register each starfield as a gated render layer.
   Renderer.add({ sections: ['intro'], render: (n) => introStarfield.render(n) });
-  Renderer.add({ sections: ['muse', 'comet', 'events'], render: (n) => unified.render(n) });
+  // Unified starfield also renders during `intro` so it's already drawn BEHIND the
+  // intro overlay (z-bg, under z-intro). When the intro #bg-canvas smoke-clears for the
+  // mission, the stars show through immediately — fixes the first-load bug where the
+  // mission sat on pure black until the muse gate (75vh buffer) first woke this canvas
+  // (after one pass the canvas retained its last frame, so it only happened on reset).
+  Renderer.add({ sections: ['intro', 'muse', 'comet', 'events'], render: (n) => unified.render(n) });
   Renderer.add({ sections: ['muse'], render: (n) => museBg.render(n) });
   Renderer.add({ sections: ['comet'], render: (n) => cometBg.render(n) });
   // Popup surfaces render only while the modal is open (any section).

@@ -12,7 +12,7 @@ Total page height ≈ **1490vh** (intro 640 + muse 450 + comet 400, plus the sta
 
 | Section | Span | Position | Phases (`timeline.js`) |
 |---|---|---|---|
-| Landing + Mission | 640vh | Fixed overlay | `intro.orbit` 192 + `intro.text` 48 + `intro.explosion` 140 + `intro.mission` 100 + `intro.missionHold` 160 |
+| Landing + Mission | 672vh | Fixed overlay | `intro.orbit` 192 + `intro.explosion` 140 + `intro.statement` 80 + `intro.mission` 100 + `intro.missionHold` 160 |
 | Muse (intro → orbit) | 450vh | Sticky `.muse-stage`, one overlapping panel | `muse.fadein` 100 + `muse.hold` 250 + `muse.switch` 100 |
 | Comet Intro | 200vh | Sticky `.comet-panel-intro` | `comet.introIn` 100 + `comet.introHold` 100 |
 | Comet Methods | 200vh | Sticky `.comet-panel-tabs` | `comet.methodsIn` 100 + `comet.methodsHold` 100 |
@@ -22,7 +22,7 @@ Muse intro and orbit are **one overlapping sticky panel** (the center logo stays
 
 ### Why these values?
 
-- **640vh intro:** five phases need room. Orbit + transition text + a front-loaded constellation explosion that settles and holds, then a smoke-clear, a mission fade-in, and a long readable hold before the joint fade-out into muse. The hold was lengthened (`missionHold` 160) so the mission statement reads comfortably.
+- **672vh intro:** five phases need room. Orbit (the "compounds co-exist" tagline fades in over its back half), a front-loaded constellation explosion (the "Unleashing…" statement fades in DURING the outward burst), a dedicated `intro.statement` hold over the settled constellation, then a smoke-clear, a mission fade-in, and a long readable hold before the joint fade-out into muse. The two copy beats are driven on sub-ranges in `intro.js`, not as their own phases. The hold was lengthened (`missionHold` 160) so the mission statement reads comfortably.
 - **450vh muse:** fade-in 100 + readable hold 250 + black→white switch 100. The intro copy fades in with **pure opacity** (no slide). No orbit dwell — the orbit is visible through the switch, so you scroll straight into comet.
 - **200vh per comet panel:** intro = fade-in 100 + hold 100; tabs = methods fade 100 + dwell 100.
 
@@ -80,7 +80,7 @@ Four of the five WebGL surfaces are produced by `createStarfield(canvasId, optio
 - `invert: true` — fragment output becomes `1.0 - color`, turning the canonical white-on-black starfield into black-on-offwhite. Used for the muse and comet backdrops (light surface).
 - `intensity` — multiplies star brightness; inverted variants use `0.9` to read against off-white; the popup starfield is recolored/pulsed at runtime by `MusePopup` (tints `starColor` to the muse hue + an intensity pulse on open/switch).
 
-Instances (created in `src/main.js`): the unified white-on-black starfield (`#unified-starfield-canvas`, fixed full-screen, shared by muse + comet + the transparent events section), the muse backdrop (`#muse-background-canvas`, inverted), the comet backdrop (`#comet-collab-background-canvas`, inverted), and the **muse popup starfield** (`#muse-popup-starfield`, reactive). The popup also has a 2D spiral-galaxy particle layer (`src/ui/muse-galaxy.js`); both popup surfaces register as gated layers with `active: () => MusePopup.isOpen` rather than a section tag.
+Instances (created in `src/main.js`): the unified white-on-black starfield (`#unified-starfield-canvas`, fixed full-screen, gated to `intro` + muse + comet + the transparent events section — the `intro` membership keeps it drawn BEHIND the intro overlay so the mission has stars the instant the `#bg-canvas` smoke-clears, instead of pure black on first load), the muse backdrop (`#muse-background-canvas`, inverted), the comet backdrop (`#comet-collab-background-canvas`, inverted), and the **muse popup starfield** (`#muse-popup-starfield`, reactive). The popup also has a 2D spiral-galaxy particle layer (`src/ui/muse-galaxy.js`); both popup surfaces register as gated layers with `active: () => MusePopup.isOpen` rather than a section tag.
 
 **Why a factory:** the previous architecture had separate gradient shaders that drifted out of sync, duplicated GLSL, and triggered extra `gl.useProgram()` switches. One shader with two parameters removed the duplication and makes adding a surface trivial — pass options, don't write a shader. Shared GLSL (`SIMPLEX_NOISE`, `STAR_FIELD`, `VERTEX_QUAD`) lives in `src/webgl/shaders/glsl-utils.js`.
 
@@ -148,7 +148,7 @@ Production iOS Safari froze scroll on the body-as-scroller layout; `ScrollTrigge
 
 These were the per-frame costs that motivated the rebuild. Do not reintroduce them.
 
-- **Per-frame `shadowBlur` (process starline).** The old draw set `ctx.shadowBlur = 12` on every frame across two blurred stroke passes — the single worst cost in the comet section. `process-links.js` fakes the glow with cheap wide translucent strokes (no blur) and skips the redraw entirely when no node moved beyond a 0.4px epsilon.
+- **Per-frame `shadowBlur` (process starline).** The old draw set `ctx.shadowBlur = 12` on every frame across two blurred stroke passes — the single worst cost in the comet section. `process-links.js` fakes the glow with cheap wide translucent gradient strokes (no blur). It now redraws every frame to animate the running muse-spectrum comet (the old epsilon redraw-skip was dropped) — fine, since the draw is a handful of plain strokes; the only hard rule is no `shadowBlur`.
 - **zIndex churn (muse orbit).** The old orbit wrote `el.style.zIndex` every frame, forcing stacking-context recalcs. `muse.js` keeps a `lastZ` per item and writes only when the rounded value changes. `data-angle` is also parsed once on init rather than per frame.
 - **Multiple RAF loops / drifting clocks.** Collapsed to the single `Renderer` loop with a shared timestamp.
 - **Off-screen WebGL.** Now gated by section membership rather than scattered conditionals.

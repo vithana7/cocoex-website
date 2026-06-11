@@ -11,9 +11,9 @@
 
 export const PHASES = [
   // ---- INTRO (section: intro) ----
-  { id: 'intro.orbit',       section: 'intro', vh: 192 }, // logo grows + dots orbit, 2 rotations
-  { id: 'intro.text',        section: 'intro', vh: 48  }, // transition text in/hold/out
+  { id: 'intro.orbit',       section: 'intro', vh: 192 }, // logo grows + dots orbit, 2 rotations (tagline fades in over the back half)
   { id: 'intro.explosion',   section: 'intro', vh: 140 }, // constellation explodes + settles
+  { id: 'intro.statement',   section: 'intro', vh: 80  }, // "Unleashing…" statement in/hold/out over the settled constellation
   { id: 'intro.mission',     section: 'intro', vh: 100 }, // smoke clears + mission fade-in
   { id: 'intro.missionHold', section: 'intro', vh: 160 }, // mission holds fully bright, then fades out
 
