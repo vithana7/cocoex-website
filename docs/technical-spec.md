@@ -8,12 +8,12 @@ The site is a Vite + ES-module build: vanilla JS organised into small modules, G
 
 ## Scroll Budget
 
-Total page height ≈ **1490vh** (intro 640 + muse 450 + comet 400, plus the static events page + footer). All scroll-driven distances live in `src/scroll/timeline.js`. Never hardcode `vh` values inline.
+Total page height ≈ **1482vh** (intro 592 + muse 490 + comet 400, plus the static events page + footer). All scroll-driven distances live in `src/scroll/timeline.js`. Never hardcode `vh` values inline.
 
 | Section | Span | Position | Phases (`timeline.js`) |
 |---|---|---|---|
-| Landing + Mission | 672vh | Fixed overlay | `intro.orbit` 192 + `intro.explosion` 140 + `intro.statement` 80 + `intro.mission` 100 + `intro.missionHold` 160 |
-| Muse (intro → orbit) | 450vh | Sticky `.muse-stage`, one overlapping panel | `muse.fadein` 100 + `muse.hold` 250 + `muse.switch` 100 |
+| Landing + Mission | 592vh | Fixed overlay | `intro.orbit` 192 + `intro.explosion` 100 + `intro.statement` 40 + `intro.mission` 100 + `intro.missionHold` 160 |
+| Muse (intro → orbit) | 490vh | Sticky `.muse-stage`, one overlapping panel | `muse.fadein` 50 + `muse.hold` 120 + `muse.switch` 100 + `muse.orbitHold` 220 |
 | Comet Intro | 200vh | Sticky `.comet-panel-intro` | `comet.introIn` 100 + `comet.introHold` 100 |
 | Comet Methods | 200vh | Sticky `.comet-panel-tabs` | `comet.methodsIn` 100 + `comet.methodsHold` 100 |
 | Events + Footer | static | Normal flow | — |
@@ -22,8 +22,8 @@ Muse intro and orbit are **one overlapping sticky panel** (the center logo stays
 
 ### Why these values?
 
-- **672vh intro:** five phases need room. Orbit (the "compounds co-exist" tagline fades in over its back half), a front-loaded constellation explosion (the "Unleashing…" statement fades in DURING the outward burst), a dedicated `intro.statement` hold over the settled constellation, then a smoke-clear, a mission fade-in, and a long readable hold before the joint fade-out into muse. The two copy beats are driven on sub-ranges in `intro.js`, not as their own phases. The hold was lengthened (`missionHold` 160) so the mission statement reads comfortably.
-- **450vh muse:** fade-in 100 + readable hold 250 + black→white switch 100. The intro copy fades in with **pure opacity** (no slide). No orbit dwell — the orbit is visible through the switch, so you scroll straight into comet.
+- **592vh intro:** five phases need room. Orbit (the "compounds co-exist" tagline fades in over its back half), a front-loaded constellation explosion (the "Unleashing…" statement fades in DURING the outward burst), a dedicated `intro.statement` hold over the settled constellation, then a smoke-clear, a mission fade-in, and a long readable hold before the joint fade-out into muse. The two copy beats are driven on sub-ranges in `intro.js`, not as their own phases. The hold was lengthened (`missionHold` 160) so the mission statement reads comfortably.
+- **490vh muse:** fade-in 50 + readable hold 120 + black→white switch 100 + orbit hold/exit 220. The intro reveal is **deliberately matched to the cocoex mission** (~50vh fade-in + ~120vh readable hold); the logo + intro copy fade in **together, pure opacity** (no slide, no stagger — mirrors the mission's flow). `muse.orbitHold` (220) = a **100vh structural exit tail + ~120vh pinned hold**: the switch completes while the sticky stage is still pinned, the orbit then sits revealed for ~120vh (a beat to read/click the muses), then scrolls its own height up into comet over the final 100vh (a 100dvh sticky stage must scroll its full height to leave; pinned dwell = `orbitHold − 100`). **NB:** these vh are converted to **px** in `buildMuseTimeline` — ScrollTrigger reads a raw `top+=Xvh` string as pixels, so an un-converted `vh` collapses the timeline (the bug that was fixed here; `comet.js` still has it latent).
 - **200vh per comet panel:** intro = fade-in 100 + hold 100; tabs = methods fade 100 + dwell 100.
 
 **Rule of thumb:** any phase under 100vh stutters on trackpads. Any phase over 200vh feels slack — Lenis's lerp amplifies that.
@@ -47,7 +47,7 @@ A builder (`buildTimeline`) turns the ordered list into absolute `{ startVh, end
 2. **CSS** — `applyHeightsToCss()` writes each section's height to `:root` as a custom property: `--intro-h`, `--muse-h`, `--comet-h`, `--total-h`. CSS reads `height: var(--intro-h)` etc. — heights are injected, never hardcoded.
 3. **Section gate** — `sectionSpan(name)` and `vhToPx()` derive section boundaries.
 
-**Why declarative:** in the old monolith, phase boundaries were coupled constants that had to be hand-synced against CSS wrapper heights and GSAP `start: 'top+=NNNvh'` offsets — drift was constant. Now changing ONE `vh` number in `PHASES` recascades both the CSS heights and every GSAP offset. There is nothing to keep in sync.
+**Why declarative:** in the old monolith, phase boundaries were coupled constants that had to be hand-synced against CSS wrapper heights and GSAP scroll offsets — drift was constant. Now changing ONE `vh` number in `PHASES` recascades both the CSS heights and every GSAP offset. There is nothing to keep in sync. **One gotcha:** GSAP start/end strings take **pixels**, not `vh` (`top+=NNNvh` is silently read as `NNN` px), so triggers must feed **`top+=${vhToPx(...)}px top`** (or `phase().*FromSection()`, which return px) inside **function-form** start/end with `invalidateOnRefresh: true`. A trigger that interpolates a raw `vh` number collapses its whole timeline into a few hundred px — the bug fixed in `muse.js` (2026-06-12); `comet.js` still carries it latently.
 
 The one deliberate exception: `.comet-panel-intro` / `.comet-panel-tabs` use literal `200vh` in `comet.css`, because each panel is exactly one 200vh phase pair and CSS `position: sticky` needs a concrete child height.
 
@@ -86,7 +86,7 @@ Instances (created in `src/main.js`): the unified white-on-black starfield (`#un
 
 ### Intro shader is separate
 
-`#bg-canvas` (`src/webgl/intro-starfield.js`, shader `INTRO_FRAG`) uses its own program because it has unique needs: a cosmic-noise background (simplex, not a star grid) and a `u_pulse` uniform for the dispersive big-bang wave at the explosion start (`setPulse`). Folding this into the factory would make every starfield pay for a uniform it never uses. It also owns its `webglcontextlost`/`webglcontextrestored` handlers and rebuilds on restore.
+`#bg-canvas` (`src/webgl/intro-starfield.js`, shader `INTRO_FRAG`) uses its own program because it has unique needs: a cosmic-noise background (simplex, not a star grid) and a `u_pulse` uniform driving a **muse-spectrum ripple** at the explosion — concentric ease-out wavefront rings (`museTint` across the 7 hues, snoise wobble) that decelerate as they expand to the screen edges. `u_pulse` is fed the **explosion scroll progress** (`setPulse`, `pulse = min(1, progress/0.45)`) so the ripple rides the burst rather than running on a clock. Folding this into the factory would make every starfield pay for a uniform it never uses. It also owns its `webglcontextlost`/`webglcontextrestored` handlers and rebuilds on restore.
 
 ### Constellation + starline are 2D
 

@@ -185,6 +185,51 @@
   width: var(--muse-orbit-image-size);
   height: var(--muse-orbit-image-size);
   perspective: 600px;
+  position: relative;
+  isolation: isolate; /* contain the hint halo's negative z-index (same trick as .beam-glow) */
+}
+
+/* Roaming "click me" halo. A muse-spectrum wedge (the .beam-glow recipe, circular) sits
+   BEHIND the disc and only its rim peeks out as a soft glow; as --beam-angle spins, the
+   bright wedge travels around the rim so the halo appears to circle the muse. JS gives ONE
+   orbit muse the .is-hinting class at a time (roaming randomly) to hint the discs are
+   clickable. Hidden until hinted; reduced-motion freezes the spin to a static glow. */
+.muse-orbit-card::before {
+  content: "";
+  position: absolute;
+  inset: -11px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1; /* behind the opaque disc — its inner glow is trimmed at the rim, so it reads as emitted from behind */
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  /* NARROW ring core (still thin) — independent of the spread below. */
+  padding: 4px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  /* Moderate blur spreads the thin core into a soft ray (lighter than before so it stays
+     visible on the offwhite orbit bg); saturate lifts the spectrum so it reads clearly. */
+  filter: blur(6px) saturate(1.25);
+  /* Continuous comet trail: the spectrum tail wraps ~300° of the ring, fading up to a bright
+     head, with only a small gap just AHEAD of the head (0/360). Because the lit trail spans
+     almost the whole circle, the spin never "disappears + snaps back" — it reads as one smooth
+     turning glow with a bright leading point (clockwise → highest angle leads). */
+  background: conic-gradient(from var(--beam-angle),
+    rgba(248, 216, 106, 0) 0deg,
+    rgba(94, 71, 161, 0.12) 38deg,
+    rgba(94, 71, 161, 0.32) 92deg,
+    rgba(87, 131, 166, 0.5) 150deg,
+    rgba(140, 176, 127, 0.66) 208deg,
+    rgba(212, 131, 72, 0.88) 268deg,
+    rgba(248, 216, 106, 1) 330deg,
+    rgba(248, 216, 106, 0) 360deg);
+}
+
+.muse-orbit-item.is-hinting .muse-orbit-card::before {
+  opacity: 1;
+  animation: beam-spin 2s linear infinite; /* only spins while actively hinting */
 }
 
 .muse-orbit-card-shell {
@@ -235,6 +280,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--muse-color, #5783A6); /* fallback: Safari <16.2 drops the color-mix gradient below */
   background: radial-gradient(
     circle at 50% 38%,
     var(--muse-color, #5783A6) 0%,
@@ -462,6 +508,7 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
+  background: var(--muse-color, #5783A6); /* fallback: Safari <16.2 drops the color-mix gradient below */
   background: radial-gradient(
     circle at var(--background-x, 50%) var(--background-y, 50%),
     var(--muse-color, #5783A6) 0%,
@@ -548,15 +595,27 @@
     drop-shadow(0 6px 16px rgba(0, 0, 0, 0.35));
 }
 
+/* Group the subtitle + description so the description sits a line tighter under the
+   subtitle (their own small gap) instead of being pushed down by the content flex gap.
+   The disc → caption spacing is still the .muse-popup-content gap above. */
+.muse-popup-caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.2rem, 0.7vh, 0.45rem);
+  width: 100%;
+}
+
 .muse-popup-cause {
   font-family: var(--font-canela);
-  font-size: clamp(16px, 1.8vw, 20px);
+  /* Sized up + opened out — bold-italic-uppercase was cramped/illegible at the old size. */
+  font-size: clamp(18px, 2vw, 24px);
   font-weight: var(--font-h1-weight);
   font-style: italic; /* bold italic — needs Canela italic in the Typekit kit (else faux) */
   text-transform: uppercase;
   color: var(--color-white);
-  letter-spacing: 0.05em;
-  margin: clamp(1rem, 2vh, 1.5rem) 0 0 0;
+  letter-spacing: 0.14em;
+  margin: 0;
   padding: 0;
   text-align: center;
   will-change: opacity, transform;
@@ -571,7 +630,7 @@
   text-align: center;
   max-width: 400px;
   padding: 0;
-  margin-top: clamp(0.15rem, 0.5vh, 0.4rem);
+  margin-top: 0; /* caption group gap handles the subtitle → description spacing now */
   /* Reserve ≥ the tallest description so all 7 discs land level — without leaking off
      the viewport. Re-measured at the smaller text (real Canela, confirmed loaded):
      tallest = 128px @1440 / 144px @≤768 (320px column). clamp(148,10vw,160) covers both.

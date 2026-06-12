@@ -75,7 +75,7 @@ Full-height surfaces declare `height: 100vh` immediately followed by `height: 10
 
 ## Touch Targets
 
-All interactive elements are ≥ 44px (WCAG AA). The mobile orbit tap surface is expanded with a `.muse-orbit-item::before { inset: -16px }` halo (preserves the transform-based centring). Footer social icons give thumb space on phones without inflating on desktop.
+Interactive controls are ≥ 44px (WCAG AA) — muse orbit (with a `.muse-orbit-item::before { inset: -16px }` halo that preserves the transform-based centring) and the popup nav. **Exception:** the footer was deliberately scaled down (~20% mobile / ~50% desktop, via a `min-width:1024px` override since desktop must be *smaller* than mobile — an inverted relationship a single clamp can't express), and as an explicit product decision its social icons drop below 44px on mobile. They're the only sub-44px tap targets.
 
 ## Reduced Motion
 

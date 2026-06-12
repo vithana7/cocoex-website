@@ -12,15 +12,16 @@
 export const PHASES = [
   // ---- INTRO (section: intro) ----
   { id: 'intro.orbit',       section: 'intro', vh: 192 }, // logo grows + dots orbit, 2 rotations (tagline fades in over the back half)
-  { id: 'intro.explosion',   section: 'intro', vh: 140 }, // constellation explodes + settles
-  { id: 'intro.statement',   section: 'intro', vh: 80  }, // "Unleashing…" statement in/hold/out over the settled constellation
+  { id: 'intro.explosion',   section: 'intro', vh: 100 }, // constellation explodes + settles (kept at the 100vh min)
+  { id: 'intro.statement',   section: 'intro', vh: 40  }, // "Unleashing…" statement in/hold/out — trimmed so it fades out a swipe sooner
   { id: 'intro.mission',     section: 'intro', vh: 100 }, // smoke clears + mission fade-in
   { id: 'intro.missionHold', section: 'intro', vh: 160 }, // mission holds fully bright, then fades out
 
   // ---- MUSE (section: muse) ----
-  { id: 'muse.fadein', section: 'muse', vh: 100 }, // intro logo + copy fade up
-  { id: 'muse.hold',   section: 'muse', vh: 250 }, // intro holds fully readable
-  { id: 'muse.switch', section: 'muse', vh: 100 }, // black→white + logo crossfade → orbit
+  { id: 'muse.fadein',    section: 'muse', vh: 50  }, // logo + copy fade in together — matched to the cocoex mission fade-in (~45-50vh)
+  { id: 'muse.hold',      section: 'muse', vh: 120 }, // intro holds readable — matched to the mission hold (~120vh, ~1.3 swipes)
+  { id: 'muse.switch',    section: 'muse', vh: 100 }, // black→white + logo crossfade → orbit reveal
+  { id: 'muse.orbitHold', section: 'muse', vh: 220 }, // 100vh structural exit tail + ~120vh PINNED hold of the revealed orbit (matches the intro hold)
 
   // ---- COMET (section: comet) ----
   { id: 'comet.introIn',    section: 'comet', vh: 100 }, // comet intro fades in

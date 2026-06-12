@@ -22,6 +22,8 @@ export const ProcessLinks = {
   canvas: null,
   ctx: null,
   nodes: [],
+  _sizedW: 0,
+  _sizedH: 0,
 
   init() {
     this.canvas = document.getElementById('process-link-canvas');
@@ -39,12 +41,22 @@ export const ProcessLinks = {
     this.canvas.width = rect.width * dpr;
     this.canvas.height = rect.height * dpr;
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this._sizedW = rect.width;
+    this._sizedH = rect.height;
   },
 
   // `now` is the shared RAF timestamp (ms) from the Renderer — drives the glint.
   draw(now = 0) {
     if (!this.ctx || this.nodes.length < 2) return;
-    const base = this.canvas.getBoundingClientRect();
+    let base = this.canvas.getBoundingClientRect();
+    // Self-heal the backing store. iOS Safari resizes the 100dvh sticky panel as the
+    // URL bar shows/hides but doesn't reliably fire a window `resize`, so the canvas
+    // sized at boot ends up mismatched and strokes land off-screen. If the live box
+    // drifted from what we last sized to, re-size before drawing.
+    if (Math.abs(base.width - this._sizedW) > 1 || Math.abs(base.height - this._sizedH) > 1) {
+      this.resize();
+      base = this.canvas.getBoundingClientRect();
+    }
     const pts = this.nodes.map((el) => {
       const r = el.getBoundingClientRect();
       return { x: r.left + r.width / 2 - base.left, y: r.top + r.height / 2 - base.top };
@@ -54,21 +66,12 @@ export const ProcessLinks = {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-
-    const path = () => {
-      ctx.beginPath();
-      ctx.moveTo(pts[0].x, pts[0].y);
-      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
-      ctx.stroke();
-    };
-
-    // Cool-silver base — thin, solid (fakes a soft glow without shadowBlur). Opacity
-    // dropped ~20% from the previous pass so the running light reads as the brightness.
     ctx.setLineDash([]);
     ctx.lineDashOffset = 0;
-    ctx.strokeStyle = 'rgba(200, 210, 225, 0.032)'; ctx.lineWidth = 4;    path();
-    ctx.strokeStyle = 'rgba(200, 210, 225, 0.064)'; ctx.lineWidth = 2;    path();
-    ctx.strokeStyle = 'rgba(214, 224, 238, 0.141)'; ctx.lineWidth = 0.75; path();
+
+    // The static connecting wire is intentionally NOT drawn — only the travelling
+    // muse-spectrum comet below runs the (now invisible) 1→5 path. The points are still
+    // computed each frame so the beam follows the live bob of the process images.
 
     // Travelling muse-spectrum comet (the toggle beam, running the wire). FLUID MOTION:
     // one continuous pass across the WHOLE path per cycle with a sinusoidal velocity
@@ -128,8 +131,8 @@ export const ProcessLinks = {
           ctx.stroke();
         };
         ctx.strokeStyle = grad;
-        ctx.globalAlpha = 0.30 * fade; ctx.lineWidth = 6;    strokeSub(); // soft colour halo
-        ctx.globalAlpha = 0.95 * fade; ctx.lineWidth = 1.75; strokeSub(); // bright core
+        ctx.globalAlpha = 0.32 * fade; ctx.lineWidth = 7;    strokeSub(); // soft colour halo
+        ctx.globalAlpha = 0.97 * fade; ctx.lineWidth = 2.25; strokeSub(); // bright core
         ctx.globalAlpha = 1;
       }
     }
