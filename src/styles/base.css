@@ -120,10 +120,19 @@ canvas.bg-layer {
   z-index: 1;
 }
 
-/* Soft bloom behind the element. */
+/* Soft bloom behind the element. Masked to the SAME rounded ring band as ::before (not a
+   filled box) so its outer edge follows border-radius — Safari fails to clip a *blurred*
+   filled pseudo to border-radius and leaks a square box, but the ring mask rounds reliably
+   (the crisp ::before ring proves it). A wider padding + blur turns that rounded band into a
+   soft, contained glow with no rectangular overflow. */
 .beam-glow::after {
-  filter: blur(9px);
-  opacity: 0.5;
+  padding: 5px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  filter: blur(7px);
+  opacity: 0.55;
   z-index: -1;
 }
 

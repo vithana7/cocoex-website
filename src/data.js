@@ -56,16 +56,16 @@ export const MUSES = [
 // `url`: each partner's site or Instagram. Empty → the logo renders but isn't a link.
 // Fill these in to make the logos clickable.
 export const PARTNERS = [
-  { name: 'C. Volpi',         file: 'C.Volpi.png',         url: '' },
-  { name: 'CdTortona',        file: 'CdTortona.png',       url: '' },
-  { name: 'Lukso',            file: 'Lukso.png',           url: '' },
-  { name: 'Peng',             file: 'Peng.png',            url: '' },
-  { name: 'RJB',              file: 'RJB.png',             url: '' },
-  { name: 'SFT',              file: 'SFT.png',             url: '' },
-  { name: 'SIRX',             file: 'SIRX.png',            url: '' },
-  { name: 'TN',               file: 'TN.png',              url: '' },
-  { name: 'Vinili e Vinelli', file: 'Vinili e vinelli.png', url: '' },
-  { name: 'WR',               file: 'WR.png',              url: '' },
+  { name: 'C. Volpi',         file: 'C.Volpi.png',         url: 'https://www.cantinevolpi.it' },
+  { name: 'CdTortona',        file: 'CdTortona.png',       url: 'https://www.comune.tortona.al.it' },
+  { name: 'Lukso',            file: 'Lukso.png',           url: 'https://lukso.network' },
+  { name: 'Peng',             file: 'Peng.png',            url: 'https://www.peng-drink.de/en-US' },
+  { name: 'RJB',              file: 'RJB.png',             url: 'https://jungk-bibliothek.org' },
+  { name: 'SFT',              file: 'SFT.png',             url: 'https://www.facebook.com/slowfoodterrederthona/' },
+  { name: 'SIRX',             file: 'SIRX.png',            url: 'https://www.silentrixdorf.de' },
+  { name: 'TN',               file: 'TN.png',              url: 'https://www.instagram.com/terranuda3000/' },
+  { name: 'Vinili e Vinelli', file: 'Vinili e vinelli.png', url: 'https://www.instagram.com/vinili_vinelli' },
+  { name: 'WR',               file: 'WR.png',              url: 'https://wexrecords.bandcamp.com' },
 ].map((p) => ({ name: p.name, url: p.url || '', src: `assets/images/partnerships/${encodeURIComponent(p.file)}` }));
 
 export function easeOutCubic(t) {

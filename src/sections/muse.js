@@ -1,6 +1,6 @@
 import { gsap } from 'gsap';
 import { Renderer } from '../webgl/renderer.js';
-import { sectionSpan, phase } from '../scroll/timeline.js';
+import { phase } from '../scroll/timeline.js';
 import { MusePopup } from '../ui/muse-popup.js';
 
 // Muse: ONE overlapping sticky panel. Intro copy + shared logo fade in over the
@@ -13,11 +13,13 @@ const MuseScroll = {
   orbitRadiusX: 0,
   orbitRadiusY: 0,
   animationTime: 0,
-  orbitSpeed: 0.00015, // ~240s per rotation
+  orbitSpeed: 0.000105, // ~60s per full rotation — calm, clearly-visible drift
   orbitPauseUntil: 0,
   hovering: false, // desktop hover freezes the whole orbit so a muse is catchable
   lastTime: performance.now(),
   initialized: false,
+  hintIndex: -1,   // which orbit muse currently wears the "click me" halo (-1 = none)
+  hintTimer: null,
 
   init() {
     this.container = document.getElementById('muse-section');
@@ -53,7 +55,11 @@ const MuseScroll = {
   update() {
     if (!this.initialized) return;
     const now = performance.now();
-    const delta = now - this.lastTime;
+    // Clamp delta: update() only runs while the muse section is active (gated), so the
+    // FIRST active frame after intro/comet would otherwise see a huge delta (time since
+    // the layer last ran) and lurch the orbit forward. Cap it to ~one slow frame so the
+    // drift always eases in smoothly instead of jumping.
+    const delta = Math.min(now - this.lastTime, 50);
     this.lastTime = now;
 
     if (!this.hovering && (!this.orbitPauseUntil || now >= this.orbitPauseUntil)) {
@@ -76,6 +82,39 @@ const MuseScroll = {
         item.lastZ = z;
       }
     }
+  },
+
+  // Roaming "click me" halo. Moves a single spectrum halo from muse to muse so the
+  // discs read as interactive. Self-scheduling so it costs nothing when idle.
+  scheduleHint(delay) {
+    clearTimeout(this.hintTimer);
+    this.hintTimer = setTimeout(() => this.showHint(), delay);
+  },
+
+  showHint() {
+    const prev = this.hintIndex;
+    // Only hint while the orbit is actually on screen and uncontested: update() runs
+    // (and refreshes lastTime) only while the muse section is the active gated layer,
+    // so a stale lastTime means we're elsewhere. Also yield to hover/popup/hidden tab.
+    const orbitLive = performance.now() - this.lastTime < 400;
+    if (!orbitLive || this.hovering || MusePopup.isOpen || document.hidden) {
+      this.clearHint();
+      this.scheduleHint(1500); // re-check shortly
+      return;
+    }
+    let i = Math.floor(Math.random() * this.items.length);
+    if (this.items.length > 1 && i === prev) i = (i + 1) % this.items.length;
+    if (prev >= 0 && prev !== i && this.items[prev]) this.items[prev].el.classList.remove('is-hinting');
+    this.items[i].el.classList.add('is-hinting');
+    this.hintIndex = i;
+    this.scheduleHint(3500); // dwell, then hop to another muse (CSS crossfades the swap)
+  },
+
+  clearHint() {
+    if (this.hintIndex >= 0 && this.items[this.hintIndex]) {
+      this.items[this.hintIndex].el.classList.remove('is-hinting');
+    }
+    this.hintIndex = -1;
   },
 
   attachHandlers() {
@@ -124,11 +163,12 @@ const MuseScroll = {
         // Freeze on hover/focus so the (now still) card is easy to click; the
         // CSS flip reveals the name in the same window.
         const thaw = () => { this.hovering = false; };
-        el.addEventListener('mouseenter', () => { this.hovering = true; });
+        // Engaging a muse clears the roaming halo so it never fights the hover flip.
+        el.addEventListener('mouseenter', () => { this.hovering = true; this.clearHint(); });
         el.addEventListener('mouseleave', thaw);
         // Only freeze on KEYBOARD focus (focus-visible) — closing the popup restores
         // focus here programmatically, which must NOT re-freeze the orbit for mouse users.
-        el.addEventListener('focus', () => { if (el.matches(':focus-visible')) this.hovering = true; });
+        el.addEventListener('focus', () => { if (el.matches(':focus-visible')) { this.hovering = true; this.clearHint(); } });
         el.addEventListener('blur', thaw);
       }
     });
@@ -136,6 +176,9 @@ const MuseScroll = {
     this.container.addEventListener('touchstart', () => {
       this.orbitPauseUntil = performance.now() + 2000;
     }, { passive: true });
+
+    // Kick off the roaming "click me" halo (gated to when the orbit is actually visible).
+    this.scheduleHint(2000);
   },
 
   resize() {
@@ -165,33 +208,36 @@ function buildMuseTimeline() {
   // Phase windows derived from the declarative timeline (section-relative vh), so
   // changing the PHASES in timeline.js automatically retimes the muse intro/switch
   // with no hand-syncing. fadein → hold → switch.
-  const museStartVh = sectionSpan('muse').startVh;
   const fadein = phase('muse.fadein');
   const sw = phase('muse.switch');
-  const FADE_VH = fadein.endVh - museStartVh;        // end of fade-in, into the panel
-  const SWITCH_AT_VH = sw.startVh - museStartVh;      // switch start, into the panel
-  const SWITCH_VH = sw.endVh - sw.startVh;            // switch duration
+  // Section-relative PIXEL offsets (computed against the live viewport inside the
+  // function-form start/end + invalidateOnRefresh, so they stay correct on resize).
+  // NOTE: ScrollTrigger reads a `top+=Xvh` string as X *pixels* (it strips the unit),
+  // so vh MUST be converted to px here — mirrors the intro section's pattern.
+  const FADE_END_PX = () => fadein.endFromSection();     // end of fade-in, into the panel
+  const SWITCH_START_PX = () => sw.startFromSection();   // switch start, into the panel
+  const SWITCH_END_PX = () => sw.endFromSection();       // switch end, into the panel
 
   gsap.set(sharedLogo, { xPercent: -50, yPercent: -50, opacity: 0 });
 
-  // Intro fade-in (0 → FADE).
-  gsap.timeline({
-    defaults: { ease: 'power2.out' },
+  // Intro fade-in (0 → FADE). Logo + copy fade in TOGETHER, pure linear opacity — a direct
+  // mirror of the cocoex mission reveal (one simple scrubbed opacity move, no stagger, no
+  // slide) so it carries the same unhurried flow.
+  gsap.fromTo([sharedLogo, introCopy], { opacity: 0 }, {
+    opacity: 1, ease: 'none',
     scrollTrigger: {
       trigger: '.muse-panel', start: 'top top',
-      end: `top+=${FADE_VH}vh top`, scrub: true, invalidateOnRefresh: true,
+      end: () => `top+=${FADE_END_PX()}px top`, scrub: true, invalidateOnRefresh: true,
     },
-  })
-    .fromTo(sharedLogo, { opacity: 0 }, { opacity: 1 }, 0)
-    .fromTo(introCopy, { opacity: 0 }, { opacity: 1 }, 0);
+  });
 
-  // Switch (SWITCH_AT → SWITCH_AT+SWITCH): bg black→white, logo white→black,
+  // Switch (SWITCH_START → SWITCH_END): bg black→white, logo white→black,
   // intro copy out, orbit revealed.
   gsap.timeline({
     scrollTrigger: {
       trigger: '.muse-panel',
-      start: `top+=${SWITCH_AT_VH}vh top`,
-      end: `top+=${SWITCH_AT_VH + SWITCH_VH}vh top`,
+      start: () => `top+=${SWITCH_START_PX()}px top`,
+      end: () => `top+=${SWITCH_END_PX()}px top`,
       scrub: true, invalidateOnRefresh: true,
     },
   })

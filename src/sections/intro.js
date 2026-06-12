@@ -1,6 +1,5 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Renderer } from '../webgl/renderer.js';
 import { phase, sectionSpan, vhToPx } from '../scroll/timeline.js';
 import {
   CONFIG, isMobile, DOT_COLORS, CONSTELLATION_REF, CONNECTIONS,
@@ -43,7 +42,6 @@ export function initIntro(introStarfield) {
 
   let fireworkDots = [];
   let explosionStarted = false;
-  let pulseTriggered = false;
 
   function sizeConstellation() {
     const dpr = isMobile() ? Math.min(window.devicePixelRatio || 1, 2) : (window.devicePixelRatio || 1);
@@ -255,24 +253,14 @@ export function initIntro(introStarfield) {
     if (!explosionStarted) {
       initFireworkDots();
       explosionStarted = true;
-      if (!pulseTriggered) {
-        introStarfield.setPulse(0.01);
-        pulseTriggered = true;
-      }
     }
+    // Drive the ripple DIRECTLY from the explosion scroll progress so the wavefront
+    // expands in lockstep with the muses bursting outward (was time-based → it lagged
+    // the scroll). The burst lands over progress 0→~0.45, so the ripple swells and
+    // fades across exactly that window (envelope sin(pulse·π) inside the shader).
+    introStarfield.setPulse(Math.min(1, progress / 0.45));
     drawExplosion(progress);
   }
-
-  // The intro draws nothing extra per-frame beyond what GSAP scrubs — but the
-  // pulse needs to advance once triggered. Register a tiny layer for that.
-  Renderer.add({
-    sections: ['intro'],
-    render() {
-      if (introStarfield.pulse > 0 && introStarfield.pulse < 1) {
-        introStarfield.setPulse(Math.min(1, introStarfield.pulse + 0.012));
-      }
-    },
-  });
 
   // ---- GSAP timelines wired to declarative timeline phases ----
   buildIntroTimelines({ el, updateOrbit, updateExplosion });
@@ -307,7 +295,8 @@ export function initIntro(introStarfield) {
 function buildIntroTimelines({ el, updateOrbit, updateExplosion }) {
   const orbit = phase('intro.orbit');
   const explosion = phase('intro.explosion');
-  const statement = phase('intro.statement');
+  // intro.statement is the dedicated hold room (its vh) but isn't referenced directly —
+  // Beat 2's window is derived from explosion.start → mission mid (see below).
   const mission = phase('intro.mission');
   const missionHold = phase('intro.missionHold');
 
@@ -348,19 +337,21 @@ function buildIntroTimelines({ el, updateOrbit, updateExplosion }) {
     },
   });
 
-  // Beat 1 — tagline: fades in over the BACK HALF of the orbit (logo mostly formed),
-  // holds while the orbit finishes, fades out as the burst begins. Spanning a custom
-  // sub-range (orbit 45% → into explosion 12%) gives it ~100vh of reading time vs the
-  // old ~14vh hold. The fractions live here (not timeline.js) because it's a sub-range
-  // of two phases, not a phase of its own.
+  // Beat 1 — tagline: fades in over the orbit (logo forming), holds while the orbit
+  // finishes, fades out as the burst begins. Enters at orbit 30% (earlier than the old
+  // 45% so the line greets you sooner) and runs to explosion 12% — its full on-screen
+  // window, shared with the colour flare below. The fractions live here (not timeline.js)
+  // because it's a sub-range of two phases, not a phase of its own.
   const orbitSpan = () => orbit.endPx() - orbit.startPx();
   const explosionSpan = () => explosion.endPx() - explosion.startPx();
   if (el.introTagline) {
+    const tagStart = () => orbit.startPx() + orbitSpan() * 0.30;
+    const tagEnd = () => explosion.startPx() + explosionSpan() * 0.12;
     gsap.timeline({
       scrollTrigger: {
         trigger: '.scroll-container',
-        start: () => `top+=${orbit.startPx() + orbitSpan() * 0.45}px top`,
-        end: () => `top+=${explosion.startPx() + explosionSpan() * 0.12}px top`,
+        start: () => `top+=${tagStart()}px top`,
+        end: () => `top+=${tagEnd()}px top`,
         scrub: true,
         invalidateOnRefresh: true,
       },
@@ -369,33 +360,38 @@ function buildIntroTimelines({ el, updateOrbit, updateExplosion }) {
       .to(el.introTagline, { opacity: 1, duration: 0.5, ease: 'none' })
       .to(el.introTagline, { opacity: 0, duration: 0.2, ease: 'none' });
 
-    // "Dia" text reveal: a muse-spectrum band sweeps across the tagline once each time it
-    // scrolls into view (the opacity above handles visibility; this is just the colour
-    // sweep, --sweep 100→0). Skipped under reduced-motion (text stays plain white).
+    // "Dia" colour flare — now SCROLL-LINKED instead of a fixed 1.5s clock. The
+    // muse-spectrum band's position (--sweep 100→0) is scrubbed against the same on-screen
+    // window, so its travel carries the weight of the scroll: it crawls when you ease,
+    // streaks when you flick, and reverses on scroll-back. A small scrub lag (0.8s) smooths
+    // it into a fluid glide rather than a 1:1 jitter. Reduced-motion → plain white (no sweep).
     const taglineP = el.introTagline.querySelector('p');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (taglineP && !reduced) {
-      const sweep = gsap.fromTo(taglineP,
+      gsap.fromTo(taglineP,
         { '--sweep': 100 },
-        { '--sweep': 0, duration: 1.5, ease: 'power1.inOut', paused: true });
-      ScrollTrigger.create({
-        trigger: '.scroll-container',
-        start: () => `top+=${orbit.startPx() + orbitSpan() * 0.45}px top`,
-        end: () => `top+=${explosion.startPx() + explosionSpan() * 0.12}px top`,
-        invalidateOnRefresh: true,
-        onEnter: () => sweep.restart(),
-        onEnterBack: () => sweep.restart(),
-      });
+        {
+          '--sweep': 0, ease: 'none',
+          scrollTrigger: {
+            trigger: '.scroll-container',
+            start: () => `top+=${tagStart()}px top`,
+            end: () => `top+=${tagEnd()}px top`,
+            scrub: 0.8,
+            invalidateOnRefresh: true,
+          },
+        });
     }
   }
 
-  // Beat 2 — statement: fades in DURING the outward burst (explosion progress 0→~0.4
-  // = the first ~19% of this range), holds over the settling/settled constellation,
-  // fades out before the mission smoke-clear. Spanning explosion.start → statement.end
-  // so the reveal is synced to the dots flying outward, not after they've settled.
+  // Beat 2 — statement: ONE timeline so it never flashes at page load (a shared smoke
+  // fromTo would immediate-render it visible) and the in/out can't race a second tween.
+  // It fades in DURING the outward burst (first ~15% of the span = the explosion), holds
+  // over the settled constellation, then fades out over the FINAL ~18.5% — a window that
+  // lands exactly on [mission.start → mission.start + 50%], i.e. the same span the
+  // constellation/backdrop smoke dissolves over. So the words and the dots leave together.
   if (el.introStatement) {
     const b2Start = () => explosion.startPx();
-    const b2End = () => statement.endPx();
+    const b2End = () => mission.startPx() + (mission.endPx() - mission.startPx()) * 0.5;
     gsap.timeline({
       scrollTrigger: {
         trigger: '.scroll-container',
@@ -405,9 +401,9 @@ function buildIntroTimelines({ el, updateOrbit, updateExplosion }) {
         invalidateOnRefresh: true,
       },
     })
-      .fromTo(el.introStatement, { opacity: 0 }, { opacity: 1, duration: 0.19, ease: 'none' })
+      .fromTo(el.introStatement, { opacity: 0 }, { opacity: 1, duration: 0.155, ease: 'none' })
       .to(el.introStatement, { opacity: 1, duration: 0.66, ease: 'none' })
-      .to(el.introStatement, { opacity: 0, duration: 0.15, ease: 'none' });
+      .to(el.introStatement, { opacity: 0, duration: 0.185, ease: 'none' });
   }
 
   // Phase 3: explosion. Front-loaded: dots settle over the first ~70% of the

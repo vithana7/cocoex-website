@@ -1,14 +1,32 @@
 import { SIMPLEX_NOISE, STAR_FIELD } from './glsl-utils.js';
 
-// Intro cosmic-noise starfield + dispersive "big bang" pulse. Verbatim port.
+// Intro cosmic-noise starfield + a muse-spectrum "big bang" RIPPLE burst.
+// The pulse moment (u_pulse 0→1, fired when the constellation explodes) now drives a
+// concentric-ring ripple (ported from the 21st.dev/aliimam shader: glowing rings via
+// 1/abs(fract(t)*5 - length(uv) + mod(...)) with an irregular diagonal term) — tinted
+// across the 7 muse hues and enveloped by sin(pulse*PI) so it swells with the burst and
+// fades out, layered over the monochrome cosmic noise. NOT continuous: it's a one-shot.
 export const INTRO_FRAG = `
   precision highp float;
+  #define PI 3.14159265359
   uniform vec2 u_resolution;
   uniform float u_time;
   uniform float u_pulse;
 
   ${SIMPLEX_NOISE}
   ${STAR_FIELD}
+
+  // Smooth palette across the 7 muse hues (Ares→Solis→Thunor→Rabu→Lunes→Shukra→Dosei).
+  vec3 museTint(float t) {
+    t = clamp(t, 0.0, 1.0) * 6.0;
+    vec3 c = mix(vec3(0.835,0.302,0.180), vec3(0.831,0.514,0.282), clamp(t,       0.0, 1.0));
+    c = mix(c, vec3(0.973,0.847,0.416), clamp(t - 1.0, 0.0, 1.0));
+    c = mix(c, vec3(0.549,0.690,0.498), clamp(t - 2.0, 0.0, 1.0));
+    c = mix(c, vec3(0.341,0.514,0.651), clamp(t - 3.0, 0.0, 1.0));
+    c = mix(c, vec3(0.369,0.278,0.631), clamp(t - 4.0, 0.0, 1.0));
+    c = mix(c, vec3(0.498,0.286,0.635), clamp(t - 5.0, 0.0, 1.0));
+    return c;
+  }
 
   void main() {
     vec2 uv = gl_FragCoord.xy / u_resolution.xy;
@@ -30,28 +48,41 @@ export const INTRO_FRAG = `
     float starLight = stars(uv, u_time);
     brightness += starLight * 0.25;
 
+    vec3 col = vec3(brightness);
+
     if (u_pulse > 0.0) {
-      vec2 center = vec2(0.5, 0.5);
-      vec2 toCenter = uv - center;
-      toCenter.x *= aspect;
+      // Aspect-correct, centered coords (matches the reference shader's normalisation).
+      vec2 ruv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+      // burst envelope, broadened peak so the rings stay bright as they travel out then fade.
+      // max(…,0) is REQUIRED: sin(π) lands at a tiny NEGATIVE float at pulse=1, and
+      // pow(negative, 0.6) = NaN → a black-pixel flash. Clamp the base to keep it safe.
+      float env = pow(max(sin(u_pulse * PI), 0.0), 0.6);
+      float r = length(ruv);
 
-      float noiseOffset = snoise(uv * 4.0 + u_time * 0.1) * 0.15;
-      float dist = length(toCenter) + noiseOffset;
+      // Concentric wavefront EXPANDING from center, radius driven by the pulse (NOT page
+      // time — so the ring positions are identical no matter when the burst fires). The
+      // radius uses an ease-OUT (1-(1-p)^2) so the wave races out then DECELERATES as it
+      // widens — like a real shockwave — and reaches 1.6 (past the screen corners) so it
+      // ripples to ALL ends of the page. 1/abs = glowing thin rings; the snoise wobble
+      // perturbs the radius for ORGANIC irregularity (the reference's hard mod() seam read
+      // as a glitch — replaced).
+      float rad = (1.0 - pow(1.0 - u_pulse, 2.0)) * 1.6;
+      float wob = snoise(ruv * 1.6 + u_pulse * 3.0) * 0.12;
+      float rings = 0.0;
+      for (int i = 0; i < 5; i++) {
+        float fi = float(i);
+        rings += 0.0016 * fi * fi / abs((rad - fi * 0.16) - r + wob);
+      }
+      rings = min(rings, 1.6);                 // tame the 1/abs spikes (no blow-out)
 
-      float expandRadius = u_pulse * 2.0;
-      float fadeOut = 1.0 - u_pulse;
+      vec3 tint = museTint(fract(r * 0.6 + u_pulse));
+      col += rings * tint * env * 0.45;
 
-      float wave1 = exp(-pow((dist - expandRadius * 0.5) * 4.0, 2.0)) * 0.12;
-      float wave2 = exp(-pow((dist - expandRadius * 0.8) * 3.0, 2.0)) * 0.08;
-      float wave3 = exp(-pow((dist - expandRadius) * 2.5, 2.0)) * 0.05;
-
-      float pulseIntensity = (wave1 + wave2 + wave3) * fadeOut * fadeOut;
-      float flash = fadeOut * fadeOut * fadeOut * exp(-dist * 4.0) * 0.1;
-
-      brightness += pulseIntensity + flash;
+      // faint white core flash for the "bang"
+      col += vec3(env * env * exp(-r * 3.0) * 0.12);
     }
 
-    gl_FragColor = vec4(vec3(brightness), 1.0);
+    gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
   }
 `;
 

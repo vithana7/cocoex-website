@@ -111,22 +111,27 @@
   transform: scale(1.1);
 }
 
+/* Footer is intentionally shrunk: ~20% smaller on mobile (the base values below) and
+   ~50% smaller on desktop (the min-width:1024px override at the bottom of this file).
+   This needs an actual breakpoint, not a clamp: desktop must be SMALLER than mobile,
+   an inverted relationship a single vw-clamp can't express. Mobile keeps the social
+   tap targets compact (sub-44px) per an explicit product decision. */
 .social-links {
   display: flex;
   justify-content: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
   width: 100%;
-  padding: var(--spacing-lg) 0 var(--spacing-md);
+  padding: var(--spacing-md) 0 var(--spacing-sm);
 }
 
 .social-link {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: clamp(44px, 6vw, 52px);
-  height: clamp(44px, 6vw, 52px);
+  width: clamp(35px, 4.8vw, 42px);
+  height: clamp(35px, 4.8vw, 42px);
   color: var(--color-white);
-  border-radius: clamp(10px, 1.5vw, 12px);
+  border-radius: clamp(8px, 1.2vw, 10px);
   transition: color var(--transition-medium), transform var(--transition-medium), background-color var(--transition-medium);
 }
 
@@ -143,16 +148,39 @@
 }
 
 .social-icon {
-  width: clamp(24px, 4vw, 32px);
-  height: clamp(24px, 4vw, 32px);
+  width: clamp(19px, 3.2vw, 26px);
+  height: clamp(19px, 3.2vw, 26px);
 }
 
 .footer-logo {
   display: block;
   margin: 0 auto;
-  padding-bottom: var(--spacing-md);
-  width: clamp(120px, 18vw, 172px);
+  /* Buffer beneath the logo so it doesn't sit flush against the page edge. */
+  padding-bottom: clamp(2rem, 6vh, 4rem);
+  width: clamp(96px, 14.4vw, 138px);
   height: auto;
+}
+
+/* Desktop: ~50% of the original footer size (half the mobile-ish base above). */
+@media screen and (min-width: 1024px) {
+  .social-links {
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) 0 var(--spacing-xs);
+  }
+  .social-link {
+    width: clamp(22px, 3vw, 26px);
+    height: clamp(22px, 3vw, 26px);
+    border-radius: clamp(6px, 0.9vw, 8px);
+  }
+  .social-icon {
+    width: clamp(12px, 2vw, 16px);
+    height: clamp(12px, 2vw, 16px);
+  }
+  .footer-logo {
+    width: clamp(60px, 9vw, 86px);
+    /* Smaller logo on desktop, but keep a comfortable bottom buffer. */
+    padding-bottom: clamp(1.75rem, 5vh, 3.5rem);
+  }
 }
 
 @media screen and (max-width: 768px) {

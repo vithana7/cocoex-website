@@ -56,7 +56,12 @@
   animation: introIdlePulse 2.6s ease-in-out infinite;
 }
 .intro-idle .intro-logo { opacity: 1; }
-.intro-idle .orbit-dot { opacity: 0; }
+/* Hide the dots on the landing screen. `animation: none` is essential: the dots' running
+   pulseDot keyframes animate `opacity`, and a running animation OVERRIDES this rule's
+   opacity:0 — so without killing the animation the dots stay visible (pulsing) at the
+   container's top-left corner (no top/left set). updateOrbit re-reveals + positions them
+   the instant the orbit starts (idle removed). */
+.intro-idle .orbit-dot { opacity: 0; animation: none; }
 
 @keyframes introIdlePulse {
   0%, 100% { transform: translate(-50%, -50%) scale(1);     }
@@ -167,11 +172,13 @@
      intro.js when the tagline scrolls into view. Background-clip paints the gradient INTO
      the glyphs; drop-shadow (not text-shadow, which needs a painted fill) keeps it legible
      over the busy intro. At --sweep 0% and 100% the band is off the text → pure white. */
-  --sweep: 100; /* unitless 100→0 (tweened by GSAP); *1% in background-position */
+  --sweep: 100; /* unitless 100→0 (scrubbed by GSAP); *1% in background-position */
+  /* Broad, feathered colour band (~34% wide, soft white shoulders) so the sweep GLIDES
+     edge-to-edge as it scrolls instead of snapping past in a narrow strip. */
   background: linear-gradient(100deg,
-    #fff 0%, #fff 42%,
-    #D54D2E 46%, #D48348 48%, #F8D86A 50%, #8CB07F 52%, #5783A6 54%,
-    #fff 58%, #fff 100%);
+    #fff 0%, #fff 28%,
+    #D54D2E 38%, #D48348 44%, #F8D86A 50%, #8CB07F 56%, #5783A6 62%,
+    #fff 72%, #fff 100%);
   background-size: 300% 100%;
   background-position: calc(var(--sweep) * 1%) 0;
   -webkit-background-clip: text;
