@@ -8,14 +8,14 @@ The site is a Vite + ES-module build: vanilla JS organised into small modules, G
 
 ## Scroll Budget
 
-Total page height ≈ **1482vh** (intro 592 + muse 490 + comet 400, plus the static events page + footer). All scroll-driven distances live in `src/scroll/timeline.js`. Never hardcode `vh` values inline.
+Total page height ≈ **1582vh** (intro 592 + muse 490 + comet 500, plus the static events page + footer). All scroll-driven distances live in `src/scroll/timeline.js`. Never hardcode `vh` values inline.
 
 | Section | Span | Position | Phases (`timeline.js`) |
 |---|---|---|---|
 | Landing + Mission | 592vh | Fixed overlay | `intro.orbit` 192 + `intro.explosion` 100 + `intro.statement` 40 + `intro.mission` 100 + `intro.missionHold` 160 |
 | Muse (intro → orbit) | 490vh | Sticky `.muse-stage`, one overlapping panel | `muse.fadein` 50 + `muse.hold` 120 + `muse.switch` 100 + `muse.orbitHold` 220 |
 | Comet Intro | 200vh | Sticky `.comet-panel-intro` | `comet.introIn` 100 + `comet.introHold` 100 |
-| Comet Methods | 200vh | Sticky `.comet-panel-tabs` | `comet.methodsIn` 100 + `comet.methodsHold` 100 |
+| Comet Methods | 300vh | Sticky `.comet-panel-tabs` | `comet.methodsIn` 100 + `comet.methodsHold` 200 |
 | Events + Footer | static | Normal flow | — |
 
 Muse intro and orbit are **one overlapping sticky panel** (the center logo stays put while the background flips black→white). Comet is **two sequential sticky panels** that never co-exist on screen — the old connected-images panel and its z-index race are gone.

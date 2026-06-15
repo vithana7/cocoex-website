@@ -50,8 +50,8 @@
         </div>
 
         <div class="mission-overlay" id="mission-overlay" aria-label="Mission statement">
-          <p class="reveal-text reveal-text-top" id="reveal-text"><em>cocoex</em> is a non-profit lab where artists, creators and collectors turn art into real environmental and social change.</p>
-          <p class="reveal-text reveal-text-bottom">The creation belongs to the artists. The impact belongs to the world.</p>
+          <p class="reveal-text reveal-text-top" id="reveal-text"><em>cocoex</em> is a transdisciplinary social impact lab that uses art, participation, and technology to generate real environmental and social change. We bring creators together — cultivating a community built on shared purpose, where art and impact are inseparable.</p>
+          <p class="reveal-text reveal-text-bottom">We are a non-profit. We build the infrastructure, hold the space, and set the conditions for something larger than ourselves.</p>
         </div>
       </div>
     </section>
@@ -182,7 +182,10 @@
         <div class="section-panel comet-panel-intro">
         <section class="comet-collab-intro" id="comet-collab-intro" aria-label="Comet collab introduction">
           <div class="comet-collab-intro-logo" id="comet-collab-intro-logo">
-            <img src="assets/images/comet-collabs/comet-collabs-logo-white.png" alt="Comet Collabs" loading="lazy" decoding="async">
+            <!-- Vector (white.svg) — SAME artwork the dive clone is cropped from, so the
+                 swirl take-over overlays exactly. NOT lazy: the dive clone measures this
+                 logo's position; a lazy (unloaded) logo measures 0x0. -->
+            <img src="assets/images/comet-collabs/white.svg" alt="Comet Collabs" decoding="async">
           </div>
 
           <div class="comet-collab-intro-content">
@@ -191,11 +194,15 @@
 
           <div class="floating-processes" id="floating-processes">
             <canvas class="process-link-canvas" id="process-link-canvas" aria-hidden="true"></canvas>
-            <div class="floating-process" data-process="1"><img src="assets/images/comet-collabs/process-one.png" alt="Process 1" loading="lazy" decoding="async"></div>
-            <div class="floating-process" data-process="2"><img src="assets/images/comet-collabs/process-two.png" alt="Process 2" loading="lazy" decoding="async"></div>
-            <div class="floating-process" data-process="3"><img src="assets/images/comet-collabs/process-three.png" alt="Process 3" loading="lazy" decoding="async"></div>
-            <div class="floating-process" data-process="4"><img src="assets/images/comet-collabs/process-four.png" alt="Process 4" loading="lazy" decoding="async"></div>
-            <div class="floating-process" data-process="5"><img src="assets/images/comet-collabs/process-five.png" alt="Process 5" loading="lazy" decoding="async"></div>
+            <!-- Only the images are wrapped in the group; the starline canvas above stays a
+                 sibling so the dive's implosion (scaling this group) never resizes the canvas. -->
+            <div class="floating-process-group" id="floating-process-group">
+              <div class="floating-process" data-process="1"><img src="assets/images/comet-collabs/process-one.png" alt="Process 1" loading="lazy" decoding="async"></div>
+              <div class="floating-process" data-process="2"><img src="assets/images/comet-collabs/process-two.png" alt="Process 2" loading="lazy" decoding="async"></div>
+              <div class="floating-process" data-process="3"><img src="assets/images/comet-collabs/process-three.png" alt="Process 3" loading="lazy" decoding="async"></div>
+              <div class="floating-process" data-process="4"><img src="assets/images/comet-collabs/process-four.png" alt="Process 4" loading="lazy" decoding="async"></div>
+              <div class="floating-process" data-process="5"><img src="assets/images/comet-collabs/process-five.png" alt="Process 5" loading="lazy" decoding="async"></div>
+            </div>
           </div>
         </section>
         </div>
@@ -250,6 +257,22 @@
           </div>
 
         </div>
+        </div>
+
+        <!-- Zoom-portal: camera dive INTO the white comet swirl -> white fill -> toggle.
+             A FIXED layer so it's immune to the intro panel's sticky scroll-away. Both the
+             swirl and the ripple are CANVASES drawn by the central Renderer every frame from
+             one scrub value (comet-dive.js + burst-ripple.js), so they present together at any
+             scroll speed (the old CSS-transformed <img> swirl desynced from the ripple on fast
+             reverse). Inert (opacity:0, pointer-events:none) outside the transition; the dive
+             is skipped entirely under prefers-reduced-motion. -->
+        <div class="comet-zoom-portal" aria-hidden="true">
+          <!-- muse-spectrum "constellation burst" ripple (reused intro shader), z BEHIND the
+               swirl — radiates from behind it. -->
+          <canvas class="comet-zoom-ripple-canvas" id="comet-zoom-ripple-canvas" aria-hidden="true"></canvas>
+          <!-- the diving comet swirl (comet-mark-white.svg, drawn imperatively, hi-res raster
+               so it's crisp at every scale) — z ABOVE the ripple. -->
+          <canvas class="comet-zoom-swirl-canvas" id="comet-zoom-swirl-canvas" aria-hidden="true"></canvas>
         </div>
       </div>
 

@@ -27,7 +27,7 @@ export const PHASES = [
   { id: 'comet.introIn',    section: 'comet', vh: 100 }, // comet intro fades in
   { id: 'comet.introHold',  section: 'comet', vh: 100 }, // intro holds
   { id: 'comet.methodsIn',  section: 'comet', vh: 100 }, // methods/tabs panel fades in
-  { id: 'comet.methodsHold',section: 'comet', vh: 100 }, // methods hold through closure
+  { id: 'comet.methodsHold',section: 'comet', vh: 200 }, // methods toggle holds pinned (longer dwell before partnerships) — MUST match .comet-panel-tabs height in comet.css
 ];
 
 // How many vh into a section's first phase the constellation 2D canvas should
