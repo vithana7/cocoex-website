@@ -245,8 +245,11 @@
   max-width: min(90%, 800px);
   font-family: var(--font-canela);
   font-weight: var(--font-h2-weight);
-  font-size: var(--font-body-size);
-  line-height: var(--font-body-height);
+  /* Lead-paragraph tier (not the larger body/statement size): the mission copy is now multi-
+     sentence explanatory prose, so the 36px statement size read chunky. --font-lead-size
+     (~26px max) is the system's tier for exactly this — matches muse intro / comet body. */
+  font-size: var(--font-lead-size);
+  line-height: var(--font-lead-height);
   color: var(--color-white);
   text-align: center;
   text-wrap: balance;

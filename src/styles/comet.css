@@ -10,8 +10,11 @@
   height: 200vh;
 }
 
+/* 300vh (= methodsIn 100 + methodsHold 200 in timeline.js): the sticky 100vh methods child
+   then stays PINNED for 200vh (panel − viewport) so the Stardust/Horizon toggle dwells
+   longer before partnerships scroll in. Keep this in sync with comet.methodsHold. */
 .comet-panel-tabs {
-  height: 200vh;
+  height: 300vh;
 }
 
 .comet-collab-intro {
@@ -38,10 +41,14 @@
 }
 
 .comet-collab-intro-logo img {
-  width: auto;
+  /* white.svg has a viewBox but NO width/height attributes, so an SVG <img> sized with
+     width:auto resolves to 0×0 (the PNG had intrinsic px dimensions; the PNG→SVG swap
+     regressed the on-page logo to invisible). Set the width EXPLICITLY — the viewBox then
+     supplies the aspect ratio for height:auto. The dive (comet-dive.js) anchors itself to this
+     element's LIVE rect, so it MUST have a real rendered size. Width = --comet-logo-size. */
+  width: var(--comet-logo-size);
   height: auto;
-  max-width: var(--comet-logo-size);
-  max-height: calc(var(--comet-logo-size) * 0.5);
+  max-width: none;
   object-fit: contain;
   filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.3));
 }
@@ -99,6 +106,22 @@
   align-items: center;
   justify-content: flex-start;
   gap: clamp(2rem, 5vh, 4rem);
+  /* The comet dive masks this whole panel with the swirl SVG to reveal the toggle THROUGH the
+     growing logo. mask-image/size/position are written inline by comet-dive.js per frame; only
+     the non-animating no-repeat lives here so the swirl never tiles. Inert until the dive. */
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* During the dive reveal the panel must cover the FULL viewport so the swirl-masked window has
+   content everywhere it grows — otherwise (while it's still sticky and mid-pin, top > 0) the
+   masked reveal clips to the panel's partial box and shows a hard horizontal seam. comet-dive.js
+   adds this only while the reveal is mid (0 < reveal < 1); fixed and the pinned-sticky state both
+   render at top:0, so the swap is seamless (and happens under a tiny mask anyway). The 300vh tabs
+   panel keeps its explicit height, so taking this child out of flow doesn't shift the scroll. */
+.comet-collab-methods.dive-fixed {
+  position: fixed;
+  left: 0;
 }
 
 .comet-collab-background-canvas {
@@ -130,6 +153,15 @@
   height: 100%;
   z-index: 2;
   pointer-events: none;
+}
+
+/* Wraps only the 5 process images (NOT the starline canvas), so the dive can scale this
+   group to implode them toward the swirl without resizing the self-healing canvas.
+   inset:0 so the children's absolute % offsets resolve exactly as before. */
+.floating-process-group {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
 }
 
 .floating-process {
@@ -439,3 +471,34 @@
   padding: 0.4em 0.9em;
   border-radius: 20px;
 }
+
+/* ---- Intro -> Methods zoom transition (swirl flies into white, then the toggle) ----
+   A FIXED overlay so it's immune to the intro panel's sticky scroll-away. The swirl and the
+   ripple are BOTH canvases drawn by the central Renderer (comet-dive.js + burst-ripple.js)
+   from one scrub value, so they present together at any scroll speed (the old CSS-transformed
+   <img> swirl desynced from the WebGL ripple on fast reverse). comet.js scrubs the dive + the
+   methods reveal. Inert outside the window; the zoom is skipped under prefers-reduced-motion. */
+.comet-zoom-portal {
+  position: fixed;
+  inset: 0;
+  /* Above intro(5) AND methods content(50): the white must cover the toggle while it fades in
+     underneath, then the portal fades out to "develop" the toggle from white. */
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0;
+  overflow: hidden;
+}
+
+/* Both dive canvases fill the viewport; content is drawn imperatively each frame (positioned
+   in canvas space, NOT via CSS transform — that's what kept the swirl in sync with the ripple).
+   Swirl z ABOVE the ripple so the ripple radiates from behind it. */
+.comet-zoom-swirl-canvas,
+.comet-zoom-ripple-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.comet-zoom-ripple-canvas { z-index: 0; } /* behind */
+.comet-zoom-swirl-canvas  { z-index: 1; } /* swirl rides on top */

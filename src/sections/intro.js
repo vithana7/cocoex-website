@@ -330,6 +330,17 @@ function buildIntroTimelines({ el, updateOrbit, updateExplosion }) {
           el.logoContainer.style.removeProperty('width');
           el.logoContainer.style.removeProperty('height');
           el.logoContainer.style.removeProperty('transform');
+          // Same for the orbit dots: updateOrbit sets inline opacity:1 + position, which would
+          // otherwise override `.intro-idle .orbit-dot { opacity: 0 }` and leave the two dots stuck
+          // VISIBLE (and off-position near the screen edges) at the very top instead of hidden as on
+          // first load. Clear them so the CSS idle state hides them on scroll-back.
+          for (const dot of [el.dotWhite, el.dotBlack]) {
+            dot.style.removeProperty('opacity');
+            dot.style.removeProperty('left');
+            dot.style.removeProperty('top');
+            dot.style.removeProperty('width');
+            dot.style.removeProperty('height');
+          }
         } else {
           updateOrbit(orbitState);
         }

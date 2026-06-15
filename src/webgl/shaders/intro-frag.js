@@ -86,6 +86,60 @@ export const INTRO_FRAG = `
   }
 `;
 
+// Standalone, TRANSPARENT version of the intro ripple — the same muse-spectrum "big
+// bang" wavefront, but with no starfield/noise behind it and centred on a configurable
+// point (u_center, in 0..1 uv). Used as an overlay for the comet dive so the constellation
+// burst rides outward from the logo. Premultiplied output (rgb already == a*hue), cleared
+// transparent each frame so the scene shows through where there are no rings.
+export const BURST_RIPPLE_FRAG = `
+  precision highp float;
+  #define PI 3.14159265359
+  uniform vec2 u_resolution;
+  uniform float u_pulse;
+  uniform vec2 u_center;
+
+  ${SIMPLEX_NOISE}
+
+  vec3 museTint(float t) {
+    t = clamp(t, 0.0, 1.0) * 6.0;
+    vec3 c = mix(vec3(0.835,0.302,0.180), vec3(0.831,0.514,0.282), clamp(t,       0.0, 1.0));
+    c = mix(c, vec3(0.973,0.847,0.416), clamp(t - 1.0, 0.0, 1.0));
+    c = mix(c, vec3(0.549,0.690,0.498), clamp(t - 2.0, 0.0, 1.0));
+    c = mix(c, vec3(0.341,0.514,0.651), clamp(t - 3.0, 0.0, 1.0));
+    c = mix(c, vec3(0.369,0.278,0.631), clamp(t - 4.0, 0.0, 1.0));
+    c = mix(c, vec3(0.498,0.286,0.635), clamp(t - 5.0, 0.0, 1.0));
+    return c;
+  }
+
+  void main() {
+    if (u_pulse <= 0.0) { gl_FragColor = vec4(0.0); return; }
+    // Centred, aspect-correct coords relative to the focal point (min-dim normalised,
+    // matching the intro ripple so the ring spacing reads identically).
+    vec2 ruv = (gl_FragCoord.xy - u_center * u_resolution) * 2.0 / min(u_resolution.x, u_resolution.y);
+    float env = pow(max(sin(u_pulse * PI), 0.0), 0.6);   // swell then fade (NaN-guarded)
+    float r = length(ruv);
+    float rad = (1.0 - pow(1.0 - u_pulse, 2.0)) * 3.0;    // ease-out shockwave PAST every edge
+    float wob = snoise(ruv * 1.6 + u_pulse * 3.0) * 0.12; // organic irregularity
+    float rings = 0.0;
+    for (int i = 0; i < 5; i++) {
+      float fi = float(i);
+      rings += 0.0016 * fi * fi / abs((rad - fi * 0.22) - r + wob);
+    }
+    rings = min(rings, 1.6);
+
+    vec3 tint = museTint(fract(r * 0.6 + u_pulse));
+    vec3 col = rings * tint * env * 0.6;
+    // NOTE: no white core flash here (the intro has one) — at this focal-centred zoom it
+    // read as a "white dot forming". The rings alone carry the burst.
+    col = clamp(col, 0.0, 1.0);
+
+    // a == max channel => col is already premultiplied (col == a * hue), so it composites
+    // cleanly over the page where rings exist and is fully transparent where they don't.
+    float a = clamp(max(max(col.r, col.g), col.b), 0.0, 1.0);
+    gl_FragColor = vec4(col, a);
+  }
+`;
+
 export const STARFIELD_FRAG = `
   precision highp float;
   uniform vec2 u_resolution;
