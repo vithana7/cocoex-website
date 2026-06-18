@@ -103,7 +103,10 @@
 
   .step-title {
     font-size: clamp(13px, 3.4vw, 16px);
-    margin-bottom: clamp(0.2rem, 0.5vh, 0.3rem);
+    /* No margin-bottom: let the title→description spacing be governed ONLY by
+       .step-content's gap (comet.css), matching desktop's tight grouping. The extra
+       margin here stacked ON TOP of that gap and made the description float away from
+       its title on mobile. */
   }
 
   .step-body {
