@@ -43,7 +43,7 @@ export const CONNECTIONS = [
 // The seven muses (canonical). var = CSS custom property for the brand hex.
 export const MUSES = [
   { name: 'Lunes',  cause: 'Water',            color: 'var(--lunes)' },
-  { name: 'Ares',   cause: 'Reforestation',    color: 'var(--ares)' },
+  { name: 'Ares',   cause: 'Rewilding',        color: 'var(--ares)' },
   { name: 'Rabu',   cause: 'Human Rights',     color: 'var(--rabu)' },
   { name: 'Thunor', cause: 'Renewable Energy', color: 'var(--thunor)' },
   { name: 'Shukra', cause: 'Bio-diversity',    color: 'var(--shukra)' },

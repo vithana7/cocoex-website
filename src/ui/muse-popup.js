@@ -32,9 +32,11 @@ export const MusePopup = {
     if (!this.popup) return;
 
     gsap.set(this.popup, { display: 'none', opacity: 0 });
-    gsap.set(this.content, { scale: 0.7, opacity: 0 });
-    gsap.set(this.imageContainer, { scale: 0.8, opacity: 0 });
-    gsap.set([this.title, this.cause, this.text], { opacity: 0, y: 30 });
+    // Entrance rest state: column static (no compound double-scale), the DISC + text carry it.
+    gsap.set(this.content, { scale: 1, opacity: 1 });
+    gsap.set(this.imageContainer, { scale: 0.62, opacity: 0 });
+    gsap.set(this.title, { opacity: 0, y: 24 });
+    gsap.set([this.cause, this.text], { opacity: 0, y: 20 });
 
     wireModalDismiss({
       overlay: this.overlay,
@@ -72,9 +74,11 @@ export const MusePopup = {
     // Reset to entrance state so reopens animate cleanly.
     if (this.switchTimeline) this.switchTimeline.kill();
     if (this.cardShell) gsap.set(this.cardShell, { rotationY: 0 });
-    gsap.set(this.content, { scale: 0.7, opacity: 0 });
-    gsap.set(this.imageContainer, { scale: 0.8, opacity: 0 });
-    gsap.set([this.title, this.cause, this.text], { opacity: 0, y: 30 });
+    // Reset to the entrance rest state so reopens animate cleanly (mirrors init()).
+    gsap.set(this.content, { scale: 1, opacity: 1 });
+    gsap.set(this.imageContainer, { scale: 0.62, opacity: 0 });
+    gsap.set(this.title, { opacity: 0, y: 24 });
+    gsap.set([this.cause, this.text], { opacity: 0, y: 20 });
 
     this._applyMuse(this.muses[this.index]);
 
@@ -84,14 +88,28 @@ export const MusePopup = {
     if (this.starfield) this.starfield.resize();
     if (this.galaxy) { this.galaxy.resize(); this.galaxy.seed(); }
 
-    this.openTimeline = gsap.timeline({ defaults: { ease: 'power3.out' } });
-    this.openTimeline
-      .to(this.popup, { opacity: 1, duration: 0.4 })
-      .to(this.title, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }, '-=0.2')
-      .to(this.imageContainer, { scale: 1, opacity: 1, duration: 0.6, ease: 'back.out(1.5)' }, '-=0.3')
-      .to(this.content, { scale: 1, opacity: 1, duration: 0.4 }, '-=0.5')
-      .to(this.cause, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }, '-=0.2')
-      .to(this.text, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }, '-=0.3');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.openTimeline = gsap.timeline();
+    if (reduced) {
+      // No scale/slide — a calm crossfade only (GSAP tweens ignore the CSS reduced-motion rule).
+      gsap.set(this.imageContainer, { scale: 1 });
+      gsap.set([this.title, this.cause, this.text], { y: 0 });
+      this.openTimeline
+        .to(this.popup, { opacity: 1, duration: 0.3, ease: 'power1.out' })
+        .to([this.imageContainer, this.title, this.cause, this.text],
+          { opacity: 1, duration: 0.3, ease: 'power1.out' }, '-=0.1');
+    } else {
+      // Disc-led bloom: the backdrop settles in, then the DISC blooms from center (hero, soft
+      // overshoot) while the starfield glow swells (fired in _applyMuse above), and the
+      // title → cause → text rise in one tight cohesive stagger. The column itself doesn't
+      // scale, so the disc grows once (no compound double-grow) and reads as the hero.
+      this.openTimeline
+        .to(this.popup, { opacity: 1, duration: 0.35, ease: 'power2.out' })
+        .to(this.imageContainer, { scale: 1, opacity: 1, duration: 0.7, ease: 'back.out(1.4)' }, '-=0.22')
+        .to(this.title, { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out' }, '-=0.5')
+        .to(this.cause, { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out' }, '-=0.34')
+        .to(this.text, { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out' }, '-=0.42');
+    }
 
     this.previouslyFocused = document.activeElement;
     this.focusTrap.activate();
@@ -126,14 +144,16 @@ export const MusePopup = {
       this.wrapper.style.setProperty('--pointer-from-center', '0');
     }
 
+    // Weighted flip to match the orbit card: slower, with a back-out overshoot settle on the
+    // second half (≈ the orbit's cubic-bezier(0.34, 1.56, 0.5, 1) over ~0.8s).
     this.switchTimeline = gsap.timeline();
     this.switchTimeline
-      .to(this.cardShell, { rotationY: dir * 90, duration: 0.22, ease: 'power2.in' })
-      .to([this.title, this.cause, this.text], { opacity: 0, duration: 0.18 }, 0)
+      .to(this.cardShell, { rotationY: dir * 90, duration: 0.3, ease: 'power2.in' })
+      .to([this.title, this.cause, this.text], { opacity: 0, duration: 0.2 }, 0)
       .add(() => this._applyMuse(muse))
       .set(this.cardShell, { rotationY: -dir * 90 })
-      .to(this.cardShell, { rotationY: 0, duration: 0.32, ease: 'power2.out' })
-      .to([this.title, this.cause, this.text], { opacity: 1, duration: 0.26 }, '-=0.24');
+      .to(this.cardShell, { rotationY: 0, duration: 0.5, ease: 'back.out(1.6)' })
+      .to([this.title, this.cause, this.text], { opacity: 1, duration: 0.3 }, '-=0.34');
   },
 
   next() { this.goTo(this.index + 1, 1); },
@@ -151,17 +171,26 @@ export const MusePopup = {
 
     if (this.openTimeline) this.openTimeline.kill();
     if (this.switchTimeline) this.switchTimeline.kill();
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.closeTimeline = gsap.timeline({
-      defaults: { ease: 'power3.in' },
       onComplete: () => {
         gsap.set(this.popup, { display: 'none' });
       },
     });
-    this.closeTimeline
-      .to([this.text, this.cause, this.title], { opacity: 0, y: -20, duration: 0.2, stagger: 0.05 })
-      .to(this.imageContainer, { scale: 0.8, opacity: 0, duration: 0.3 }, '-=0.15')
-      .to(this.content, { scale: 0.7, opacity: 0, duration: 0.3 }, '-=0.25')
-      .to(this.popup, { opacity: 0, duration: 0.3 }, '-=0.2');
+    if (reduced) {
+      this.closeTimeline
+        .to([this.text, this.cause, this.title, this.imageContainer],
+          { opacity: 0, duration: 0.22, ease: 'power1.in' })
+        .to(this.popup, { opacity: 0, duration: 0.25, ease: 'power1.in' }, '-=0.1');
+    } else {
+      // Mirror of the entrance: text sinks + fades, then the disc gently RELEASES (settles back
+      // to 0.84, not yanked to 0.7), backdrop fades last. Quicker than the open so it feels light.
+      this.closeTimeline
+        .to([this.text, this.cause], { opacity: 0, y: 12, duration: 0.18, ease: 'power2.in', stagger: 0.04 })
+        .to(this.title, { opacity: 0, y: -8, duration: 0.18, ease: 'power2.in' }, '-=0.12')
+        .to(this.imageContainer, { scale: 0.84, opacity: 0, duration: 0.3, ease: 'power2.in' }, '-=0.12')
+        .to(this.popup, { opacity: 0, duration: 0.3, ease: 'power2.in' }, '-=0.18');
+    }
   },
 
   _wrap(index) {
@@ -199,15 +228,20 @@ export const MusePopup = {
   },
 
   // --- 3D pointer tilt: drive the CSS vars the card layers already read. ---
+  // Listens on the whole popup (not just the disc) so the card tilts as the cursor
+  // moves anywhere in the open modal. Rotation is measured from the card's CENTER and
+  // clamped so a far-away cursor can't over-rotate.
   _wireTilt() {
-    if (!this.wrapper) return;
+    if (!this.wrapper || !this.popup) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const wrap = this.wrapper;
+    const clamp = (v) => Math.max(-1, Math.min(1, v));
     const onMove = (e) => {
       const r = wrap.getBoundingClientRect();
-      const px = (e.clientX - r.left) / r.width;
-      const py = (e.clientY - r.top) / r.height;
-      const cx = px - 0.5, cy = py - 0.5;
+      // Offset from the card centre in card-half units, clamped to [-1, 1].
+      const cx = clamp((e.clientX - (r.left + r.width / 2)) / r.width);
+      const cy = clamp((e.clientY - (r.top + r.height / 2)) / r.height);
+      const px = cx + 0.5, py = cy + 0.5;
       wrap.style.setProperty('--pointer-x', `${(px * 100).toFixed(1)}%`);
       wrap.style.setProperty('--pointer-y', `${(py * 100).toFixed(1)}%`);
       wrap.style.setProperty('--pointer-from-left', px.toFixed(3));
@@ -225,8 +259,8 @@ export const MusePopup = {
       wrap.style.setProperty('--background-x', '50%');
       wrap.style.setProperty('--background-y', '50%');
     };
-    wrap.addEventListener('pointermove', onMove);
-    wrap.addEventListener('pointerleave', reset);
+    this.popup.addEventListener('pointermove', onMove);
+    this.popup.addEventListener('pointerleave', reset);
   },
 
   // --- Horizontal swipe switches muse on touch. ---

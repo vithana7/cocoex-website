@@ -96,7 +96,9 @@
   font-weight: var(--font-lead-weight);
   color: var(--color-white);
   opacity: 0.9;
-  max-width: 800px;
+  /* Wider than the hook so the paragraph balances onto fewer lines and short tails like
+     "…a different way in." don't strand (width:90% still caps it on phones). */
+  max-width: 940px;
   width: 90%;
   text-align: center;
   text-transform: none;
@@ -105,6 +107,8 @@
   padding-top: var(--spacing-lg);
   max-height: 28vh;
   overflow: visible;
+  /* Even line lengths, no stranded single-word lines (mobile + desktop). */
+  text-wrap: balance;
 }
 
 .muse-intro-text-top a,
@@ -189,7 +193,7 @@
   isolation: isolate; /* contain the hint halo's negative z-index (same trick as .beam-glow) */
 }
 
-/* Roaming "click me" halo. A muse-spectrum wedge (the .beam-glow recipe, circular) sits
+/* Roaming "click me" halo. A wedge in the muse's OWN colour (the .beam-glow recipe, circular) sits
    BEHIND the disc and only its rim peeks out as a soft glow; as --beam-angle spins, the
    bright wedge travels around the rim so the halo appears to circle the muse. JS gives ONE
    orbit muse the .is-hinting class at a time (roaming randomly) to hint the discs are
@@ -197,39 +201,42 @@
 .muse-orbit-card::before {
   content: "";
   position: absolute;
-  inset: -11px;
+  inset: -12px; /* a touch larger than the disc so the rainbow blooms OUT (not too spread) */
   border-radius: 50%;
   pointer-events: none;
-  z-index: -1; /* behind the opaque disc — its inner glow is trimmed at the rim, so it reads as emitted from behind */
+  z-index: -1; /* behind the opaque disc → only the spreading glow shows around the rim */
   opacity: 0;
-  transition: opacity 0.6s ease;
-  /* NARROW ring core (still thin) — independent of the spread below. */
-  padding: 4px;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  /* Moderate blur spreads the thin core into a soft ray (lighter than before so it stays
-     visible on the offwhite orbit bg); saturate lifts the spectrum so it reads clearly. */
-  filter: blur(6px) saturate(1.25);
-  /* Continuous comet trail: the spectrum tail wraps ~300° of the ring, fading up to a bright
-     head, with only a small gap just AHEAD of the head (0/360). Because the lit trail spans
-     almost the whole circle, the spin never "disappears + snaps back" — it reads as one smooth
-     turning glow with a bright leading point (clockwise → highest angle leads). */
+  transition: opacity 0.9s ease-in-out; /* eased crossfade between muses */
+  /* No mask — the full rainbow fills the circle and the heavy blur lets it spread OUT as a
+     soft halo (not a contained ring); it sits behind the opaque disc so the centre is hidden. */
+  filter: blur(12px) saturate(1.4);
+  /* SINGLE-HUE halo in the muse's OWN colour (was the 7-hue rainbow — confusing when the same
+     spectrum sat on every coloured disc). A dim ring of --muse-color with one brighter,
+     white-lifted "head" wedge that travels as --beam-angle spins, so the circling still reads
+     but stays the muse's colour. Seamless at the seam (0deg == 360deg, both the dim value). The
+     head is lifted toward white so it blooms BRIGHTER than the disc body and doesn't wash into
+     the disc edge. Solid fallback first for Safari <16.2 (same pattern as the disc gradient). */
+  background: var(--muse-color, #5783A6);
   background: conic-gradient(from var(--beam-angle),
-    rgba(248, 216, 106, 0) 0deg,
-    rgba(94, 71, 161, 0.12) 38deg,
-    rgba(94, 71, 161, 0.32) 92deg,
-    rgba(87, 131, 166, 0.5) 150deg,
-    rgba(140, 176, 127, 0.66) 208deg,
-    rgba(212, 131, 72, 0.88) 268deg,
-    rgba(248, 216, 106, 1) 330deg,
-    rgba(248, 216, 106, 0) 360deg);
+    color-mix(in srgb, var(--muse-color, #5783A6) 45%, transparent) 0deg,
+    color-mix(in srgb, var(--muse-color, #5783A6) 78%, #fff)        80deg,
+    color-mix(in srgb, var(--muse-color, #5783A6) 45%, transparent) 220deg,
+    color-mix(in srgb, var(--muse-color, #5783A6) 45%, transparent) 360deg);
+  /* Spin + a very subtle breathe run CONTINUOUSLY (cheap while opacity:0 → not painted) so
+     the halo never snaps/jumps when it moves between muses — it just keeps turning underneath
+     and only its OPACITY is toggled. (Was gated to .is-hinting, which reset --beam-angle to 0
+     mid-spin on every hop = the "almost round then jump" glitch.) */
+  animation: beam-spin 2s linear infinite, halo-breathe 3.4s ease-in-out infinite;
 }
 
 .muse-orbit-item.is-hinting .muse-orbit-card::before {
   opacity: 1;
-  animation: beam-spin 2s linear infinite; /* only spins while actively hinting */
+}
+
+/* Subtle in/out breathe of the halo glow. */
+@keyframes halo-breathe {
+  0%, 100% { transform: scale(0.97); }
+  50% { transform: scale(1.06); }
 }
 
 .muse-orbit-card-shell {
@@ -237,7 +244,9 @@
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* Weighted flip: slower with a stronger back-out overshoot so the card settles with
+     real momentum (feels like it has mass) rather than a flat ease. */
+  transition: transform 0.82s cubic-bezier(0.34, 1.56, 0.5, 1);
 }
 
 /* Desktop hover / keyboard focus flips the card to the name face (decision: touch
@@ -322,8 +331,25 @@
 .muse-orbit-face--back .muse-orbit-disc {
   flex-direction: column;
   gap: clamp(0.05rem, 0.3vw, 0.18rem);
-  /* Minimal side padding so long single words (REFORESTATION) get the full chord. */
+  /* Minimal side padding so long single words (RENEWABLE ENERGY) get the full chord. */
   padding: 0 0.15em;
+  /* The back face is a LABEL: a BLACK disc with the name/cause in the muse's own colour.
+     A soft top sheen + inset shadows give it a concave, glassy read (like the popup card);
+     grain via the ::after override below. The front symbol disc is left untouched. */
+  background:
+    radial-gradient(ellipse 90% 65% at 50% 20%, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0) 60%),
+    radial-gradient(circle at 50% 40%, #1d1d1d 0%, #000 100%);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.35),              /* outer drop (matches the front disc) */
+    inset 0 5px 13px rgba(0, 0, 0, 0.75),        /* top inner shadow → pressed-in / concave */
+    inset 0 -4px 10px rgba(255, 255, 255, 0.05); /* faint lower-inner light catches the dish */
+}
+
+/* The shared overlay grain vanishes on black — switch the back disc to a screen blend so
+   the same film grain (matching the popup card) reads on the black label face. */
+.muse-orbit-face--back .muse-orbit-disc::after {
+  mix-blend-mode: screen;
+  opacity: 0.13;
 }
 
 /* Name face — Canela title on the disc; white + soft dark shadow so it stays
@@ -341,8 +367,9 @@
   letter-spacing: -0.01em;
   line-height: 1.05;
   text-align: center;
-  color: var(--color-white);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 0 12px rgba(0, 0, 0, 0.25);
+  color: #fff; /* fallback if color-mix unsupported (legible on black) */
+  color: color-mix(in srgb, var(--muse-color, #ffffff) 75%, #ffffff); /* muse hue, lifted so dark muses (Dosei/Lunes) read on black */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .muse-orbit-cause {
@@ -360,8 +387,9 @@
   text-align: center;
   text-wrap: balance;
   max-width: 100%;
-  color: rgba(255, 255, 255, 0.95);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  color: #fff; /* fallback if color-mix unsupported */
+  color: color-mix(in srgb, var(--muse-color, #ffffff) 72%, #ffffff);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 /* Kept in the DOM (hidden) as the popup's data source — h3 = name, p = description. */
@@ -442,8 +470,8 @@
 .muse-popup-content {
   position: relative;
   background: transparent;
-  max-width: min(90%, 500px);
-  width: 90%;
+  max-width: min(92%, 600px);
+  width: 92%;
   max-height: 80vh;
   overflow: visible;
   z-index: 3;
@@ -628,17 +656,27 @@
    the reserved min-height still keeps the card level. */
 .muse-popup-body {
   text-align: center;
-  max-width: 400px;
+  max-width: 520px;
   padding: 0;
   margin-top: 0; /* caption group gap handles the subtitle → description spacing now */
-  /* Reserve ≥ the tallest description so all 7 discs land level — without leaking off
-     the viewport. Re-measured at the smaller text (real Canela, confirmed loaded):
-     tallest = 128px @1440 / 144px @≤768 (320px column). clamp(148,10vw,160) covers both.
-     Verified all 7 bodies equal at 390/768/1024/1440. (Was 200px — too tall, it leaked.) */
-  min-height: clamp(148px, 10vw, 160px);
+  /* Reserve the tallest description's height so all 7 discs land level. This needs a
+     BREAKPOINT, not a vw-clamp: a narrower column wraps to MORE lines, so the reserve
+     must DECREASE as the viewport grows (phones reserve most, desktop least) — the
+     inverse of what a clamp gives. The widened 520px column keeps desktop ~4 lines. */
+  min-height: 150px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
+}
+
+/* Phones: the copy column is only ~92vw, so 2–3 sentence descriptions wrap taller.
+   Also nudge the copy DOWN inside the fixed box (padding eats into min-height via the
+   global border-box, so the disc stays level) — balances the bottom-third weight. */
+@media screen and (max-width: 560px) {
+  .muse-popup-body {
+    min-height: 200px;
+    padding-top: clamp(10px, 4vw, 22px);
+  }
 }
 
 .muse-popup-text {

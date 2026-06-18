@@ -32,7 +32,7 @@ function boot() {
 
   // 3. WebGL surfaces. Three share the starfield factory; intro has its own.
   const introStarfield = createIntroStarfield('bg-canvas');
-  const unified = createStarfield('unified-starfield-canvas', { intensity: 0.275 }); // white-on-black (+10% star visibility, was default 0.25)
+  const unified = createStarfield('unified-starfield-canvas', { intensity: 0.33 }); // white-on-black (+20% on the prior 0.275; was default 0.25)
   const museBg = createStarfield('muse-background-canvas', { invert: true, intensity: 0.9 });
   const cometBg = createStarfield('comet-collab-background-canvas', { invert: true, intensity: 0.9 });
   const popupStars = createStarfield('muse-popup-starfield', { intensity: 0.4 }); // reactive modal bg

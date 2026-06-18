@@ -10,12 +10,75 @@ import { SWIRL_CX } from '../ui/comet-dive.js';
 
 const Toggle = {
   current: 'stardust',
+  _suppressClick: false,
   init() {
     const tabStardust = document.getElementById('tab-stardust');
     const tabHorizon = document.getElementById('tab-horizon');
+    const pill = document.querySelector('.comet-pill');
+    const slider = document.getElementById('pillSlider');
+    // Tap a label to switch (kept).
     if (tabStardust) tabStardust.addEventListener('click', () => this.switch('stardust'));
     if (tabHorizon) tabHorizon.addEventListener('click', () => this.switch('horizon'));
+    // Drag the thumb left/right; snap to the nearest side on release.
+    if (pill && slider) this._initDrag(pill, slider);
   },
+
+  // Pointer-Events drag (mouse + touch). The thumb sits BEHIND the labels (z-index),
+  // so we listen on the whole pill. A move past a small threshold becomes a drag: the
+  // slider follows the finger 1:1 (transition off), and on release it snaps to the
+  // nearest side and switches. Below the threshold it's a tap → the label's click
+  // handler does the switch. `touch-action: pan-y` (CSS) lets a vertical swipe still
+  // scroll the page; a horizontal drag is ours.
+  _initDrag(pill, slider) {
+    let dragging = false, moved = false, startX = 0, startFrac = 0, frac = 0, travel = 1, pid = null;
+
+    const onDown = (e) => {
+      if (e.button != null && e.button !== 0) return; // primary / touch only
+      this._suppressClick = false; // clear any stale flag from a prior drag
+      travel = slider.getBoundingClientRect().width || 1; // px the thumb travels (its own width)
+      startX = e.clientX;
+      startFrac = this.current === 'horizon' ? 1 : 0;
+      frac = startFrac;
+      dragging = true;
+      moved = false;
+      pid = e.pointerId;
+    };
+
+    const onMove = (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      if (!moved) {
+        if (Math.abs(dx) < 4) return; // threshold separates a tap from a drag
+        moved = true;
+        slider.classList.add('dragging'); // kill the snap transition → follow finger 1:1
+        try { pill.setPointerCapture(pid); } catch (_) { /* ok */ }
+      }
+      frac = Math.max(0, Math.min(1, startFrac + dx / travel));
+      slider.style.transform = `translateX(${frac * 100}%)`;
+      e.preventDefault();
+    };
+
+    const onUp = () => {
+      if (!dragging) return;
+      dragging = false;
+      if (!moved) return; // a tap → leave it to the label click handler
+      try { pill.releasePointerCapture(pid); } catch (_) { /* ok */ }
+      slider.classList.remove('dragging'); // restore the snap transition
+      this.switch(frac > 0.5 ? 'horizon' : 'stardust'); // set the target side
+      slider.style.transform = ''; // release inline → the .right class animates the snap
+      this._suppressClick = true; // swallow the trailing click so it doesn't re-switch
+    };
+
+    pill.addEventListener('pointerdown', onDown);
+    pill.addEventListener('pointermove', onMove);
+    pill.addEventListener('pointerup', onUp);
+    pill.addEventListener('pointercancel', onUp);
+    // Capture-phase: eat the click that fires after a drag (before the label handlers).
+    pill.addEventListener('click', (e) => {
+      if (this._suppressClick) { e.preventDefault(); e.stopPropagation(); this._suppressClick = false; }
+    }, true);
+  },
+
   switch(method) {
     const stardust = document.getElementById('panel-stardust');
     const horizon = document.getElementById('panel-horizon');

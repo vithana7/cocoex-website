@@ -403,7 +403,12 @@ function buildIntroTimelines({ el, updateOrbit, updateExplosion }) {
   if (el.introStatement) {
     const b2Start = () => explosion.startPx();
     const b2End = () => mission.startPx() + (mission.endPx() - mission.startPx()) * 0.5;
-    gsap.timeline({
+    const words = el.introStatement.querySelectorAll('.intro-statement-word');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Container stays visible; the words (CSS opacity:0) carry the in-reveal, so nothing
+    // shows before the beat (no load flash). The container opacity is the UNIFIED leave.
+    gsap.set(el.introStatement, { opacity: 1 });
+    const tl = gsap.timeline({
       scrollTrigger: {
         trigger: '.scroll-container',
         start: () => `top+=${b2Start()}px top`,
@@ -411,10 +416,26 @@ function buildIntroTimelines({ el, updateOrbit, updateExplosion }) {
         scrub: true,
         invalidateOnRefresh: true,
       },
-    })
-      .fromTo(el.introStatement, { opacity: 0 }, { opacity: 1, duration: 0.155, ease: 'none' })
-      .to(el.introStatement, { opacity: 1, duration: 0.66, ease: 'none' })
-      .to(el.introStatement, { opacity: 0, duration: 0.185, ease: 'none' });
+    });
+    // In-phase (~first 40%): ignite the three pillars one-by-one — a glow that blooms to
+    // full then settles to a faint resting halo (reduced-motion: plain staggered fade).
+    const IGN = 0.13, STG = 0.13;
+    words.forEach((w, i) => {
+      const at = i * STG;
+      if (reduced) {
+        tl.fromTo(w, { opacity: 0 }, { opacity: 1, duration: IGN, ease: 'none' }, at);
+      } else {
+        tl.fromTo(w,
+          { opacity: 0, '--glow': 0, y: 14, scale: 0.96 },
+          { opacity: 1, '--glow': 1, y: 0, scale: 1, duration: IGN, ease: 'power2.out' }, at)
+          .to(w, { '--glow': 0.12, duration: IGN, ease: 'power2.out' }, at + IGN);
+      }
+    });
+    // Hold over the settled constellation (gap), then the UNIFIED fade-out placed at the
+    // SAME final ~18.5% window as before (position 0.815 → timeline total 1.0), so the
+    // words + the constellation/backdrop smoke still leave together (narrower smoke window
+    // leads on reverse — unchanged).
+    tl.to(el.introStatement, { opacity: 0, duration: 0.185, ease: 'none' }, 0.815);
   }
 
   // Phase 3: explosion. Front-loaded: dots settle over the first ~70% of the
@@ -439,12 +460,21 @@ function buildIntroTimelines({ el, updateOrbit, updateExplosion }) {
   const revealSpan = () => mission.endPx() - mission.startPx();
 
   if (smokeLayers.length) {
+    // The smoke (constellation + cosmic backdrop) clears over a window that ENDS together
+    // with the Beat-2 statement (at b2End = mission-mid) but is slightly NARROWER than the
+    // statement's fade-out (~0.13 vs ~0.185 of the statement span). Result: at every scroll
+    // position the constellation is at least as opaque as the text, so it leads on the way
+    // up — fixing "the statement appears before the constellation" on reverse scroll — while
+    // both still finish together on the way down.
+    const b2Start = () => explosion.startPx();
+    const b2End = () => mStart() + revealSpan() * 0.5;
+    const smokeStart = () => b2End() - (b2End() - b2Start()) * 0.13;
     gsap.fromTo(smokeLayers, { opacity: 1 }, {
       opacity: 0, ease: 'none',
       scrollTrigger: {
         trigger: '.scroll-container',
-        start: () => `top+=${mStart()}px top`,
-        end: () => `top+=${mStart() + revealSpan() * 0.5}px top`,
+        start: () => `top+=${smokeStart()}px top`,
+        end: () => `top+=${b2End()}px top`,
         scrub: true, invalidateOnRefresh: true,
       },
     });

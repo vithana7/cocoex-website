@@ -74,6 +74,8 @@
   text-transform: none;
   opacity: 1;
   width: 100%;
+  /* Even line lengths, no stranded single-word lines. */
+  text-wrap: balance;
 }
 
 .comet-methods-text em {
@@ -87,7 +89,18 @@
 
 .comet-methods-guided {
   display: inline-block;
-  margin-top: 0.4em;
+  /* Font-independent gap so the two paragraphs stay clearly separated on mobile
+     (an em-based gap shrank with the smaller mobile font and read as one block). */
+  margin-top: clamp(0.7rem, 3.5vw, 1.1rem);
+}
+
+/* Desktop: dial the intro copy down from --font-body-size (which caps at 36px) so it
+   doesn't dominate the panel. Mobile keeps the full body size. */
+@media screen and (min-width: 1024px) {
+  .comet-methods-text {
+    font-size: clamp(22px, 1.9vw, 28px);
+    line-height: 1.45;
+  }
 }
 
 .comet-collab-methods {
@@ -222,8 +235,10 @@
 }
 
 /* The pill carries the reusable `.beam-glow` class (see base.css) for the running
-   muse-spectrum glow. No backdrop-filter here: it re-blurred the animated bloom every
-   frame and stuttered the slider — the bloom alone reads fine on the offwhite panel. */
+   muse-spectrum glow — a rainbow LINE races around the rim (the spinning conic masked
+   to the border band) while the light body stays muted, so the labels sit on a calm
+   interior. No backdrop-filter here: it re-blurred the animated bloom every frame and
+   stuttered the slider — the bloom alone reads fine on the offwhite panel. */
 .comet-pill {
   position: relative;
   display: inline-flex;
@@ -232,6 +247,73 @@
   border: 1px solid var(--color-black);
   border-radius: 50px;
   padding: 4px;
+  /* A horizontal drag slides the thumb (handled in comet.js); a vertical swipe still
+     scrolls the page. user-select:none stops the label text highlighting mid-drag. */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* "Liquid glass" body shared by the toggle (always on) and the campaign CTAs (fades in on
+   hover): a heavily-muted muse-spectrum rainbow drifts BEHIND a frosted, grainy glass, so
+   the colour reads softly instead of a flat opaque fill. inset:0 = the padding box (the 1px
+   border stays crisp); overflow clips the rainbow + grain to the rounded shape; the
+   .beam-glow rim line still races on top. */
+.pill-glass,
+.cta-glass {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden; /* clip the rainbow + grain to the rounded shape (siblings unaffected) */
+  pointer-events: none;
+  /* the colour — full muse spectrum, slow LIQUID drift (slower than the 5s rim) */
+  background: conic-gradient(from var(--beam-angle),
+    #D54D2E, #D48348, #F8D86A, #8CB07F, #5783A6, #5E47A1, #7F49A2, #D54D2E);
+  animation: beam-spin 12s linear infinite;
+}
+
+.pill-glass { z-index: 0; } /* below the toggle thumb (1) + labels (2) */
+
+/* The CTA glass is hidden until hover (the toggle's is always on); z-index:-1 keeps it
+   behind the CTA text (isolation contains it). */
+.cta-glass {
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.comet-cta:hover .cta-glass { opacity: 1; }
+
+/* the glass SURFACE (static, so the colour drifts BEHIND it — privacy-window read): a heavy
+   milky frost mutes the rainbow to a barely-there tint, plus a top sheen + inset shadows for
+   the glass curvature. (No ripple ribs — removed per request.) */
+.pill-glass::before,
+.cta-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    /* top sheen */
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 45%),
+    /* heavy milky frost → strong mute (privacy glass; ~30% whiter than before; also lifts
+       dark-label contrast) */
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.72) 45%, rgba(255, 255, 255, 0.84) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* noise — coarse, stronger grain for the frosted/privacy speckle (reuses the muse grain). */
+.pill-glass::after,
+.cta-glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.32;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 150px 150px;
 }
 
 .pill-slider {
@@ -251,6 +333,13 @@
 
 .pill-slider.right {
   transform: translateX(100%);
+}
+
+/* While dragging, the thumb follows the finger 1:1 — drop the snap transition so it
+   doesn't lag the pointer. comet.js restores it (and clears the inline transform) on
+   release so the snap to the nearest side animates. */
+.pill-slider.dragging {
+  transition: none;
 }
 
 .pill-opt {
@@ -369,9 +458,16 @@
   margin-bottom: var(--spacing-lg);
 }
 
+/* The campaign CTAs match the toggle: the .beam-glow racing-rainbow rim is always on (no
+   overflow:hidden, so its bloom shows), and a frosted-glass body (.cta-glass) fades in on
+   hover. isolation:isolate (also from .beam-glow) contains the glass's negative z-index. */
 .comet-cta {
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  text-align: center;
   font-family: var(--font-canela);
   font-size: clamp(16px, 1.8vw, 20px);
   font-weight: var(--font-body-weight);
@@ -381,13 +477,11 @@
   border: 1px solid var(--color-black);
   padding: clamp(12px, 1.5vw, 16px) clamp(24px, 3vw, 32px);
   border-radius: 50px;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, color 0.3s ease;
   align-self: flex-start;
 }
 
 .comet-cta:hover {
-  background: var(--color-black);
-  color: var(--color-white);
   transform: translateX(4px);
 }
 
@@ -399,7 +493,9 @@
 .comet-steps {
   display: flex;
   flex-direction: column;
-  gap: clamp(0.75rem, 2vh, 1.5rem);
+  /* Larger gap BETWEEN steps so each title+body reads as one group (paired with the
+     tighter title→body gap in .step-content below). */
+  gap: clamp(1.25rem, 3vh, 2.25rem);
   justify-content: center;
 }
 
@@ -415,6 +511,7 @@
   font-family: var(--font-canela);
   font-size: clamp(20px, 2.5vw, 32px);
   font-weight: var(--font-h1-weight);
+  line-height: 1.15; /* matches .step-title so the number + title tops align */
   color: var(--color-black);
   min-width: clamp(40px, 5vw, 60px);
 }
@@ -422,13 +519,16 @@
 .step-content {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  /* Tight title→body gap so the description hugs its own title (see .comet-steps gap). */
+  gap: clamp(2px, 0.6vh, 5px);
 }
 
 .step-title {
   font-family: var(--font-canela);
   font-size: clamp(20px, 2.5vw, 28px);
   font-weight: var(--font-h1-weight);
+  /* Tighter than the default leading so the description sits close under its title. */
+  line-height: 1.15;
   text-transform: uppercase;
   color: var(--color-black);
 }
@@ -451,24 +551,30 @@
    wraps to its own line only if the column gets tight. */
 .step-addon .step-title {
   display: inline-flex;
-  align-items: center;
+  align-items: stretch; /* the +Horizon pill stretches to the Future Lab text height */
   flex-wrap: wrap;
   gap: clamp(0.4rem, 1vw, 0.6rem);
+  /* No line-height override here — inherit .step-title's 1.15 so the addon title's box
+     matches a normal title and its top aligns with the "02" number (was 1.1 → rode high). */
 }
 
 .step-addon-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   font-family: var(--font-canela);
-  font-size: clamp(11px, 1vw, 13px);
-  font-weight: var(--font-body-weight);
+  font-size: clamp(12px, 1.05vw, 14px);
+  /* Bold so the leading "+" reads (it was almost invisible at regular weight). */
+  font-weight: 700;
+  text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   line-height: 1;
   color: var(--color-white);
   background: var(--color-black);
-  padding: 0.4em 0.9em;
+  /* Height comes from the stretch above (= the title text height); only side padding. */
+  padding: 0 0.9em;
   border-radius: 20px;
 }
 
