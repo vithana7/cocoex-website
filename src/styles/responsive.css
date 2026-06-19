@@ -23,6 +23,17 @@
     z-index: -1;
   }
 
+  /* Muse intro is top-heavy on tall phones (title high, body ends ~84%, dead space below).
+     Shift the WHOLE block down so title → centred logo → body reads as one balanced group
+     and the bottom gap closes. Desktop anchors (16%/16% in muse.css) are untouched. */
+  .muse-intro-text-top {
+    top: 21%;
+  }
+
+  .muse-intro-text-bottom {
+    bottom: 9%;
+  }
+
   .white-section {
     padding: 0;
   }

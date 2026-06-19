@@ -60,8 +60,32 @@ function buildTimeline(phases) {
 
 export const TIMELINE = buildTimeline(PHASES);
 
-// Convert a vh value to absolute pixels using the live viewport height.
-export const vhToPx = (vh) => (vh / 100) * window.innerHeight;
+// Convert a vh value to absolute pixels using the SAME unit the CSS layout uses.
+//
+// Critical on iOS Safari: CSS `vh` resolves to the LARGE (stable) viewport — the height with
+// the URL bar retracted — and never changes as the bar shows/hides. `window.innerHeight`, by
+// contrast, is the *dynamic* viewport (shrinks under the URL bar). The section heights are
+// written in CSS `vh` (`applyHeightsToCss`), so element positions in the scroll layout are
+// large-vh-based; if the scroll math used `innerHeight` instead, every offset would be short
+// by the URL-bar ratio and the error would COMPOUND with depth (measured ~196px adrift at the
+// muse panel on iOS — the muse logo switched too early). So we measure the real CSS vh unit
+// once (re-measured whenever heights are reapplied) and convert against that. Because CSS `vh`
+// is stable, this is also immune to the URL bar moving — no mid-scroll refresh/jump needed.
+let _vhUnit = (typeof window !== 'undefined' ? window.innerHeight : 800) / 100;
+
+function measureVhUnit() {
+  if (typeof document === 'undefined') return _vhUnit;
+  const probe = document.createElement('div');
+  probe.style.cssText =
+    'position:absolute;top:0;left:0;width:1px;height:100vh;visibility:hidden;pointer-events:none;z-index:-1';
+  (document.body || document.documentElement).appendChild(probe);
+  const h = probe.getBoundingClientRect().height; // forces a synchronous layout read
+  probe.remove();
+  if (h > 0) _vhUnit = h / 100;
+  return _vhUnit;
+}
+
+export const vhToPx = (vh) => vh * _vhUnit;
 
 // A phase descriptor with px offsets computed against the CURRENT viewport.
 // ScrollTriggers read these inside their function-form start/end so they stay
@@ -96,4 +120,6 @@ export function applyHeightsToCss() {
     root.setProperty(`--${name}-h`, `${span.endVh - span.startVh}vh`);
   }
   root.setProperty('--total-h', `${TIMELINE.totalVh}vh`);
+  // Re-measure the CSS vh unit now the heights are applied so vhToPx matches the layout.
+  measureVhUnit();
 }

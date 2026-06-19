@@ -45,14 +45,24 @@
 }
 
 .muse-logo-white {
-  filter: brightness(0) invert(1) drop-shadow(0 8px 16px rgba(255, 255, 255, 0.3));
-  will-change: opacity;
+  /* The soft white glow is BAKED INTO the PNG (muse_logo_white_glow.png) — NO runtime filter.
+     Safari re-rasterises a blurred CSS `drop-shadow` on every opacity-scrub frame even with
+     `translateZ(0)` layer promotion (confirmed on device: the logo's fade trailed the scroll), so
+     the glow halo + the white recolour are pre-rendered into the asset and we animate a plain
+     bitmap. The asset has ~12.5% transparent padding for the halo (see the bake; `.muse-logo-image`
+     scales the display width by 1.25 to keep the glyph at its original size). filter MUST stay off. */
+  filter: none;
+  transform: translateZ(0);
+  will-change: transform, opacity;
 }
 
 .muse-logo-black {
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+  /* Dark glow likewise baked into muse_logo_black_glow.png — NO runtime filter (same Safari
+     scrub-lag reason as the white logo above). */
   opacity: 0;
-  will-change: opacity;
+  filter: none;
+  transform: translateZ(0);
+  will-change: transform, opacity;
 }
 
 .muse-intro-copy {
@@ -153,7 +163,10 @@
 }
 
 .muse-logo-image {
-  width: var(--muse-logo-size);
+  /* ×1.25 compensates for the ~12.5%/side transparent padding baked into the glow PNGs
+     (muse_logo_{white,black}_glow.png) so the GLYPH renders at --muse-logo-size; the padding only
+     carries the halo. Must match the bake factor `f` in the asset-generation step. */
+  width: calc(var(--muse-logo-size) * 1.25);
   height: auto;
   display: block;
   object-fit: contain;

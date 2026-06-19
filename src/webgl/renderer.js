@@ -8,6 +8,7 @@ export const Renderer = {
   section: 'intro',
   running: false,
   visible: true,
+  frames: 0, // rAF tick counter (telemetry: lets us see when iOS pauses rAF during scroll)
   _raf: null,
 
   // layer: { sections: ['muse'], render(now) {}, active(section) -> bool? }
@@ -29,6 +30,7 @@ export const Renderer = {
     if (this.running) return;
     this.running = true;
     const tick = (now) => {
+      this.frames++;
       if (this.visible) {
         for (const layer of this.layers) {
           if (this._isActive(layer)) layer.render(now);

@@ -31,7 +31,7 @@ Three layout-only breakpoints plus a landscape height query, all in `src/styles/
 | Breakpoint | What changes |
 |---|---|
 | `≤1024px` Tablet | `touch-action: manipulation` on muse orbit items; comet intro padding |
-| `≤768px` Mobile | Comet method panel stacks vertically (`flex-direction: column`, ordered children); mobile font floors; muse-popup body width cap; orbit tap halo; partnership marquee item spacing tightened |
+| `≤768px` Mobile | Comet method panel stacks vertically (`flex-direction: column`, ordered children); mobile font floors; muse-popup body width cap; orbit tap halo; partnership marquee item spacing tightened; muse intro copy block shifted down (`.muse-intro-text-top { top:21% }` / `.muse-intro-text-bottom { bottom:9% }`) so it isn't top-heavy on tall phones (desktop stays 16%/16%) |
 | `≤480px` Small | Tighter mission-overlay padding; comet min-heights reduced |
 | `max-height: 500px` | Muse popup card shrinks (height-relative `30vh` sizing) so it fits landscape phones |
 
@@ -59,11 +59,13 @@ So when `height > width`, the layout is **transposed 90°**: the fit box becomes
 
 The comet floating-process images are **non-interactive** — placed once and left to a CSS `float` bob, with `pointer-events: none`. Drag was removed (it conflicted with mobile scroll and the fixed layout reads better); there are no document-level `touchmove` listeners anymore.
 
-The muse orbit auto-rotation pauses for 2s on `touchstart` inside the section (`MuseScroll.attachHandlers`) so mobile users have a stable tap target.
+Mobile orbit stability is passive: there is **no** `touchstart` pause (the old `touchstart → pause 2s` froze the orbit for the whole drag and 2s after, the "orbit stuck while scrolling" bug, and was removed). With Lenis `syncTouch` off, iOS touch scroll is native and iOS pauses rAF during a momentum fling, so the orbit naturally stills while you scroll and resumes when you stop — a muse is already steady as you reach to tap. Do not re-add the pause.
 
 ## iOS Safari `100vh` Toolbar Fix
 
 Full-height surfaces declare `height: 100vh` immediately followed by `height: 100dvh` (or `min-height: 100svh`). See `comet.css` (`.section-panel` children), `muse.css` (`.muse-stage`), and `intro.css`. `100vh` on iOS Safari includes the dynamic toolbar area, hiding content behind it; `100dvh` shrinks with the visible viewport and `100svh` uses the smallest viewport. Browsers without these units fall back to the `100vh` declaration above.
+
+**Scroll math must use the CSS `vh` unit, not `window.innerHeight`.** On iOS Safari CSS `vh` resolves to the *large/stable* viewport (URL bar retracted) and never changes as the bar shows/hides, while `window.innerHeight` is the *dynamic* viewport. Section heights are written in CSS `vh` (`applyHeightsToCss`), so if the scroll math (`vhToPx`) used `innerHeight` it would be short by the URL-bar ratio and the error compounds with depth — measured ~196px adrift by the muse panel, switching the muse logo too early. `vhToPx` therefore measures the real CSS vh unit via a hidden `100vh` probe (`measureVhUnit` in `timeline.js`, re-run in `applyHeightsToCss`). Diagnose with the `?debug` overlay (`src/dev/viewport-debug.js`) — `panel Δ` is this drift. Fixed 2026-06-19.
 
 ## Muse Popup on Short Viewports
 
@@ -71,7 +73,7 @@ Full-height surfaces declare `height: 100vh` immediately followed by `height: 10
 
 ## Resize Handling
 
-`src/main.js` debounces `resize` (150ms) and, on fire, re-injects section heights (`applyHeightsToCss`), resizes every WebGL/2D surface, recomputes the orbit ellipse, and calls `ScrollTrigger.refresh()`. GSAP triggers read live `window.innerHeight` through `timeline.js` px getters with `invalidateOnRefresh: true`, so the refresh recomputes every scrub offset correctly. (There is no separate `orientationchange` handler — the debounced resize covers rotation.)
+`src/main.js` debounces `resize` (150ms) and, on fire, re-injects section heights (`applyHeightsToCss`, which also re-measures the CSS vh unit), resizes every WebGL/2D surface, recomputes the orbit ellipse, and calls `ScrollTrigger.refresh()`. GSAP triggers read the live **measured CSS vh unit** (not `window.innerHeight` — see the iOS Safari section) through `timeline.js` px getters with `invalidateOnRefresh: true`, so the refresh recomputes every scrub offset correctly. (There is no separate `orientationchange` handler — the debounced resize covers rotation.)
 
 ## Touch Targets
 

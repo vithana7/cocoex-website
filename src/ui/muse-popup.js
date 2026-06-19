@@ -64,6 +64,18 @@ export const MusePopup = {
 
   setMuses(muses) {
     this.muses = muses || [];
+    // Preload + DECODE every symbol up front. The popup <img> gets its src set at open time;
+    // Safari paints a freshly-set, async-decoded 935×935 PNG with a brief edge/outline artifact
+    // until the decode finishes ("normal after a few rounds"). Warming the HTTP + decode cache
+    // here means the bitmap is ready before any popup opens, so the first open is clean too.
+    this._preloaded = this._preloaded || [];
+    this.muses.forEach((m) => {
+      if (!m || !m.img) return;
+      const img = new Image();
+      img.src = m.img;
+      if (img.decode) img.decode().catch(() => {});
+      this._preloaded.push(img); // keep a ref so the browser can't drop the decoded bitmap
+    });
   },
 
   open(index) {
