@@ -173,9 +173,12 @@ const MuseScroll = {
       }
     });
 
-    this.container.addEventListener('touchstart', () => {
-      this.orbitPauseUntil = performance.now() + 2000;
-    }, { passive: true });
+    // NO touch-pause. The old `touchstart → pause 2s` froze the orbit for the whole drag and
+    // 2s after every scroll touch — the "orbit stuck while scrolling" bug. It's also redundant:
+    // Lenis runs with syncTouch off, so iOS touch scrolling is NATIVE, and iOS pauses rAF during
+    // momentum scroll — the orbit (the whole Renderer loop) naturally stills WHILE you scroll and
+    // resumes the instant you stop. So a muse is already steady right when you reach to tap it;
+    // an explicit pause only delayed the resume. The orbit is slow (~60s/turn) so tapping is easy.
 
     // Kick off the roaming "click me" halo (gated to when the orbit is actually visible).
     this.scheduleHint(2000);

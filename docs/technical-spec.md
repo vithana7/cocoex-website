@@ -43,7 +43,7 @@ export const PHASES = [
 
 A builder (`buildTimeline`) turns the ordered list into absolute `{ startVh, endVh, durationVh }` per phase plus per-section spans. Three consumers read it:
 
-1. **GSAP** — `phase(id)` returns a descriptor with px-offset getters (`startPx`/`endPx`/`startFromSection`/`endFromSection`) computed against the **live** `window.innerHeight`. ScrollTriggers read these inside function-form `start`/`end` with `invalidateOnRefresh: true`, so resizing recomputes offsets correctly.
+1. **GSAP** — `phase(id)` returns a descriptor with px-offset getters (`startPx`/`endPx`/`startFromSection`/`endFromSection`) computed against the **measured CSS `vh` unit** (`measureVhUnit` — a hidden `100vh` probe, re-run in `applyHeightsToCss`), NOT `window.innerHeight`. This is deliberate: on iOS Safari CSS `vh` resolves to the stable *large* viewport while `innerHeight` is the *dynamic* one, and the section heights are written in CSS `vh` — so the scroll math must use the same unit or every offset drifts by the URL-bar ratio (see the iOS Safari section below). ScrollTriggers read these inside function-form `start`/`end` with `invalidateOnRefresh: true`, so resizing recomputes offsets correctly.
 2. **CSS** — `applyHeightsToCss()` writes each section's height to `:root` as a custom property: `--intro-h`, `--muse-h`, `--comet-h`, `--total-h`. CSS reads `height: var(--intro-h)` etc. — heights are injected, never hardcoded.
 3. **Section gate** — `sectionSpan(name)` and `vhToPx()` derive section boundaries.
 

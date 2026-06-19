@@ -267,7 +267,20 @@ export function initIntro(introStarfield) {
 
   const setIntroVisible = (visible) => {
     if (el.introSection) el.introSection.style.visibility = visible ? 'visible' : 'hidden';
-    if (!visible) constCtx.clearRect(0, 0, el.constCanvas.width, el.constCanvas.height);
+    if (!visible) {
+      constCtx.clearRect(0, 0, el.constCanvas.width, el.constCanvas.height);
+    } else if (explosionStarted) {
+      // Repaint the settled constellation on scroll-back UP. The explosion scrub only runs
+      // within intro.explosion (192–292vh), so above that the canvas just holds its last
+      // frame — but setIntroVisible(false) cleared it on intro exit. Without this repaint,
+      // scrolling all the way up from muse reveals an EMPTY canvas through the statement/smoke
+      // region: the smoke fade ramps the canvas opacity back to 1 over a window ABOVE the
+      // explosion phase, so "Art / Community / Impact" shows with no constellation behind it
+      // until you scroll up far enough for the scrub to repaint. drawExplosion(1) is the fully
+      // settled frame (identical to the held state) and persists — nothing else clears the
+      // canvas between 192 and 592vh. Harmless on the way down (canvas opacity is 0 there).
+      drawExplosion(1);
+    }
   };
 
   // Hide the intro overlay at the TRUE (unbuffered) intro end so it can't bleed

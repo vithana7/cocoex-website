@@ -22,6 +22,7 @@ import { MusePopup } from './ui/muse-popup.js';
 import { createMuseGalaxy } from './ui/muse-galaxy.js';
 import { initComet } from './sections/comet.js';
 import { initEvents } from './sections/events.js';
+import { initViewportDebug } from './dev/viewport-debug.js';
 
 function boot() {
   // 1. Inject section heights from the single declarative timeline.
@@ -96,6 +97,9 @@ function boot() {
 
   // Ensure triggers measure correctly after fonts/layout settle.
   ScrollTrigger.refresh();
+
+  // On-device viewport diagnostic for Issue 2 — inert unless the URL has `?debug`.
+  initViewportDebug();
 }
 
 if (document.readyState === 'loading') {
