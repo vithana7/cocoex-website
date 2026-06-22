@@ -9,8 +9,9 @@
 // DEPTH d∈[0,1]: near (1) = bigger/brighter/faster/longer-streak, far (0) = tiny/
 // dim/slow → parallax. The whole field also turns slowly (globalTheta) so it reads
 // volumetric, not a flat 2D swirl.
+import { DPR } from '../webgl/gl-context.js';
+
 export function createMuseGalaxy(canvasId, options = {}) {
-  const DPR = () => Math.min(window.devicePixelRatio || 1, 2);
   const COUNT = options.count || 140;
   const GLOBAL_OMEGA = 0.03; // rad/s — slow overall turn of the whole field
 

@@ -4,7 +4,7 @@ const FOCUSABLE = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
-export function getFocusable(container) {
+function getFocusable(container) {
   if (!container) return [];
   return Array.from(container.querySelectorAll(FOCUSABLE))
     .filter((el) => el.offsetParent !== null || el === document.activeElement);

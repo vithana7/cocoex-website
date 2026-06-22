@@ -13,10 +13,8 @@ Token table (defined in `:root` of `src/styles/tokens.css`):
 | Token | Range |
 |---|---|
 | `--font-h1-size` | `clamp(24px, 3vw, 48px)` |
-| `--font-h2-size` | `clamp(14px, 1.5vw, 22px)` |
-| `--font-lead-size` | `clamp(18px, 1.7vw, 26px)` — lead paragraph tier (between H2 and body) |
+| `--font-lead-size` | `clamp(18px, 1.7vw, 26px)` — lead paragraph tier |
 | `--font-body-size` | `clamp(20px, 2.5vw, 36px)` |
-| `--intro-logo-size` | `clamp(60px, 15vw, 250px)` |
 | `--muse-logo-size` | `clamp(150px, 20vw, 300px)` |
 | `--muse-orbit-image-size` | `clamp(80px, 12vw, 150px)` |
 | `--comet-logo-size` | `clamp(180px, 25vw, 320px)` |

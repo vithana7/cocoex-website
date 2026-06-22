@@ -7,6 +7,8 @@
 // the glow is faked with cheap wide translucent strokes. The glint is animated, so we
 // redraw every frame (no epsilon skip) but only with a handful of plain strokes.
 
+import { DPR } from '../webgl/gl-context.js';
+
 // Muse hues in spectrum order (Ares red → … → Dosei purple).
 const MUSE_SPECTRUM = [
   [0xD5, 0x4D, 0x2E], // Ares red
@@ -36,7 +38,7 @@ export const ProcessLinks = {
 
   resize() {
     if (!this.canvas) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = DPR();
     const rect = this.canvas.getBoundingClientRect();
     this.canvas.width = rect.width * dpr;
     this.canvas.height = rect.height * dpr;

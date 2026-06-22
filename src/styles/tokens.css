@@ -19,8 +19,6 @@
   --font-h1-height: clamp(28px, 3.2vw, 52px);
   --font-h1-weight: 700;
 
-  --font-h2-size: clamp(14px, 1.5vw, 22px);
-  --font-h2-height: clamp(18px, 1.8vw, 26px);
   --font-h2-weight: 400;
 
   /* Lead paragraph — the tier between H2 (caption) and body (statement). For
@@ -33,7 +31,6 @@
   --font-body-height: clamp(26px, 3vw, 42px);
   --font-body-weight: 400;
 
-  --intro-logo-size: clamp(60px, 15vw, 250px);
   --muse-logo-size: clamp(150px, 20vw, 300px);
   --muse-orbit-image-size: clamp(80px, 12vw, 150px);
   --comet-logo-size: clamp(180px, 25vw, 320px);
@@ -53,6 +50,4 @@
   --z-bg: 0;
   --z-intro: 10;
   --z-white-section: 30;
-  --z-events: 40;
-  --z-popup: 1000;
 }
