@@ -138,7 +138,13 @@ export function initIntro(introStarfield) {
     constCtx.save();
     constCtx.clearRect(0, 0, el.constCanvas.width, el.constCanvas.height);
 
-    const explosionEnd = 0.4, settleStart = 0.35;
+    // explosionEnd and settleStart MUST meet at the same point or the two branches are
+    // discontinuous: at the crossover the fly-out branch leaves the dot at `mid` (overshoot
+    // 1.08) while easeOutBack(>0) starts the settle a few % PAST mid — a sudden backward snap.
+    // At 100vh it flashed by; lengthening the phase surfaced it as a "pause/restart" hiccup.
+    // Aligning settleStart to explosionEnd makes settleProgress start at easeOutBack(0)=0 →
+    // the dot is exactly at `mid` on both sides of the seam (position-continuous, no kick).
+    const explosionEnd = 0.4, settleStart = 0.4;
 
     fireworkDots.forEach((dot) => {
       let x, y;
@@ -254,16 +260,15 @@ export function initIntro(introStarfield) {
       initFireworkDots();
       explosionStarted = true;
     }
-    // Drive the ripple DIRECTLY from the explosion scroll progress so the wavefront
-    // expands in lockstep with the muses bursting outward (was time-based → it lagged
-    // the scroll). The burst lands over progress 0→~0.45, so the ripple swells and
-    // fades across exactly that window (envelope sin(pulse·π) inside the shader).
-    introStarfield.setPulse(Math.min(1, progress / 0.45));
+    // NOTE: the ripple pulse is NO LONGER driven here. It's driven from the STATEMENT
+    // timeline (see buildIntroTimelines) so the colorful ripple sustains through the
+    // "Art / Community / Impact" ignition and extinguishes exactly when "Impact" lands —
+    // this scrub only owns the DOT burst now.
     drawExplosion(progress);
   }
 
   // ---- GSAP timelines wired to declarative timeline phases ----
-  buildIntroTimelines({ el, updateOrbit, updateExplosion });
+  buildIntroTimelines({ el, updateOrbit, updateExplosion, introStarfield });
 
   const setIntroVisible = (visible) => {
     if (el.introSection) el.introSection.style.visibility = visible ? 'visible' : 'hidden';
@@ -305,7 +310,7 @@ export function initIntro(introStarfield) {
   };
 }
 
-function buildIntroTimelines({ el, updateOrbit, updateExplosion }) {
+function buildIntroTimelines({ el, updateOrbit, updateExplosion, introStarfield }) {
   const orbit = phase('intro.orbit');
   const explosion = phase('intro.explosion');
   // intro.statement is the dedicated hold room (its vh) but isn't referenced directly —
@@ -449,6 +454,25 @@ function buildIntroTimelines({ el, updateOrbit, updateExplosion }) {
     // words + the constellation/backdrop smoke still leave together (narrower smoke window
     // leads on reverse — unchanged).
     tl.to(el.introStatement, { opacity: 0, duration: 0.185, ease: 'none' }, 0.815);
+
+    // Colorful RIPPLE, re-wired to live with the words (was driven off the shorter explosion
+    // scrub → it faded out before the words even finished). Now it's a tween on THIS timeline,
+    // so it's synced to the ignition and extinguishes as "Impact" lands.
+    //
+    // CRITICAL: u_pulse drives BOTH the ring brightness AND the ring RADIUS in the shader
+    // (rad = (1-(1-pulse)²)·1.6). So pulse must move MONOTONICALLY the whole time — a
+    // constant-pulse "sustain" plateau freezes the ring positions dead (that was the
+    // "everything stops moving when Community appears" hiccup). Instead we ramp pulse
+    // 0→1 across pos 0→0.39 with a single ease: the rings keep expanding CONTINUOUSLY,
+    // while the shader's sin(pulse·π) brightness envelope stays near peak through the
+    // Art→Community stretch (pulse lingers around 0.4–0.6) and returns to 0 at pulse=1,
+    // so the glow fades out exactly at pos 0.39 = the moment "Impact" finishes igniting.
+    // power1.in keeps early motion gentle (bright dwell) then accelerates into the fade.
+    if (introStarfield) {
+      const ripple = { pulse: 0 };
+      const setP = () => introStarfield.setPulse(ripple.pulse);
+      tl.to(ripple, { pulse: 1.0, duration: 0.39, ease: 'power1.in', onUpdate: setP }, 0);
+    }
   }
 
   // Phase 3: explosion. Front-loaded: dots settle over the first ~70% of the

@@ -12,7 +12,7 @@
 export const PHASES = [
   // ---- INTRO (section: intro) ----
   { id: 'intro.orbit',       section: 'intro', vh: 150 }, // logo grows + dots orbit, 2 rotations (trimmed 192→150 — tagline fades in over the back half; still above the 100vh smoothness floor)
-  { id: 'intro.explosion',   section: 'intro', vh: 100 }, // constellation explodes + settles (kept at the 100vh min)
+  { id: 'intro.explosion',   section: 'intro', vh: 200 }, // constellation explodes + settles; LENGTHENED 100→200 so the colorful ripple + "Art/Community/Impact" ignition can't be skipped on a fast flick (deliberate slow-mo hero beat)
   { id: 'intro.statement',   section: 'intro', vh: 40  }, // "Unleashing…" statement in/hold/out — trimmed so it fades out a swipe sooner
   { id: 'intro.mission',     section: 'intro', vh: 100 }, // smoke clears + mission fade-in
   { id: 'intro.missionHold', section: 'intro', vh: 90  }, // mission holds fully bright, then fades out (trimmed 160→90 to cut dead scroll)
