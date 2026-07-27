@@ -10,11 +10,11 @@
   height: 200vh;
 }
 
-/* 300vh (= methodsIn 100 + methodsHold 200 in timeline.js): the sticky 100vh methods child
-   then stays PINNED for 200vh (panel − viewport) so the Stardust/Horizon toggle dwells
-   longer before partnerships scroll in. Keep this in sync with comet.methodsHold. */
+/* 220vh (= methodsIn 100 + methodsHold 120 in timeline.js): the sticky 100vh methods child
+   then stays PINNED for 120vh (panel − viewport) so the Stardust/Horizon toggle dwells
+   before partnerships scroll in. Keep this in sync with comet.methodsHold. */
 .comet-panel-tabs {
-  height: 300vh;
+  height: 220vh;
 }
 
 .comet-collab-intro {
@@ -130,7 +130,7 @@
    content everywhere it grows — otherwise (while it's still sticky and mid-pin, top > 0) the
    masked reveal clips to the panel's partial box and shows a hard horizontal seam. comet-dive.js
    adds this only while the reveal is mid (0 < reveal < 1); fixed and the pinned-sticky state both
-   render at top:0, so the swap is seamless (and happens under a tiny mask anyway). The 300vh tabs
+   render at top:0, so the swap is seamless (and happens under a tiny mask anyway). The tabs
    panel keeps its explicit height, so taking this child out of flow doesn't shift the scroll. */
 .comet-collab-methods.dive-fixed {
   position: fixed;

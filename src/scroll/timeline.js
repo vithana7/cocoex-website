@@ -11,23 +11,23 @@
 
 export const PHASES = [
   // ---- INTRO (section: intro) ----
-  { id: 'intro.orbit',       section: 'intro', vh: 192 }, // logo grows + dots orbit, 2 rotations (tagline fades in over the back half)
+  { id: 'intro.orbit',       section: 'intro', vh: 150 }, // logo grows + dots orbit, 2 rotations (trimmed 192→150 — tagline fades in over the back half; still above the 100vh smoothness floor)
   { id: 'intro.explosion',   section: 'intro', vh: 100 }, // constellation explodes + settles (kept at the 100vh min)
   { id: 'intro.statement',   section: 'intro', vh: 40  }, // "Unleashing…" statement in/hold/out — trimmed so it fades out a swipe sooner
   { id: 'intro.mission',     section: 'intro', vh: 100 }, // smoke clears + mission fade-in
-  { id: 'intro.missionHold', section: 'intro', vh: 160 }, // mission holds fully bright, then fades out
+  { id: 'intro.missionHold', section: 'intro', vh: 90  }, // mission holds fully bright, then fades out (trimmed 160→90 to cut dead scroll)
 
   // ---- MUSE (section: muse) ----
   { id: 'muse.fadein',    section: 'muse', vh: 50  }, // logo + copy fade in together — matched to the cocoex mission fade-in (~45-50vh)
-  { id: 'muse.hold',      section: 'muse', vh: 120 }, // intro holds readable — matched to the mission hold (~120vh, ~1.3 swipes)
+  { id: 'muse.hold',      section: 'muse', vh: 75  }, // intro holds readable (trimmed 120→75 to cut dead scroll)
   { id: 'muse.switch',    section: 'muse', vh: 100 }, // black→white + logo crossfade → orbit reveal
-  { id: 'muse.orbitHold', section: 'muse', vh: 220 }, // 100vh structural exit tail + ~120vh PINNED hold of the revealed orbit (matches the intro hold)
+  { id: 'muse.orbitHold', section: 'muse', vh: 170 }, // 100vh structural exit tail + ~70vh PINNED hold of the revealed orbit (trimmed 220→170 — dwell 120→70)
 
   // ---- COMET (section: comet) ----
   { id: 'comet.introIn',    section: 'comet', vh: 100 }, // comet intro fades in
-  { id: 'comet.introHold',  section: 'comet', vh: 100 }, // intro holds
+  { id: 'comet.introHold',  section: 'comet', vh: 60  }, // intro holds (trimmed 100→60 to cut dead scroll)
   { id: 'comet.methodsIn',  section: 'comet', vh: 100 }, // methods/tabs panel fades in
-  { id: 'comet.methodsHold',section: 'comet', vh: 200 }, // methods toggle holds pinned (longer dwell before partnerships) — MUST match .comet-panel-tabs height in comet.css
+  { id: 'comet.methodsHold',section: 'comet', vh: 120 }, // methods toggle holds pinned (trimmed 200→120) — MUST match .comet-panel-tabs height in comet.css (methodsIn 100 + this 120 = 220vh)
 ];
 
 // How many vh into a section's first phase the constellation 2D canvas should
