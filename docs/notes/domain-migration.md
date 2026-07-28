@@ -1,13 +1,14 @@
 # Domain Migration — cocoex.xyz → Cloudflare + GitHub Pages
 
-> Status: **NOT STARTED** — pick up once we have Squarespace + Cloudflare + GitHub accesses.
+> Status: **STEP 1 DONE (2026-07-28)** — `cocoex.xyz` now serves the GitHub Pages site over HTTPS via Squarespace DNS. Cloudflare transfer + archive subdomain still pending.
 > Goal: serve the new GitHub Pages site on `cocoex.xyz`, move the domain off Squarespace (we're cancelling that plan), and land it at Cloudflare.
-> Scope also includes bringing the **Muse Archive** (separate repo `vithana7/museobservatory`) online at the subdomain `archive.cocoex.xyz` — see the dedicated section at the bottom.
+> Scope also includes bringing the **Muse Archive** (separate repo `osiom/museobservatory`) online at the subdomain `archive.cocoex.xyz` — see the dedicated section at the bottom. **DONE 2026-07-28** (live over HTTPS).
 
 ## Current state
 - Site deployed via GitHub Actions (`.github/workflows/deploy.yml`) → `actions/deploy-pages`. No `gh-pages` branch; `dist/` is uploaded as an artifact.
-- Repo: `vithana7/cocoex-website`. Pages URL: `vithana7.github.io`.
+- Repo: `osiom/cocoex-website` (moved from `vithana7` — new owner as of 2026-07). Pages URL: `osiom.github.io`.
 - `public/CNAME` = `cocoex.xyz` already committed → Vite copies it to `dist/CNAME` on every build, so the domain survives deploys. **Done.**
+- **GitHub Pages custom domain set to `cocoex.xyz`, DNS check green, HTTPS cert issued.** Only remaining click: tick **Enforce HTTPS** in Settings → Pages (the REST API rejects `https_enforced` — UI toggle only).
 - `vite.config.js` uses `base: './'` (relative paths) → works at an apex domain with **no config change**. Do NOT switch to a `/repo/` base.
 - Domain currently registered at **Squarespace** (registrar + DNS). We want to cancel Squarespace but keep the domain.
 
@@ -30,15 +31,15 @@ A      @      185.199.111.153
 `www` subdomain → CNAME to the Pages host:
 ```
 Type    Name   Value
-CNAME   www    vithana7.github.io
+CNAME   www    osiom.github.io
 ```
 
 `archive` subdomain → CNAME to the Pages host (Muse Archive — see the archive section below):
 ```
 Type    Name      Value
-CNAME   archive   vithana7.github.io
+CNAME   archive   osiom.github.io
 ```
-> Both `www` and `archive` CNAME to the same `vithana7.github.io` host — that's fine. GitHub routes each request to the correct repo by matching the `Host` header against each repo's Pages custom-domain setting. Leave these **grey-cloud (DNS-only)** on Cloudflare unless we deliberately want the proxy.
+> Both `www` and `archive` CNAME to the same `osiom.github.io` host (both repos moved to `osiom`) — that's fine. GitHub routes each request to the correct repo by matching the `Host` header against each repo's Pages custom-domain setting. Leave these **grey-cloud (DNS-only)** on Cloudflare unless we deliberately want the proxy.
 
 **Cloudflare proxy note:** if the records are **orange-cloud (proxied)**, set SSL/TLS mode to **Full** (NOT Flexible — Flexible causes an HTTPS redirect loop with GitHub Pages). Simplest/safest: leave them **grey-cloud (DNS-only)** and Cloudflare behaves like a plain registrar. Enable the orange proxy later only if we want CDN/analytics.
 
@@ -60,7 +61,7 @@ A domain transfer takes **5–7 days** (ICANN). Do NOT cancel Squarespace until 
    - Verify before proceeding:
      ```
      dig cocoex.xyz +short        # → the 4 GitHub IPs
-     dig www.cocoex.xyz +short    # → vithana7.github.io
+     dig www.cocoex.xyz +short    # → osiom.github.io
      ```
      Site loads over HTTPS at cocoex.xyz. ✅ Only continue once this is solid.
 
@@ -96,7 +97,7 @@ A domain transfer takes **5–7 days** (ICANN). Do NOT cancel Squarespace until 
 # Muse Archive → archive.cocoex.xyz
 
 Bring the **Muse Archive** online at `archive.cocoex.xyz`. It lives in a **separate repo**
-(`vithana7/museobservatory`) — we are **NOT** merging it into cocoex-website.
+(`osiom/museobservatory`) — we are **NOT** merging it into cocoex-website.
 
 ## Why a subdomain + separate repo (not a subpath)
 GitHub Pages allows exactly **one custom domain per repo**, so each repo claims its own:
@@ -130,7 +131,7 @@ No other code changes expected. The archive uses the same `actions/deploy-pages@
    wait for the green DNS check → tick **Enforce HTTPS**.
 4. Verify:
    ```
-   dig archive.cocoex.xyz +short     # → vithana7.github.io
+   dig archive.cocoex.xyz +short     # → osiom.github.io
    ```
    Load https://archive.cocoex.xyz — globe + grid render, record pages resolve, assets 200
    (confirm no `/museobservatory/`-prefixed 404s — that's the tell the base flip didn't take).
@@ -139,4 +140,4 @@ No other code changes expected. The archive uses the same `actions/deploy-pages@
 - **Don't forget the base flip.** If `GITHUB_PAGES: 1` is left in, assets 404 under the
   subdomain (they'd expect `/museobservatory/…`). This is the #1 thing to check after deploy.
 - Enabling Pages + setting the custom domain is a repo-admin toggle (per repo).
-- `www` and `archive` both CNAME to `vithana7.github.io` — expected; GitHub disambiguates by Host header.
+- `www` → `osiom.github.io` (cocoex-website) and `archive` → `osiom.github.io` (museobservatory) — both moved to `osiom`; same host, GitHub disambiguates by Host header.
